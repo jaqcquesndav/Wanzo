@@ -1,0 +1,832 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../sales/models/sale.dart';
+import '../../settings/models/settings.dart';
+
+/// Service pour générer et imprimer des factures et tickets de caisse
+class InvoiceService {
+  /// Génère un PDF pour une vente et retourne le chemin du fichier
+  Future<String> generateInvoicePdf(Sale sale, Settings settings) async {
+    final pdf = pw.Document();
+    final fontRegularData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+    final fontBoldData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
+    
+    final regularFont = pw.Font.ttf(fontRegularData); // Used below
+    final boldFont = pw.Font.ttf(fontBoldData);
+    
+    // Formater les montants selon la devise configurée
+    final currencyFormat = NumberFormat.currency(
+      symbol: settings.currency,
+      decimalDigits: 0,
+    );
+    
+    // Vérifier si un logo d'entreprise existe
+    pw.Widget? logoWidget;
+    if (settings.companyLogo.isNotEmpty) {
+      try {
+        if (settings.companyLogo.startsWith('assets/')) {
+          final logoData = await rootBundle.load(settings.companyLogo);
+          final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+          logoWidget = pw.Image(logoImage, width: 80, height: 80);
+        } else {
+          final logoFile = File(settings.companyLogo);
+          if (await logoFile.exists()) {
+            final logoImage = pw.MemoryImage(await logoFile.readAsBytes());
+            logoWidget = pw.Image(logoImage, width: 80, height: 80);
+          }
+        }
+      } catch (e) {
+        // Si le logo ne peut pas être chargé, on n'affiche rien
+        print('Erreur lors du chargement du logo: $e');
+      }
+    }
+    
+    // Date formatée
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+    final formattedDate = dateFormat.format(sale.date);
+    
+    // Numéro de facture formaté selon le modèle configuré
+    String invoiceNumber = settings.invoiceNumberFormat;
+    invoiceNumber = invoiceNumber
+        .replaceAll('{YEAR}', sale.date.year.toString())
+        .replaceAll('{MONTH}', sale.date.month.toString().padLeft(2, '0'))
+        .replaceAll('{SEQ}', sale.id.substring(0, 8));
+    
+    // Calcul des totaux
+    final subtotal = sale.items.fold<double>(
+      0, (sum, item) => sum + (item.quantity * item.unitPrice)
+    );
+    
+    double taxAmount = 0;
+    if (settings.showTaxes) {
+      taxAmount = subtotal * (settings.defaultTaxRate / 100);
+    }
+    
+    final total = subtotal + taxAmount;
+    
+    // Création du PDF
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // En-tête avec logo et informations de l'entreprise
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  logoWidget ?? pw.SizedBox(width: 80, height: 80),
+                  pw.SizedBox(width: 10),
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          settings.companyName,
+                          style: pw.TextStyle(
+                            font: boldFont,
+                            fontSize: 18,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        if (settings.companyAddress.isNotEmpty)
+                          pw.Text(settings.companyAddress),
+                        if (settings.companyPhone.isNotEmpty)
+                          pw.Text('Tél: ${settings.companyPhone}'),                        if (settings.companyEmail.isNotEmpty)
+                          pw.Text('Email: ${settings.companyEmail}'),
+                        if (settings.taxIdentificationNumber.isNotEmpty)
+                          pw.Text('NIF: ${settings.taxIdentificationNumber}'),
+                        if (settings.rccmNumber.isNotEmpty)
+                          pw.Text('RCCM: ${settings.rccmNumber}'),
+                        if (settings.idNatNumber.isNotEmpty)
+                          pw.Text('ID NAT: ${settings.idNatNumber}'),
+                        if (settings.rccmNumber.isNotEmpty)
+                          pw.Text('RCCM: ${settings.rccmNumber}'),
+                        if (settings.idNatNumber.isNotEmpty)
+                          pw.Text('ID NAT: ${settings.idNatNumber}'),
+                      ],
+                    ),
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        'FACTURE',
+                        style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 16,
+                        ),
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text('N°: $invoiceNumber'),
+                      pw.Text('Date: $formattedDate'),
+                    ],
+                  ),
+                ],
+              ),
+              
+              pw.SizedBox(height: 20),
+              
+              // Informations client
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey200,
+                  borderRadius: pw.BorderRadius.circular(5),
+                ),
+                child: pw.Row(
+                  children: [
+                    pw.Text(
+                      'CLIENT:',
+                      style: pw.TextStyle(font: boldFont),
+                    ),
+                    pw.SizedBox(width: 10),
+                    pw.Text(sale.customerName),
+                  ],
+                ),
+              ),
+              
+              pw.SizedBox(height: 20),
+              
+              // Tableau des articles
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey400),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(4),
+                  1: const pw.FlexColumnWidth(1),
+                  2: const pw.FlexColumnWidth(2),
+                  3: const pw.FlexColumnWidth(2),
+                },
+                children: [
+                  // En-tête du tableau
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(
+                          'Désignation',
+                          style: pw.TextStyle(font: boldFont),
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(
+                          'Qté',
+                          style: pw.TextStyle(font: boldFont),
+                          textAlign: pw.TextAlign.center,
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(
+                          'P.U.',
+                          style: pw.TextStyle(font: boldFont),
+                          textAlign: pw.TextAlign.right,
+                        ),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(
+                          'Total',
+                          style: pw.TextStyle(font: boldFont),
+                          textAlign: pw.TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Lignes des articles
+                  ...sale.items.map((item) {
+                    final itemTotal = item.quantity * item.unitPrice;
+                    return pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(item.productName),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            '${item.quantity}',
+                            textAlign: pw.TextAlign.center,
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            currencyFormat.format(item.unitPrice),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                            currencyFormat.format(itemTotal),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+              
+              pw.SizedBox(height: 10),
+              
+              // Récapitulatif des montants
+              pw.Container(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Row(
+                      mainAxisSize: pw.MainAxisSize.min,
+                      children: [
+                        pw.Container(
+                          width: 150,
+                          child: pw.Text(
+                            'Sous-total:',
+                            style: pw.TextStyle(font: boldFont),
+                          ),
+                        ),
+                        pw.Container(
+                          width: 120,
+                          child: pw.Text(
+                            currencyFormat.format(subtotal),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (settings.showTaxes) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisSize: pw.MainAxisSize.min,
+                        children: [
+                          pw.Container(
+                            width: 150,
+                            child: pw.Text(
+                              'TVA (${settings.defaultTaxRate}%):',
+                              style: pw.TextStyle(font: boldFont),
+                            ),
+                          ),
+                          pw.Container(
+                            width: 120,
+                            child: pw.Text(
+                              currencyFormat.format(taxAmount),
+                              textAlign: pw.TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      padding: const pw.EdgeInsets.all(5),
+                      color: PdfColors.grey300,
+                      child: pw.Row(
+                        mainAxisSize: pw.MainAxisSize.min,
+                        children: [
+                          pw.Container(
+                            width: 150,
+                            child: pw.Text(
+                              'Total à payer:',
+                              style: pw.TextStyle(
+                                font: boldFont,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          pw.Container(
+                            width: 120,
+                            child: pw.Text(
+                              currencyFormat.format(total),
+                              style: pw.TextStyle(
+                                font: boldFont,
+                                fontSize: 12,
+                              ),
+                              textAlign: pw.TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              pw.SizedBox(height: 30),
+              
+              // Conditions de paiement et notes
+              if (settings.defaultPaymentTerms.isNotEmpty) ...[
+                pw.Text(
+                  'Conditions de paiement:',
+                  style: pw.TextStyle(font: boldFont),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(settings.defaultPaymentTerms),
+                pw.SizedBox(height: 10),
+              ],
+              
+              if (settings.defaultInvoiceNotes.isNotEmpty) ...[
+                pw.Text(
+                  'Notes:',
+                  style: pw.TextStyle(font: boldFont),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(settings.defaultInvoiceNotes),
+              ],
+              
+              pw.Spacer(),
+              
+              // Pied de page
+              pw.Center(
+                child: pw.Text(
+                  'Merci pour votre confiance!',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    
+    // Enregistrer le PDF
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/invoice_${sale.id}.pdf');
+    await file.writeAsBytes(await pdf.save());
+    
+    return file.path;
+  }
+  
+  /// Génère un ticket de caisse pour une vente et retourne le chemin du fichier
+  Future<String> generateReceiptPdf(Sale sale, Settings settings) async {
+    final pdf = pw.Document();
+    final fontRegularData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+    final fontBoldData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
+    
+    final regularFont = pw.Font.ttf(fontRegularData); // Used below
+    final boldFont = pw.Font.ttf(fontBoldData);
+    
+    // Format pour la monnaie
+    final currencyFormat = NumberFormat.currency(
+      symbol: settings.currency,
+      decimalDigits: 0,
+    );
+    
+    // Vérifier si un logo d'entreprise existe
+    pw.Widget? logoWidget;
+    if (settings.companyLogo.isNotEmpty) {
+      try {
+        if (settings.companyLogo.startsWith('assets/')) {
+          final logoData = await rootBundle.load(settings.companyLogo);
+          final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+          logoWidget = pw.Image(logoImage, width: 60, height: 60);
+        } else {
+          final logoFile = File(settings.companyLogo);
+          if (await logoFile.exists()) {
+            final logoImage = pw.MemoryImage(await logoFile.readAsBytes());
+            logoWidget = pw.Image(logoImage, width: 60, height: 60);
+          }
+        }
+      } catch (e) {
+        // Si le logo ne peut pas être chargé, on n'affiche rien
+        print('Erreur lors du chargement du logo: $e');
+      }
+    }
+    
+    // Date formatée
+    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+    final formattedDate = dateFormat.format(sale.date);
+    
+    // Calcul des totaux
+    final subtotal = sale.items.fold<double>(
+      0, (sum, item) => sum + (item.quantity * item.unitPrice)
+    );
+    
+    double taxAmount = 0;
+    if (settings.showTaxes) {
+      taxAmount = subtotal * (settings.defaultTaxRate / 100);
+    }
+    
+    final total = subtotal + taxAmount;
+      // Largeur standard pour tickets thermiques: 80mm
+    final ticketWidth = PdfPageFormat(
+      80 * PdfPageFormat.mm,
+      500 * PdfPageFormat.mm, // hauteur définie, sera automatiquement ajustée
+      marginAll: 5 * PdfPageFormat.mm,
+    );
+    
+    // Création du PDF format ticket
+    pdf.addPage(
+      pw.Page(
+        pageFormat: ticketWidth,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              // Logo et nom de l'entreprise
+              if (logoWidget != null) ...[
+                pw.Center(child: logoWidget),
+                pw.SizedBox(height: 5),
+              ],
+              
+              // Nom et info de l'entreprise
+              pw.Text(
+                settings.companyName,
+                style: pw.TextStyle(
+                  font: boldFont,
+                  fontSize: 12,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              
+              if (settings.companyAddress.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  settings.companyAddress,
+                  style: pw.TextStyle(
+                    font: regularFont,
+                    fontSize: 8,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+              
+              if (settings.companyPhone.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Tél: ${settings.companyPhone}',
+                  style: pw.TextStyle(
+                    font: regularFont,
+                    fontSize: 8,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+                if (settings.taxIdentificationNumber.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'NIF: ${settings.taxIdentificationNumber}',
+                  style: pw.TextStyle(
+                    font: regularFont,
+                    fontSize: 8,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+              
+              if (settings.rccmNumber.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'RCCM: ${settings.rccmNumber}',
+                  style: pw.TextStyle(
+                    font: regularFont,
+                    fontSize: 8,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+              
+              if (settings.idNatNumber.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'ID NAT: ${settings.idNatNumber}',
+                  style: pw.TextStyle(
+                    font: regularFont,
+                    fontSize: 8,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+              
+              pw.SizedBox(height: 10),
+              
+              // Ligne de séparation
+              pw.Divider(thickness: 1),
+              
+              // Numéro de ticket et date
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'TICKET DE CAISSE',
+                style: pw.TextStyle(
+                  font: boldFont,
+                  fontSize: 10,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 2),
+              pw.Text(
+                'N°: ${sale.id.substring(0, 8)}',
+                style: pw.TextStyle(font: regularFont, fontSize: 8),
+              ),
+              pw.Text(
+                'Date: $formattedDate',
+                style: pw.TextStyle(font: regularFont, fontSize: 8),
+              ),
+              
+              // Client
+              if (sale.customerName.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Client: ${sale.customerName}',
+                  style: pw.TextStyle(font: regularFont, fontSize: 8),
+                ),
+              ],
+              
+              pw.SizedBox(height: 10),
+              
+              // Ligne de séparation
+              pw.Divider(thickness: 1),
+              
+              // En-tête des articles
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    flex: 4,
+                    child: pw.Text(
+                      'Article',
+                      style: pw.TextStyle(font: boldFont, fontSize: 8),
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 1,
+                    child: pw.Text(
+                      'Qté',
+                      style: pw.TextStyle(font: boldFont, fontSize: 8),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Text(
+                      'P.U.',
+                      style: pw.TextStyle(font: boldFont, fontSize: 8),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Text(
+                      'Total',
+                      style: pw.TextStyle(font: boldFont, fontSize: 8),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+              
+              pw.Divider(thickness: 1),
+              
+              // Liste des articles
+              ...sale.items.map((item) {
+                final itemTotal = item.quantity * item.unitPrice;
+                return pw.Column(
+                  children: [
+                    pw.Row(
+                      children: [
+                        pw.Expanded(
+                          flex: 4,
+                          child: pw.Text(
+                            item.productName,
+                            style: pw.TextStyle(font: regularFont, fontSize: 8),
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 1,
+                          child: pw.Text(
+                            '${item.quantity}',
+                            style: pw.TextStyle(font: regularFont, fontSize: 8),
+                            textAlign: pw.TextAlign.center,
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 2,
+                          child: pw.Text(
+                            currencyFormat.format(item.unitPrice),
+                            style: pw.TextStyle(font: regularFont, fontSize: 8),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 2,
+                          child: pw.Text(
+                            currencyFormat.format(itemTotal),
+                            style: pw.TextStyle(font: regularFont, fontSize: 8),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 2),
+                  ],
+                );
+              }),
+              
+              pw.Divider(thickness: 1),
+              
+              // Totaux
+              pw.SizedBox(height: 5),
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Text(
+                      'Sous-total:',
+                      style: pw.TextStyle(font: regularFont, fontSize: 8),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Text(
+                      currencyFormat.format(subtotal),
+                      style: pw.TextStyle(font: regularFont, fontSize: 8),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+              
+              if (settings.showTaxes) ...[
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  children: [
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        'TVA (${settings.defaultTaxRate}%):',
+                        style: pw.TextStyle(font: regularFont, fontSize: 8),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Text(
+                        currencyFormat.format(taxAmount),
+                        style: pw.TextStyle(font: regularFont, fontSize: 8),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              
+              pw.SizedBox(height: 5),
+              
+              // Total à payer
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    top: pw.BorderSide(),
+                    bottom: pw.BorderSide(),
+                  ),
+                ),
+                child: pw.Row(
+                  children: [
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Text(
+                        'TOTAL À PAYER:',
+                        style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 10,
+                        ),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Text(
+                        currencyFormat.format(total),
+                        style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 10,
+                        ),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              pw.SizedBox(height: 10),
+              
+              // Note de bas de page
+              pw.Text(
+                'Merci de votre achat!',
+                style: pw.TextStyle(
+                  font: boldFont,
+                  fontSize: 8,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              
+              pw.SizedBox(height: 5),
+              
+              if (settings.defaultInvoiceNotes.isNotEmpty) ...[
+                pw.Text(
+                  settings.defaultInvoiceNotes,
+                  style: pw.TextStyle(font: regularFont, fontSize: 6),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+    
+    // Enregistrer le PDF
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/receipt_${sale.id}.pdf');
+    await file.writeAsBytes(await pdf.save());
+    
+    return file.path;
+  }
+  
+  /// Imprime une facture ou un ticket de caisse
+  Future<void> printDocument(String filePath) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await Printing.layoutPdf(
+        onLayout: (_) async => await file.readAsBytes(),
+      );
+    }
+  }
+  
+  /// Ouvre un aperçu avant impression
+  Future<void> previewDocument(String filePath) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await Printing.layoutPdf(
+        onLayout: (_) async => await file.readAsBytes(),
+        name: 'Document',
+        format: PdfPageFormat.a4,
+        dynamicLayout: false,
+      );
+    }
+  }
+
+  /// Partage un document PDF
+  Future<void> shareDocument(String filePath, String subject) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        subject: subject,
+      );
+    }
+  }
+  
+  /// Génère et affiche un reçu/facture pour une vente
+  Future<void> generateAndShowReceipt({
+    required Sale sale,
+    required String companyName,
+    required String companyAddress,
+    required String companyPhone,
+    required String companyEmail,
+    required String footerText,
+    required BuildContext context,
+  }) async {
+    // Créer un objet Settings avec les informations fournies
+    final settings = Settings(
+      companyName: companyName,
+      companyAddress: companyAddress,
+      companyPhone: companyPhone,
+      companyEmail: companyEmail,
+      companyLogo: '',
+      currency: 'FC',
+      dateFormat: 'dd/MM/yyyy',
+      themeMode: AppThemeMode.light,
+      language: 'fr',
+      showTaxes: false,
+      defaultTaxRate: 0,
+      defaultInvoiceNotes: footerText,
+      taxIdentificationNumber: '',
+      rccmNumber: '',
+      idNatNumber: '',
+      invoiceNumberFormat: 'FAC-{YEAR}-{MONTH}-{SEQ}'
+    );
+    
+    // Générer le fichier PDF
+    final pdfPath = await generateInvoicePdf(sale, settings);
+    
+    // Afficher le PDF
+    await previewDocument(pdfPath);
+  }
+}
