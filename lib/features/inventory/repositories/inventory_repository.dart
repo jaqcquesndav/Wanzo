@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
+import '../models/stock_transaction.dart'; // Import StockTransaction
 
 /// Repository pour gérer l'inventaire et les transactions de stock
 class InventoryRepository {
@@ -86,7 +87,7 @@ class InventoryRepository {
       await addStockTransaction(StockTransaction(
         id: _uuid.v4(),
         productId: newProduct.id,
-        type: StockTransactionType.purchase,
+        type: StockTransactionType.initialStock, // Changed type to initialStock
         quantity: product.stockQuantity,
         date: DateTime.now(),
         notes: 'Stock initial lors de la création du produit',

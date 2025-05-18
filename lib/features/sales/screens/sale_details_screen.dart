@@ -61,6 +61,8 @@ class SaleDetailsScreen extends StatelessWidget {
                 _showDeleteConfirmation(context);
               } else if (value == "print") {
                 _printInvoice(context);
+              } else if (value == "share") {
+                _shareInvoice(context);
               }
             },
             itemBuilder: (context) => [
@@ -81,6 +83,16 @@ class SaleDetailsScreen extends StatelessWidget {
                     Icon(Icons.print),
                     SizedBox(width: 8),
                     Text("Imprimer"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: "share",
+                child: Row(
+                  children: [
+                    Icon(Icons.share),
+                    SizedBox(width: 8),
+                    Text("Partager"),
                   ],
                 ),
               ),
@@ -272,6 +284,15 @@ class SaleDetailsScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
               ),
+              ElevatedButton.icon(
+                onPressed: () => _shareInvoice(context),
+                icon: const Icon(Icons.share),
+                label: const Text("Partager"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
               if (sale.status == SaleStatus.pending)
                 ElevatedButton.icon(
                   onPressed: () {
@@ -357,6 +378,38 @@ class SaleDetailsScreen extends StatelessWidget {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(        SnackBar(
           content: Text('Erreur lors de la génération de la facture: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Partage la facture
+  void _shareInvoice(BuildContext context) async {
+    final invoiceService = InvoiceService();
+    final settingsBloc = context.read<SettingsBloc>();
+    final settingsState = settingsBloc.state;
+    
+    try {
+      if (settingsState is SettingsLoaded) {
+        // Customer phone number might not be directly on sale object.
+        // Pass null for now, or retrieve if available and necessary.
+        await invoiceService.shareInvoice(
+          sale, 
+          settingsState.settings,
+          // customerPhoneNumber: sale.customerPhoneNumber, // Example if available
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de partager : paramètres non chargés'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(        SnackBar(
+          content: Text('Erreur lors du partage de la facture: $e'),
           backgroundColor: Colors.red,
         ),
       );

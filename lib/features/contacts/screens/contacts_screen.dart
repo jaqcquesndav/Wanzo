@@ -78,9 +78,9 @@ class _ContactsScreenState extends State<ContactsScreen>
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (_tabController.index == 0) {
-            context.go('/customers/add');
+            context.push('/customers/add');
           } else {
-            context.go('/suppliers/add');
+            context.push('/suppliers/add');
           }
         },
         child: const Icon(Icons.add),

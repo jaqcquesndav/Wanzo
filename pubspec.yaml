@@ -39,7 +39,7 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   uuid: ^4.5.1
-  image_picker: ^1.0.7
+  image_picker: ^1.1.2
   connectivity_plus: ^5.0.2
   http: ^1.2.0
       # Authentication
@@ -65,6 +65,8 @@ dependencies:
   pdf: ^3.10.7
   printing: ^5.12.0
   share_plus: ^11.0.0
+  fl_chart: ^1.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -103,3 +105,17 @@ flutter_launcher_icons:
     generate: true
   windows:
     generate: true
+
+# Configuration pour flutter_native_splash
+flutter_native_splash:
+  color: "#FFFFFF" # Couleur de fond blanche
+  image: assets/images/logo-wanzo-orange-carre-500x500.png # Chemin vers votre image de splash
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  web_image_mode: center
+
+  # Décommentez et personnalisez si vous avez une image spécifique pour Android 12+
+  # android_12:
+  #   image: assets/images/logo-wanzo-orange-carre-500x500.png 
+  #   color: "#FFFFFF"
+  #   icon_background_color: "#FFFFFF"

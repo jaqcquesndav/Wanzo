@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart'; // Importer go_router
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
@@ -66,7 +67,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
-            Navigator.pop(context);
+            context.pop(); // MODIFIÉ: Utiliser context.pop() de go_router
           } else if (state is CustomerError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

@@ -8,7 +8,7 @@ part of 'product.dart';
 
 class ProductAdapter extends TypeAdapter<Product> {
   @override
-  final int typeId = 6;
+  final int typeId = 22;
 
   @override
   Product read(BinaryReader reader) {
@@ -29,13 +29,14 @@ class ProductAdapter extends TypeAdapter<Product> {
       alertThreshold: fields[9] as double,
       createdAt: fields[10] as DateTime,
       updatedAt: fields[11] as DateTime,
+      imagePath: fields[12] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Product obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class ProductAdapter extends TypeAdapter<Product> {
       ..writeByte(10)
       ..write(obj.createdAt)
       ..writeByte(11)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(12)
+      ..write(obj.imagePath);
   }
 
   @override
@@ -73,61 +76,9 @@ class ProductAdapter extends TypeAdapter<Product> {
           typeId == other.typeId;
 }
 
-class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
-  @override
-  final int typeId = 8;
-
-  @override
-  StockTransaction read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return StockTransaction(
-      id: fields[0] as String,
-      productId: fields[1] as String,
-      type: fields[2] as StockTransactionType,
-      quantity: fields[3] as double,
-      date: fields[4] as DateTime,
-      referenceId: fields[5] as String,
-      notes: fields[6] as String,
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, StockTransaction obj) {
-    writer
-      ..writeByte(7)
-      ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
-      ..write(obj.productId)
-      ..writeByte(2)
-      ..write(obj.type)
-      ..writeByte(3)
-      ..write(obj.quantity)
-      ..writeByte(4)
-      ..write(obj.date)
-      ..writeByte(5)
-      ..write(obj.referenceId)
-      ..writeByte(6)
-      ..write(obj.notes);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is StockTransactionAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
 class ProductCategoryAdapter extends TypeAdapter<ProductCategory> {
   @override
-  final int typeId = 4;
+  final int typeId = 20;
 
   @override
   ProductCategory read(BinaryReader reader) {
@@ -196,7 +147,7 @@ class ProductCategoryAdapter extends TypeAdapter<ProductCategory> {
 
 class ProductUnitAdapter extends TypeAdapter<ProductUnit> {
   @override
-  final int typeId = 5;
+  final int typeId = 21;
 
   @override
   ProductUnit read(BinaryReader reader) {
@@ -259,70 +210,6 @@ class ProductUnitAdapter extends TypeAdapter<ProductUnit> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ProductUnitAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class StockTransactionTypeAdapter extends TypeAdapter<StockTransactionType> {
-  @override
-  final int typeId = 7;
-
-  @override
-  StockTransactionType read(BinaryReader reader) {
-    switch (reader.readByte()) {
-      case 0:
-        return StockTransactionType.purchase;
-      case 1:
-        return StockTransactionType.sale;
-      case 2:
-        return StockTransactionType.return_in;
-      case 3:
-        return StockTransactionType.return_out;
-      case 4:
-        return StockTransactionType.adjustment;
-      case 5:
-        return StockTransactionType.transfer;
-      case 6:
-        return StockTransactionType.loss;
-      default:
-        return StockTransactionType.purchase;
-    }
-  }
-
-  @override
-  void write(BinaryWriter writer, StockTransactionType obj) {
-    switch (obj) {
-      case StockTransactionType.purchase:
-        writer.writeByte(0);
-        break;
-      case StockTransactionType.sale:
-        writer.writeByte(1);
-        break;
-      case StockTransactionType.return_in:
-        writer.writeByte(2);
-        break;
-      case StockTransactionType.return_out:
-        writer.writeByte(3);
-        break;
-      case StockTransactionType.adjustment:
-        writer.writeByte(4);
-        break;
-      case StockTransactionType.transfer:
-        writer.writeByte(5);
-        break;
-      case StockTransactionType.loss:
-        writer.writeByte(6);
-        break;
-    }
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is StockTransactionTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -20,11 +20,11 @@ class Customer extends Equatable {
 
   /// Adresse email du client
   @HiveField(3)
-  final String email;
+  final String? email; // Changed to nullable
 
   /// Adresse physique du client
   @HiveField(4)
-  final String address;
+  final String? address; // Changed to nullable
 
   /// Date de création du client dans le système
   @HiveField(5)
@@ -32,7 +32,7 @@ class Customer extends Equatable {
 
   /// Notes ou informations supplémentaires sur le client
   @HiveField(6)
-  final String notes;
+  final String? notes; // Changed to nullable
 
   /// Historique d'achat total du client (en francs congolais - FC)
   @HiveField(7)
@@ -50,10 +50,10 @@ class Customer extends Equatable {
     required this.id,
     required this.name,
     required this.phoneNumber,
-    required this.email,
-    required this.address,
+    this.email, // No longer required, allow null
+    this.address, // No longer required, allow null
     required this.createdAt,
-    this.notes = '',
+    this.notes, // Allow null
     this.totalPurchases = 0.0,
     this.lastPurchaseDate,
     this.category = CustomerCategory.regular,

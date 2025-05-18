@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'dart:io'; // Added for File support
 import '../../../constants/colors.dart';
 import '../../../constants/spacing.dart';
 import '../../../constants/typography.dart';
@@ -10,8 +11,7 @@ import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
-import 'add_product_screen.dart';
-import 'product_details_screen.dart';
+import '../models/stock_transaction.dart'; // Added import
 
 /// Écran principal de gestion de l'inventaire
 class InventoryScreen extends StatefulWidget {
@@ -289,7 +289,44 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
         final product = products[index];
         final isLowStock = product.stockQuantity <= product.alertThreshold;
         
+        Widget? leadingWidget;
+        if (product.imagePath != null && product.imagePath!.isNotEmpty) {
+          leadingWidget = SizedBox(
+            width: 50, // Define a fixed width for the image
+            height: 50, // Define a fixed height for the image
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(WanzoSpacing.sm), // Optional: for rounded corners
+              child: Image.file(
+                File(product.imagePath!),
+                fit: BoxFit.cover, // Ensure the image covers the space
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback for image loading errors
+                  return CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.grey[300],
+                    child: Text(
+                      product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
+                      style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        } else {
+          // Fallback if no image path is available
+          leadingWidget = CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.grey[300],
+            child: Text(
+              product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
+              style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+            ),
+          );
+        }
+        
         return ListTile(
+          leading: leadingWidget, // Added leading widget for the image
           contentPadding: const EdgeInsets.symmetric(
             vertical: WanzoSpacing.sm,
             horizontal: WanzoSpacing.md,

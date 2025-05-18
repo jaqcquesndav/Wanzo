@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../models/product.dart';
+import '../models/stock_transaction.dart'; // Added import
 
 /// États du BLoC d'inventaire
 abstract class InventoryState extends Equatable {

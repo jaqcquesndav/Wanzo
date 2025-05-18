@@ -140,11 +140,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               context.read<AuthBloc>().add(const AuthLogoutRequested());
             } else if (value == 'profile') {
               // Navigation vers le profil
-              // TODO: Implémenter la navigation vers le profil
-              // context.go('/profile'); // Example for future implementation
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profil sera bientôt disponible')),
-              );
+              context.go('/profile'); // Navigate to ProfileScreen
             } else if (value == 'settings') {
               // Navigation vers les paramètres
               context.go('/settings'); // MODIFIED: Use context.go to navigate

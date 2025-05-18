@@ -135,23 +135,23 @@ class CustomerDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     
                     // Email
-                    if (customer.email.isNotEmpty) ...[
+                    if (customer.email?.isNotEmpty ?? false) ...[
                       _buildInfoRow(
                         Icons.email,
                         'Email',
-                        customer.email,
-                        onTap: () => _sendEmail(context, customer.email),
+                        customer.email ?? '', // Provide default value
+                        onTap: () => _sendEmail(context, customer.email ?? ''), // Provide default value
                       ),
                       const SizedBox(height: 12),
                     ],
                     
                     // Adresse
-                    if (customer.address.isNotEmpty) ...[
+                    if (customer.address?.isNotEmpty ?? false) ...[
                       _buildInfoRow(
                         Icons.location_on,
                         'Adresse',
-                        customer.address,
-                        onTap: () => _openMap(context, customer.address),
+                        customer.address ?? '', // Provide default value
+                        onTap: () => _openMap(context, customer.address ?? ''), // Provide default value
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -211,7 +211,7 @@ class CustomerDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             
             // Notes
-            if (customer.notes.isNotEmpty) ...[
+            if (customer.notes?.isNotEmpty ?? false) ...[
               Card(
                 elevation: 2,
                 child: Padding(
@@ -228,7 +228,7 @@ class CustomerDetailsScreen extends StatelessWidget {
                       ),
                       const Divider(),
                       const SizedBox(height: 8),
-                      Text(customer.notes),
+                      Text(customer.notes ?? ''), // Provide default value
                     ],
                   ),
                 ),

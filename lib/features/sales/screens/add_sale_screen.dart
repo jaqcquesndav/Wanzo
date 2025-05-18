@@ -1,5 +1,3 @@
-import 'dart:math'; // Added for Math.min
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +14,7 @@ import 'package:wanzo/features/invoice/services/invoice_service.dart';
 import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
 import 'package:wanzo/features/settings/bloc/settings_event.dart';
 import 'package:wanzo/features/settings/bloc/settings_state.dart';
+import 'package:wanzo/features/settings/models/settings.dart';
 import '../../../constants/spacing.dart';
 import '../bloc/sales_bloc.dart';
 import '../models/sale.dart'; // Added missing import
@@ -459,15 +458,28 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
       bottomNavigationBar: BottomAppBar(
         child: Padding(
           padding: const EdgeInsets.all(WanzoSpacing.md),
-          child: ElevatedButton(
-            onPressed: _items.isEmpty ? null : _saveSale,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.md),
-            ),
-            child: const Text(
-              'Enregistrer la vente',
-              style: TextStyle(fontSize: 16),
-            ),
+          child: BlocBuilder<SalesBloc, SalesState>(
+            builder: (context, state) {
+              bool isLoading = state is SalesLoading;
+              return ElevatedButton(
+                onPressed: (_items.isEmpty || isLoading) ? null : _saveSale,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.md),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text(
+                        'Enregistrer la vente',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              );
+            },
           ),
         ),
       ),
@@ -550,7 +562,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
 
     // ignore: unnecessary_null_comparison 
     if (pdfPath != null && pdfPath.isNotEmpty) {
-      _showDocumentOptions(pdfPath, documentType, savedSale);
+      _showDocumentOptions(pdfPath, documentType, savedSale, settings); // Pass settings
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Impossible de générer le $documentType. Chemin non valide.')),
@@ -559,7 +571,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     }
   }
 
-  void _showDocumentOptions(String pdfPath, String documentType, Sale sale) {
+  void _showDocumentOptions(String pdfPath, String documentType, Sale sale, Settings settings) { // Add Settings parameter
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bc) {
@@ -590,8 +602,11 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 title: Text('Partager $documentType'),
                 onTap: () async {
                   Navigator.pop(bc); 
-                  final subject = '$documentType N° ${sale.id.substring(0,min(8, sale.id.length))}';
-                  await invoiceService.shareDocument(pdfPath, subject);
+                  await invoiceService.shareInvoice(
+                    sale, 
+                    settings, 
+                    customerPhoneNumber: _customerPhoneController.text, 
+                  );
                   if (mounted) Navigator.of(context).pop(); 
                 },
               ),

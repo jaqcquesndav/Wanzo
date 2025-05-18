@@ -1,10 +1,10 @@
-﻿// filepath: c:\Users\DevSpace\Flutter\wanzo\lib\core\services\sync_service.dart
+// filepath: c:\Users\DevSpace\Flutter\wanzo\lib\core\services\sync_service.dart
 
-import "dart:async";
-import "package:flutter/material.dart";
-import "../utils/connectivity_service.dart";
-import "api_service.dart";
-import "database_service.dart";
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../utils/connectivity_service.dart';
+import 'api_service.dart';
+import 'database_service.dart';
 
 /// Statut de la synchronisation
 enum SyncStatus {
@@ -42,11 +42,9 @@ class SyncService {
   Future<void> init() async {
     // Planifier une synchronisation régulière
     _setupPeriodicSync();
-    
-    // Écouter les changements de connectivité via le service de connectivité
+      // Écouter les changements de connectivité via le service de connectivité
     _connectivityService.connectionStatus.addListener(() {
-      bool isConnected = _connectivityService.isConnected;
-      if (isConnected && !_isSyncing) {
+      if (_connectivityService.isConnected && !_isSyncing) {
         // Lancer une synchronisation lorsque la connexion est rétablie
         syncData();
       }
@@ -69,12 +67,12 @@ class SyncService {
     
     _isSyncing = true;
     _syncStatusController.add(SyncStatus.syncing);
-    debugPrint("Démarrage de la synchronisation des données...");
+    debugPrint('Démarrage de la synchronisation des données...');
     
     try {
       // Récupérer toutes les opérations en attente
       final pendingOperations = await _databaseService.getPendingOperations();
-      debugPrint("${pendingOperations.length} opérations en attente de synchronisation");
+      debugPrint('${pendingOperations.length} opérations en attente de synchronisation');
       
       if (pendingOperations.isEmpty) {
         _isSyncing = false;
@@ -85,17 +83,17 @@ class SyncService {
       // Synchroniser chaque opération
       for (final operation in pendingOperations) {
         if (!_connectivityService.isConnected) {
-          debugPrint("Synchronisation interrompue : connexion perdue");
+          debugPrint('Synchronisation interrompue : connexion perdue');
           _isSyncing = false;
           _syncStatusController.add(SyncStatus.failed);
           return false;
         }
         
         try {
-          final endpoint = operation["endpoint"] as String;
-          final method = operation["method"] as String;
-          final body = operation["body"] as Map<String, dynamic>?;
-          final id = operation["id"] as String;
+          final endpoint = operation['endpoint'] as String;
+          final method = operation['method'] as String;
+          final body = operation['body'] as Map<String, dynamic>?;
+          final id = operation['id'] as String;
           
           // Exécuter l'opération sur l'API
           await _executeApiOperation(method, endpoint, body);
@@ -103,9 +101,9 @@ class SyncService {
           // Marquer l'opération comme synchronisée
           await _databaseService.markOperationAsSynchronized(id);
           
-          debugPrint("Opération $id synchronisée avec succès");
+          debugPrint('Opération $id synchronisée avec succès');
         } catch (e) {
-          debugPrint("Erreur lors de la synchronisation d\'une opération: $e");
+          debugPrint('Erreur lors de la synchronisation d\'une opération: $e');
           // Continuer avec la prochaine opération, celle-ci sera retentée plus tard
         }
       }
@@ -115,10 +113,10 @@ class SyncService {
       
       _isSyncing = false;
       _syncStatusController.add(SyncStatus.completed);
-      debugPrint("Synchronisation terminée avec succès");
+      debugPrint('Synchronisation terminée avec succès');
       return true;
     } catch (e) {
-      debugPrint("Erreur lors de la synchronisation: $e");
+      debugPrint('Erreur lors de la synchronisation: $e');
       _isSyncing = false;
       _syncStatusController.add(SyncStatus.failed);
       return false;
@@ -128,20 +126,20 @@ class SyncService {
   /// Exécute une opération API selon la méthode
   Future<void> _executeApiOperation(String method, String endpoint, Map<String, dynamic>? body) async {
     switch (method) {
-      case "GET":
+      case 'GET':
         await _apiService.get(endpoint);
         break;
-      case "POST":
+      case 'POST':
         await _apiService.post(endpoint, body: body);
         break;
-      case "PUT":
+      case 'PUT':
         await _apiService.put(endpoint, body: body);
         break;
-      case "DELETE":
+      case 'DELETE':
         await _apiService.delete(endpoint);
         break;
       default:
-        throw Exception("Méthode non supportée: $method");
+        throw Exception('Méthode non supportée: $method');
     }
   }
   

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -77,7 +78,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
-            Navigator.pop(context);
+            context.pop();
           } else if (state is SupplierError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -333,7 +334,8 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
 
   /// Retourne la couleur associée à une catégorie de fournisseur
   Color _getCategoryColor(SupplierCategory category) {
-    switch (category) {      case SupplierCategory.strategic:
+    switch (category) {      
+      case SupplierCategory.strategic:
         return Colors.indigo;
       case SupplierCategory.regular:
         return Colors.blue;
@@ -343,14 +345,13 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
         return Colors.orange;
       case SupplierCategory.international:
         return Colors.purple;
-      default:
-        return Colors.grey;
     }
   }
 
   /// Retourne le nom d'une catégorie de fournisseur
   String _getCategoryName(SupplierCategory category) {
-    switch (category) {      case SupplierCategory.strategic:
+    switch (category) {      
+      case SupplierCategory.strategic:
         return 'Stratégique';
       case SupplierCategory.regular:
         return 'Régulier';
@@ -360,8 +361,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
         return 'Occasionnel';
       case SupplierCategory.international:
         return 'International';
-      default:
-        return 'Inconnu';
     }
   }
 }

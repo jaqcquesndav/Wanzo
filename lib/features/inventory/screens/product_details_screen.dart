@@ -10,6 +10,7 @@ import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
+import '../models/stock_transaction.dart'; // Added import
 import 'add_product_screen.dart';
 
 /// Écran de détails d'un produit
@@ -688,8 +689,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                     // Déterminer si c'est une entrée ou une sortie
                     double adjustedQuantity = quantity;
                     if (transactionType == StockTransactionType.sale ||
-                        transactionType == StockTransactionType.return_out ||
-                        transactionType == StockTransactionType.loss) {
+                        transactionType == StockTransactionType.transferOut ||
+                        transactionType == StockTransactionType.damaged ||
+                        transactionType == StockTransactionType.lost) { 
                       adjustedQuantity = -quantity;
                     }
                     
@@ -750,22 +752,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                 valueColor: transaction.quantity > 0 ? Colors.green : Colors.red,
                 isBold: true,
               ),
-              if (transaction.referenceId.isNotEmpty) ...[
+              if (transaction.referenceId != null && transaction.referenceId!.isNotEmpty) ...[
                 const SizedBox(height: WanzoSpacing.sm),
                 _buildTransactionDetailRow(
                   context,
                   label: 'Référence',
-                  value: transaction.referenceId,
+                  value: transaction.referenceId!,
                 ),
               ],
-              if (transaction.notes.isNotEmpty) ...[
+              if (transaction.notes != null && transaction.notes!.isNotEmpty) ...[
                 const SizedBox(height: WanzoSpacing.sm),
                 const Text(
                   'Notes:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: WanzoSpacing.xs),
-                Text(transaction.notes),
+                Text(transaction.notes!),
               ],
             ],
           ),
@@ -862,16 +864,20 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
         return 'Achat';
       case StockTransactionType.sale:
         return 'Vente';
-      case StockTransactionType.return_in:
-        return 'Retour client';
-      case StockTransactionType.return_out:
-        return 'Retour fournisseur';
       case StockTransactionType.adjustment:
         return 'Ajustement';
-      case StockTransactionType.transfer:
-        return 'Transfert';
-      case StockTransactionType.loss:
+      case StockTransactionType.transferIn:
+        return 'Transfert (Entrée)';
+      case StockTransactionType.transferOut:
+        return 'Transfert (Sortie)';
+      case StockTransactionType.returned:
+        return 'Retour Client';
+      case StockTransactionType.damaged:
+        return 'Endommagé';
+      case StockTransactionType.lost:
         return 'Perte';
+      case StockTransactionType.initialStock:
+        return 'Stock Initial';
     }
   }
 }

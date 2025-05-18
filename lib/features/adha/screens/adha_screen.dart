@@ -159,112 +159,148 @@ class _AdhaScreenState extends State<AdhaScreen> {
       isVoiceActive = adhaState.isVoiceActive;
     }
 
-    bool canInteractGenerally = isConversationActive && !isProcessing;
-    bool canStartNewConversation = !isProcessing;
+    bool canSendMessage = !isProcessing && !isVoiceActive && _messageController.text.trim().isNotEmpty;
+    bool canUseVoice = isConversationActive && !isProcessing;
+    bool canStartNewConversationViaButton = !isProcessing;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 12.0),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 12.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // FloatingActionButton for new conversation
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: FloatingActionButton(
-              mini: true,
-              tooltip: 'Nouvelle conversation',
-              onPressed: canStartNewConversation
-                  ? () {
-                      context.read<AdhaBloc>().add(const NewConversation());
-                      _messageController.clear();
-                    }
-                  : null,
-              backgroundColor: canStartNewConversation ? Theme.of(context).colorScheme.secondary : Colors.grey,
-              elevation: 2,
-              child: const Icon(Icons.add, color: Colors.white),
-              heroTag: 'newConversationFab',
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Center(
+              child: TextButton.icon(
+                icon: Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+                label: Text(
+                  'Nouvelle conversation',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  minimumSize: Size(0, 30),
+                ),
+                onPressed: canStartNewConversationViaButton
+                    ? () {
+                        context.read<AdhaBloc>().add(const NewConversation());
+                        _messageController.clear();
+                      }
+                    : null,
+              ),
             ),
           ),
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: isVoiceActive
-                    ? "Parlez maintenant..."
-                    : "Écrivez votre message...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: Icon(Icons.attach_file, color: Theme.of(context).colorScheme.primary),
+                tooltip: 'Joindre un fichier (bientôt disponible)',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('La fonction d\'import de pièce jointe sera bientôt disponible.')),
+                  );
+                },
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: isVoiceActive
+                        ? "Parlez maintenant..."
+                        : (isConversationActive && !(adhaState is AdhaConversationActive && adhaState.conversation.messages.isEmpty))
+                            ? "Écrivez votre message..."
+                            : "Commencer une nouvelle conversation...",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  maxLines: null,
+                  minLines: 1,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  enabled: !isProcessing && !isVoiceActive,
+                  onChanged: (text) {
+                    setState(() {});
+                  },
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty && canSendMessage) {
+                      context.read<AdhaBloc>().add(SendMessage(value.trim()));
+                      _messageController.clear();
+                      setState(() {});
+                    }
+                  },
                 ),
               ),
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              textInputAction: TextInputAction.newline,
-              enabled: canInteractGenerally && !isVoiceActive,
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty && canInteractGenerally && !isVoiceActive) {
-                  context.read<AdhaBloc>().add(SendMessage(value.trim()));
-                  _messageController.clear();
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(
-              isVoiceActive ? Icons.mic : Icons.mic_none,
-              color: isVoiceActive ? Colors.redAccent : Theme.of(context).colorScheme.primary,
-            ),
-            tooltip: isVoiceActive ? 'Arrêter la dictée' : 'Commencer la dictée',
-            onPressed: canInteractGenerally
-              ? () {
-                  final adhaBloc = context.read<AdhaBloc>();
-                  if (isVoiceActive) {
-                    adhaBloc.add(const StopVoiceRecognition());
-                  } else {
-                    adhaBloc.add(const StartVoiceRecognition());
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (modalContext) {
-                        return BlocProvider.value(
-                          value: adhaBloc,
-                          child: const VoiceRecognitionWidget(),
-                        );
-                      },
-                    ).whenComplete(() {
-                      final latestState = adhaBloc.state;
-                      if (latestState is AdhaConversationActive && latestState.isVoiceActive) {
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(
+                  isVoiceActive ? Icons.mic : Icons.mic_none,
+                  color: isVoiceActive ? Colors.redAccent : Theme.of(context).colorScheme.primary,
+                ),
+                tooltip: isVoiceActive ? 'Arrêter la dictée' : 'Commencer la dictée',
+                onPressed: canUseVoice
+                  ? () {
+                      final adhaBloc = context.read<AdhaBloc>();
+                      if (isVoiceActive) {
                         adhaBloc.add(const StopVoiceRecognition());
+                      } else {
+                        adhaBloc.add(const StartVoiceRecognition());
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (modalContext) {
+                            return BlocProvider.value(
+                              value: adhaBloc,
+                              child: const VoiceRecognitionWidget(),
+                            );
+                          },
+                        ).whenComplete(() {
+                          final latestState = adhaBloc.state;
+                          if (latestState is AdhaConversationActive && latestState.isVoiceActive) {
+                            adhaBloc.add(const StopVoiceRecognition());
+                          }
+                        });
                       }
-                    });
-                  }
-                }
-              : null,
-          ),
-          FloatingActionButton(
-            onPressed: (canInteractGenerally && !isVoiceActive && _messageController.text.trim().isNotEmpty)
-                ? () {
-                    final message = _messageController.text.trim();
-                    if (message.isNotEmpty) {
-                      context.read<AdhaBloc>().add(SendMessage(message));
-                      _messageController.clear();
                     }
-                  }
-                : null,
-            backgroundColor: (canInteractGenerally && !isVoiceActive && _messageController.text.trim().isNotEmpty)
-                ? Theme.of(context).primaryColor
-                : Colors.grey,
-            elevation: 2,
-            mini: true,
-            child: const Icon(Icons.send, color: Colors.white),
-            heroTag: 'sendMessageFab',
+                  : null,
+              ),
+              FloatingActionButton(
+                onPressed: canSendMessage
+                    ? () {
+                        final message = _messageController.text.trim();
+                        if (message.isNotEmpty) {
+                          context.read<AdhaBloc>().add(SendMessage(message));
+                          _messageController.clear();
+                          setState(() {});
+                        }
+                      }
+                    : null,
+                backgroundColor: canSendMessage
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey,
+                elevation: 2,
+                mini: true,
+                child: const Icon(Icons.send, color: Colors.white),
+                heroTag: 'sendMessageFab',
+              ),
+            ],
           ),
         ],
       ),

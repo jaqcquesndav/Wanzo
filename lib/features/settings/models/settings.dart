@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'settings.g.dart';
 
 /// Modèle pour les paramètres de l'application
-@HiveType(typeId: 7)
+@HiveType(typeId: 14)
 class Settings extends Equatable {
   /// Nom de l'entreprise
   @HiveField(0)
@@ -229,7 +229,7 @@ class Settings extends Equatable {
 }
 
 /// Modes de thème pour l'application
-@HiveType(typeId: 8)
+@HiveType(typeId: 15)
 enum AppThemeMode {
   /// Thème clair
   @HiveField(0)

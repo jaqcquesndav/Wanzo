@@ -1,8 +1,12 @@
+import 'dart:io'; // Added for File support
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart'; // Added image_picker
+import 'package:path_provider/path_provider.dart'; // Added path_provider
+import 'package:path/path.dart' as path; // Added path
 import '../../../constants/spacing.dart';
 import '../../../constants/typography.dart';
 import '../../../constants/colors.dart';
@@ -37,6 +41,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   late ProductCategory _selectedCategory;
   late ProductUnit _selectedUnit;
   
+  File? _selectedImageFile; // To store the selected image file
+  String? _currentImagePath; // To store the path of an existing or newly saved image
+
   bool _isEditing = false;
 
   @override
@@ -44,6 +51,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.initState();
     
     _isEditing = widget.product != null;
+    _currentImagePath = widget.product?.imagePath;
     
     // Initialiser les contrôleurs
     _nameController = TextEditingController(text: widget.product?.name ?? '');
@@ -78,9 +86,88 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(source: source);
+
+      if (pickedFile != null) {
+        final File imageFile = File(pickedFile.path);
+        // Optionally, save the image to the app's directory and store the path
+        final Directory appDir = await getApplicationDocumentsDirectory();
+        final String fileName = path.basename(imageFile.path);
+        final String savedImagePath = path.join(appDir.path, fileName);
+        
+        // Check if the file already exists at the destination, if so, generate a unique name
+        String uniqueSavedImagePath = savedImagePath;
+        int counter = 1;
+        while (await File(uniqueSavedImagePath).exists()) {
+          String newFileName = path.basenameWithoutExtension(savedImagePath) + '_${counter}' + path.extension(savedImagePath);
+          uniqueSavedImagePath = path.join(appDir.path, newFileName);
+          counter++;
+        }
+
+        await imageFile.copy(uniqueSavedImagePath);
+
+        setState(() {
+          _selectedImageFile = imageFile; // Keep for display before saving form
+          _currentImagePath = uniqueSavedImagePath; // Store the path to be saved with the product
+        });
+      }
+    } catch (e) {
+      // Handle exceptions, e.g., permission denied
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection de l\'image: $e')),
+      );
+    }
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galerie'),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Appareil photo'),
+                onTap: () {
+                  _pickImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+              if (_selectedImageFile != null || (_currentImagePath != null && _currentImagePath!.isNotEmpty))
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Supprimer l\'image', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    setState(() {
+                      _selectedImageFile = null;
+                      _currentImagePath = null;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<InventoryBloc, InventoryState>(      listener: (context, state) {
+    return BlocListener<InventoryBloc, InventoryState>(
+      listener: (context, state) {
         if (state is InventoryOperationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
@@ -106,6 +193,77 @@ class _AddProductScreenState extends State<AddProductScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Image Picker Section
+                _buildSectionTitle(context, 'Image du produit'),
+                const SizedBox(height: WanzoSpacing.md),
+                GestureDetector(
+                  onTap: () => _showImageSourceActionSheet(context),
+                  child: Container(
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(WanzoSpacing.sm),
+                      border: Border.all(color: Colors.grey.shade400),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (_selectedImageFile != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(WanzoSpacing.sm),
+                            child: Image.file(
+                              _selectedImageFile!,
+                              width: double.infinity,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        else if (_currentImagePath != null && _currentImagePath!.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(WanzoSpacing.sm),
+                            child: Image.file(
+                              File(_currentImagePath!), // Display existing image
+                              width: double.infinity,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        else
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo, size: 40, color: Colors.grey[600]),
+                              const SizedBox(height: WanzoSpacing.sm),
+                              Text('Ajouter une image', style: TextStyle(color: Colors.grey[700])),
+                            ],
+                          ),
+                        if (_selectedImageFile != null || (_currentImagePath != null && _currentImagePath!.isNotEmpty))
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedImageFile = null;
+                                  _currentImagePath = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 18),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: WanzoSpacing.lg),
+
                 // Informations générales
                 _buildSectionTitle(context, 'Informations générales'),
                 const SizedBox(height: WanzoSpacing.md),
@@ -423,6 +581,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           unit: _selectedUnit,
           alertThreshold: alertThreshold,
           updatedAt: DateTime.now(),
+          imagePath: _currentImagePath, // Pass the image path
         );
         
         context.read<InventoryBloc>().add(UpdateProduct(updatedProduct));
@@ -441,6 +600,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           alertThreshold: alertThreshold,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
+          imagePath: _currentImagePath, // Pass the image path
         );
         
         context.read<InventoryBloc>().add(AddProduct(newProduct));

@@ -112,3 +112,47 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
+  @override
+  final int typeId = 5;
+
+  @override
+  SaleStatus read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return SaleStatus.pending;
+      case 1:
+        return SaleStatus.completed;
+      case 2:
+        return SaleStatus.cancelled;
+      default:
+        return SaleStatus.pending;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, SaleStatus obj) {
+    switch (obj) {
+      case SaleStatus.pending:
+        writer.writeByte(0);
+        break;
+      case SaleStatus.completed:
+        writer.writeByte(1);
+        break;
+      case SaleStatus.cancelled:
+        writer.writeByte(2);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SaleStatusAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

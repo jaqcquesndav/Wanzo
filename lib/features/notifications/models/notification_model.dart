@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 part 'notification_model.g.dart';
 
 /// Type de notification
-@HiveType(typeId: 10)
+@HiveType(typeId: 11)
 enum NotificationType {
   /// Notification d'information
   @HiveField(0)
@@ -37,7 +37,7 @@ enum NotificationType {
 }
 
 /// Modèle pour les notifications de l'application
-@HiveType(typeId: 9)
+@HiveType(typeId: 10)
 class NotificationModel extends Equatable {
   /// Identifiant unique de la notification
   @HiveField(0)

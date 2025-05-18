@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'product.g.dart';
 
 /// Catégorie de produit
-@HiveType(typeId: 4)
+@HiveType(typeId: 20)
 enum ProductCategory {
   @HiveField(0)
   food,        // Alimentation
@@ -32,7 +32,7 @@ enum ProductCategory {
 }
 
 /// Unité de mesure d'un produit
-@HiveType(typeId: 5)
+@HiveType(typeId: 21)
 enum ProductUnit {
   @HiveField(0)
   piece,      // Pièce
@@ -60,7 +60,7 @@ enum ProductUnit {
 }
 
 /// Modèle représentant un produit dans l'inventaire
-@HiveType(typeId: 6)
+@HiveType(typeId: 22)
 class Product extends Equatable {
   /// Identifiant unique du produit
   @HiveField(0)
@@ -109,6 +109,10 @@ class Product extends Equatable {
   /// Date de dernière mise à jour
   @HiveField(11)
   final DateTime updatedAt;
+
+  /// Chemin de l'image du produit (optionnel)
+  @HiveField(12)
+  final String? imagePath; 
   
   /// Constructeur
   const Product({
@@ -124,6 +128,7 @@ class Product extends Equatable {
     this.alertThreshold = 5,
     required this.createdAt,
     required this.updatedAt,
+    this.imagePath,
   });
   
   /// Vérifie si le stock est bas
@@ -152,6 +157,7 @@ class Product extends Equatable {
     double? alertThreshold,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? imagePath, // Added imagePath
   }) {
     return Product(
       id: id ?? this.id,
@@ -166,6 +172,7 @@ class Product extends Equatable {
       alertThreshold: alertThreshold ?? this.alertThreshold,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      imagePath: imagePath ?? this.imagePath, // Added imagePath
     );
   }
 
@@ -183,97 +190,6 @@ class Product extends Equatable {
     alertThreshold,
     createdAt,
     updatedAt,
-  ];
-}
-
-/// Modèle représentant une transaction de stock (entrée ou sortie)
-@HiveType(typeId: 7)
-enum StockTransactionType {
-  @HiveField(0)
-  purchase,    // Achat
-  
-  @HiveField(1)
-  sale,        // Vente
-  
-  @HiveField(2)
-  return_in,   // Retour client
-  
-  @HiveField(3)
-  return_out,  // Retour fournisseur
-  
-  @HiveField(4)
-  adjustment,  // Ajustement
-  
-  @HiveField(5)
-  transfer,    // Transfert
-  
-  @HiveField(6)
-  loss,        // Perte
-}
-
-/// Modèle représentant une transaction de stock
-@HiveType(typeId: 8)
-class StockTransaction extends Equatable {
-  /// Identifiant unique de la transaction
-  @HiveField(0)
-  final String id;
-  
-  /// ID du produit concerné
-  @HiveField(1)
-  final String productId;
-  
-  /// Type de transaction
-  @HiveField(2)
-  final StockTransactionType type;
-  
-  /// Quantité (positive pour entrée, négative pour sortie)
-  @HiveField(3)
-  final double quantity;
-  
-  /// Date de la transaction
-  @HiveField(4)
-  final DateTime date;
-  
-  /// Référence à une vente ou un achat
-  @HiveField(5)
-  final String referenceId;
-  
-  /// Notes ou commentaires
-  @HiveField(6)
-  final String notes;
-
-  /// Constructeur
-  const StockTransaction({
-    required this.id,
-    required this.productId,
-    required this.type,
-    required this.quantity,
-    required this.date,
-    this.referenceId = '',
-    this.notes = '',
-  });
-
-  /// Vérifie si c'est une entrée de stock
-  bool get isStockIn => 
-    type == StockTransactionType.purchase || 
-    type == StockTransactionType.return_in || 
-    (type == StockTransactionType.adjustment && quantity > 0);
-
-  /// Vérifie si c'est une sortie de stock
-  bool get isStockOut => 
-    type == StockTransactionType.sale || 
-    type == StockTransactionType.return_out || 
-    type == StockTransactionType.loss || 
-    (type == StockTransactionType.adjustment && quantity < 0);
-
-  @override
-  List<Object?> get props => [
-    id,
-    productId,
-    type,
-    quantity,
-    date,
-    referenceId,
-    notes,
+    imagePath, // Added imagePath
   ];
 }

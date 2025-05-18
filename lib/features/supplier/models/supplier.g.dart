@@ -8,7 +8,7 @@ part of 'supplier.dart';
 
 class SupplierAdapter extends TypeAdapter<Supplier> {
   @override
-  final int typeId = 5;
+  final int typeId = 12;
 
   @override
   Supplier read(BinaryReader reader) {
@@ -78,7 +78,7 @@ class SupplierAdapter extends TypeAdapter<Supplier> {
 
 class SupplierCategoryAdapter extends TypeAdapter<SupplierCategory> {
   @override
-  final int typeId = 6;
+  final int typeId = 13;
 
   @override
   SupplierCategory read(BinaryReader reader) {

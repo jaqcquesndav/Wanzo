@@ -5,9 +5,13 @@ import 'package:hive/hive.dart';
 part 'sale.g.dart';
 
 /// Statut possible d'une vente
+@HiveType(typeId: 5) // Changed typeId to 5
 enum SaleStatus {
+  @HiveField(0) // Added HiveField annotation for enum values
   pending,    // En attente
+  @HiveField(1) // Added HiveField annotation for enum values
   completed,  // Terminée
+  @HiveField(2) // Added HiveField annotation for enum values
   cancelled,  // Annulée
 }
 

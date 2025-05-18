@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'supplier.g.dart';
 
 /// Modèle de données pour un fournisseur
-@HiveType(typeId: 5)
+@HiveType(typeId: 12)
 class Supplier extends Equatable {
   /// Identifiant unique du fournisseur
   @HiveField(0)
@@ -126,7 +126,7 @@ class Supplier extends Equatable {
 }
 
 /// Catégories de fournisseurs
-@HiveType(typeId: 6)
+@HiveType(typeId: 13)
 enum SupplierCategory {
   /// Fournisseur principal ou stratégique
   @HiveField(0)

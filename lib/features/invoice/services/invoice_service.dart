@@ -15,11 +15,9 @@ class InvoiceService {
   /// Génère un PDF pour une vente et retourne le chemin du fichier
   Future<String> generateInvoicePdf(Sale sale, Settings settings) async {
     final pdf = pw.Document();
-    final fontRegularData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-    final fontBoldData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
     
-    final regularFont = pw.Font.ttf(fontRegularData); // Used below
-    final boldFont = pw.Font.ttf(fontBoldData);
+    final regularFont = pw.Font.helvetica(); // Use standard Helvetica
+    final boldFont = pw.Font.helveticaBold(); // Use standard Helvetica Bold
     
     // Formater les montants selon la devise configurée
     final currencyFormat = NumberFormat.currency(
@@ -100,14 +98,11 @@ class InvoiceService {
                         if (settings.companyAddress.isNotEmpty)
                           pw.Text(settings.companyAddress),
                         if (settings.companyPhone.isNotEmpty)
-                          pw.Text('Tél: ${settings.companyPhone}'),                        if (settings.companyEmail.isNotEmpty)
+                          pw.Text('Tél: ${settings.companyPhone}'),
+                        if (settings.companyEmail.isNotEmpty)
                           pw.Text('Email: ${settings.companyEmail}'),
                         if (settings.taxIdentificationNumber.isNotEmpty)
                           pw.Text('NIF: ${settings.taxIdentificationNumber}'),
-                        if (settings.rccmNumber.isNotEmpty)
-                          pw.Text('RCCM: ${settings.rccmNumber}'),
-                        if (settings.idNatNumber.isNotEmpty)
-                          pw.Text('ID NAT: ${settings.idNatNumber}'),
                         if (settings.rccmNumber.isNotEmpty)
                           pw.Text('RCCM: ${settings.rccmNumber}'),
                         if (settings.idNatNumber.isNotEmpty)
@@ -348,15 +343,25 @@ class InvoiceService {
               
               pw.Spacer(),
               
-              // Pied de page
+              // Pied de page personnalisé
               pw.Center(
-                child: pw.Text(
-                  'Merci pour votre confiance!',
-                  style: pw.TextStyle(
-                    font: boldFont,
-                    fontSize: 12,
-                  ),
-                ),
+                child: pw.Column(
+                  children: [
+                     pw.Text(
+                        'Merci pour votre confiance!',
+                        style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 12,
+                        ),
+                      ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Facture générée par Wanzo, conçu par i-kiotahub Goma.',
+                      style: pw.TextStyle(font: regularFont, fontSize: 8, color: PdfColors.grey600),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ]
+                )
               ),
             ],
           );
@@ -372,14 +377,36 @@ class InvoiceService {
     return file.path;
   }
   
+  /// Partage la facture PDF générée
+  Future<void> shareInvoice(Sale sale, Settings settings, {String? customerPhoneNumber, String? customerEmail}) async {
+    try {
+      final pdfPath = await generateInvoicePdf(sale, settings);
+      final file = XFile(pdfPath);
+
+      // Texte de partage (peut être personnalisé)
+      String shareText = 'Voici votre facture N° ${sale.id.substring(0,8)} concernant ${sale.items.first.productName}.';
+      if (customerPhoneNumber != null) {
+        shareText += '\nPartage via WhatsApp: wa.me/$customerPhoneNumber'; // Exemple pour pré-remplir (nécessite une gestion plus avancée)
+      }
+
+      await Share.shareXFiles(
+        [file],
+        text: shareText,
+        subject: 'Facture N° ${sale.id.substring(0,8)}',
+      );
+    } catch (e) {
+      print('Erreur lors du partage de la facture: $e');
+      // Gérer l'erreur, par exemple afficher un message à l'utilisateur
+      throw Exception('Impossible de partager la facture: $e');
+    }
+  }
+
   /// Génère un ticket de caisse pour une vente et retourne le chemin du fichier
   Future<String> generateReceiptPdf(Sale sale, Settings settings) async {
     final pdf = pw.Document();
-    final fontRegularData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-    final fontBoldData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
     
-    final regularFont = pw.Font.ttf(fontRegularData); // Used below
-    final boldFont = pw.Font.ttf(fontBoldData);
+    final regularFont = pw.Font.helvetica(); // Use standard Helvetica
+    final boldFont = pw.Font.helveticaBold(); // Use standard Helvetica Bold
     
     // Format pour la monnaie
     final currencyFormat = NumberFormat.currency(
@@ -512,14 +539,12 @@ class InvoiceService {
                   textAlign: pw.TextAlign.center,
                 ),
               ],
-              
-              pw.SizedBox(height: 10),
-              
-              // Ligne de séparation
-              pw.Divider(thickness: 1),
+
+              pw.SizedBox(height: 5),
+              pw.Text('------------------------------------------------------', style: pw.TextStyle(fontSize: 8)), // Separator
+              pw.SizedBox(height: 5),
               
               // Numéro de ticket et date
-              pw.SizedBox(height: 5),
               pw.Text(
                 'TICKET DE CAISSE',
                 style: pw.TextStyle(
@@ -726,25 +751,24 @@ class InvoiceService {
               
               pw.SizedBox(height: 10),
               
-              // Note de bas de page
-              pw.Text(
-                'Merci de votre achat!',
-                style: pw.TextStyle(
-                  font: boldFont,
-                  fontSize: 8,
-                ),
-                textAlign: pw.TextAlign.center,
+              // Pied de page personnalisé pour le ticket
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'Merci de votre visite!',
+                      style: pw.TextStyle(font: boldFont, fontSize: 10),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                    pw.SizedBox(height: 3),
+                    pw.Text(
+                      'Généré par Wanzo, conçu par i-kiotahub Goma.',
+                      style: pw.TextStyle(font: regularFont, fontSize: 6, color: PdfColors.grey600),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ]
+                )
               ),
-              
-              pw.SizedBox(height: 5),
-              
-              if (settings.defaultInvoiceNotes.isNotEmpty) ...[
-                pw.Text(
-                  settings.defaultInvoiceNotes,
-                  style: pw.TextStyle(font: regularFont, fontSize: 6),
-                  textAlign: pw.TextAlign.center,
-                ),
-              ],
             ],
           );
         },

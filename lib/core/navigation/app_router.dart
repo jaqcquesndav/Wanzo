@@ -29,6 +29,9 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/notifications/screens/notification_settings_screen.dart';
 import '../../features/contacts/screens/contacts_screen.dart'; // Import the new contacts screen
+import '../../features/expenses/screens/add_expense_screen.dart'; // Added import
+import '../../features/financing/screens/add_financing_request_screen.dart';
+import '../../features/profile/screens/profile_screen.dart'; // Import ProfileScreen
 
 /// Configuration des routes de l'application
 class AppRouter {
@@ -99,6 +102,12 @@ class AppRouter {
         builder: (context, state) => const DashboardScreen(),
       ),
       
+      // Route de gestion du financement
+      GoRoute(
+        path: '/financing/add',
+        builder: (context, state) => const AddFinancingRequestScreen(),
+      ),
+
       // Route de gestion des ventes
       GoRoute(
         path: '/sales',
@@ -171,65 +180,69 @@ class AppRouter {
         builder: (context, state) => const AdhaScreen(),
       ),
       
-      // Route de gestion des clients (REMOVED - now part of /contacts)
-      // GoRoute(
-      //   path: '/customers',
-      //   builder: (context, state) => const CustomersScreen(),
-      //   routes: [
-      //     GoRoute(
-      //       path: 'add',
-      //       builder: (context, state) => const AddCustomerScreen(),
-      //     ),
-      //     GoRoute(
-      //       path: 'edit/:customerId',
-      //       builder: (context, state) {
-      //         final customer = state.extra as Customer?;
-      //         return AddCustomerScreen(customer: customer);
-      //       },
-      //     ),
-      //     GoRoute(
-      //       path: ':customerId',
-      //       builder: (context, state) {
-      //         final customer = state.extra as Customer?;
-      //         final customerId = state.pathParameters['customerId'] ?? '';
-      //         return CustomerDetailsScreen(
-      //           customerId: customerId,
-      //           customer: customer,
-      //         );
-      //       },
-      //     ),
-      //   ],
-      // ),
+      // Route de gestion des clients
+      // Le builder principal est commenté pour que /customers ne charge pas CustomersScreen.
+      // ContactsScreen est l'écran principal pour lister les clients.
+      GoRoute(
+        path: '/customers',
+        builder: (context, state) => const SizedBox.shrink(), // Added to prevent pageBuilder=null error
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddCustomerScreen(),
+          ),
+          GoRoute(
+            path: 'edit/:customerId',
+            builder: (context, state) {
+              final customer = state.extra as Customer?;
+              return AddCustomerScreen(customer: customer);
+            },
+          ),
+          GoRoute(
+            path: ':customerId',
+            builder: (context, state) {
+              final customer = state.extra as Customer?;
+              final customerId = state.pathParameters['customerId'] ?? '';
+              return CustomerDetailsScreen(
+                customerId: customerId,
+                customer: customer,
+              );
+            },
+          ),
+        ],
+      ),
       
-      // Route de gestion des fournisseurs (REMOVED - now part of /contacts)
-      // GoRoute(
-      //   path: '/suppliers',
-      //   builder: (context, state) => const SuppliersScreen(),
-      //   routes: [
-      //     GoRoute(
-      //       path: 'add',
-      //       builder: (context, state) => const AddSupplierScreen(),
-      //     ),
-      //     GoRoute(
-      //       path: 'edit/:supplierId',
-      //       builder: (context, state) {
-      //         final supplier = state.extra as Supplier?;
-      //         return AddSupplierScreen(supplier: supplier);
-      //       },
-      //     ),
-      //     GoRoute(
-      //       path: ':supplierId',
-      //       builder: (context, state) {
-      //         final supplier = state.extra as Supplier?;
-      //         final supplierId = state.pathParameters['supplierId'] ?? '';
-      //         return SupplierDetailsScreen(
-      //           supplierId: supplierId,
-      //           supplier: supplier,
-      //         );
-      //       },
-      //     ),
-      //   ],
-      // ),
+      // Route de gestion des fournisseurs
+      // Le builder principal est commenté pour que /suppliers ne charge pas SuppliersScreen.
+      // ContactsScreen est l'écran principal pour lister les fournisseurs.
+      GoRoute(
+        path: '/suppliers',
+        builder: (context, state) => const SizedBox.shrink(), // Added to prevent pageBuilder=null error
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddSupplierScreen(),
+          ),
+          GoRoute(
+            path: 'edit/:supplierId',
+            builder: (context, state) {
+              final supplier = state.extra as Supplier?;
+              return AddSupplierScreen(supplier: supplier);
+            },
+          ),
+          GoRoute(
+            path: ':supplierId',
+            builder: (context, state) {
+              final supplier = state.extra as Supplier?;
+              final supplierId = state.pathParameters['supplierId'] ?? '';
+              return SupplierDetailsScreen(
+                supplierId: supplierId,
+                supplier: supplier,
+              );
+            },
+          ),
+        ],
+      ),
       
       // Route des paramètres
       GoRoute(
@@ -251,6 +264,17 @@ class AppRouter {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      
+      // Route d'ajout d'une dépense
+      GoRoute(
+        path: '/expenses/add',
+        builder: (context, state) => const AddExpenseScreen(),
+      ),
+      // Route du profil utilisateur
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );
