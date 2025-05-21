@@ -87,6 +87,20 @@ class OperationJournalRepository {
         .toList()..sort((a,b) => b.date.compareTo(a.date)); // Tri par date décroissante
   }
 
+  Future<double> getOpeningBalance(DateTime forDate) async {
+    // Calculates the sum of amounts for all operations strictly BEFORE the given forDate (exclusive of the day itself).
+    // This means it sums up everything up to the end of the day before forDate.
+    await Future.delayed(const Duration(milliseconds: 200)); // Simulate data access
+    final DateTime beginningOfForDate = DateTime(forDate.year, forDate.month, forDate.day);
+    double balance = 0.0;
+    for (var op in _mockData) {
+      if (op.date.isBefore(beginningOfForDate)) {
+        balance += op.amount;
+      }
+    }
+    return balance;
+  }
+
   Future<void> addOperation(OperationJournalEntry entry) async {
     await Future.delayed(const Duration(milliseconds: 100)); // Simule une écriture
     _mockData.add(entry);

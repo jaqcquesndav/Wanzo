@@ -1,4 +1,3 @@
-
 import 'dart:async';
 // Removed unused import: import 'package:flutter/material.dart';
 import '../../../core/utils/logger.dart';
@@ -186,7 +185,7 @@ class NotificationSyncService {
   Future<void> _syncReadStatus() async {
     try {
       // Récupérer les notifications lues localement mais pas encore synchronisées
-      final db = await _databaseService.getDatabase();
+      final db = await _databaseService.database;
       final List<Map<String, dynamic>> readNotifications = await db.query(
         'notifications',
         where: 'is_read = ? AND synced = ?',

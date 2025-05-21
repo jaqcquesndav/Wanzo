@@ -36,12 +36,47 @@ import 'features/expenses/bloc/expense_bloc.dart';
 import 'features/expenses/repositories/expense_repository.dart';
 import 'features/financing/bloc/financing_bloc.dart';
 import 'features/financing/repositories/financing_repository.dart';
+import 'features/subscription/repositories/subscription_repository.dart';
+import 'features/subscription/bloc/subscription_bloc.dart';
+import 'features/auth/models/user.dart';
+import 'features/auth/models/user_adapter_v2.dart';
 import 'utils/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+
+  // Check if migration is needed for User box
+  final userBoxInfo = await Hive.openBox('userBoxInfo');
+  int currentVersion = userBoxInfo.get('version', defaultValue: 1);
+
+  if (currentVersion < 2) {
+    // Register the V2 adapter temporarily for migration
+    if (!Hive.isAdapterRegistered(UserAdapterV2().typeId)) {
+      Hive.registerAdapter(UserAdapterV2());
+    }
+    
+    final userBox = await Hive.openBox<User>('userBox'); // Open with V2 adapter
+    Map<dynamic, User> migratedUsers = {};
+    for (var key in userBox.keys) {
+      final user = userBox.get(key);
+      if (user != null) {
+        // The UserAdapterV2's read method already handles the null idCardStatus
+        // So, just reading and re-writing will apply the migration.
+        migratedUsers[key] = user;
+      }
+    }
+    await userBox.deleteAll(userBox.keys); // Clear old data
+    await userBox.putAll(migratedUsers);   // Put migrated data
+    await userBox.close();
+
+    // Update version and close info box
+    await userBoxInfo.put('version', 2);
+  }
+  await userBoxInfo.close();
+
+  // Register original adapters (including the generated UserAdapter)
   registerHiveAdapters();
 
   final authRepository = AuthRepository();
@@ -58,6 +93,15 @@ void main() async {
 
   final expenseRepository = ExpenseRepository();
   await expenseRepository.init();
+
+  // Initialize ApiService before SubscriptionRepository
+  final apiService = ApiService();
+  await apiService.init();
+
+  final subscriptionRepository = SubscriptionRepository(
+    expenseRepository: expenseRepository,
+    apiService: apiService, // Provide ApiService
+  );
 
   final adhaRepository = AdhaRepository();
   await adhaRepository.init();
@@ -84,9 +128,6 @@ void main() async {
 
   final databaseService = DatabaseService();
 
-  final apiService = ApiService();
-  await apiService.init();
-
   final syncService = SyncService();
   await syncService.init();
 
@@ -105,6 +146,7 @@ void main() async {
     operationJournalRepository: operationJournalRepository,
     expenseRepository: expenseRepository,
     financingRepository: financingRepository,
+    subscriptionRepository: subscriptionRepository,
     notificationService: notificationService,
     connectivityService: connectivityService,
     databaseService: databaseService,
@@ -125,6 +167,7 @@ class MyApp extends StatelessWidget {
   final OperationJournalRepository operationJournalRepository;
   final ExpenseRepository expenseRepository;
   final FinancingRepository financingRepository;
+  final SubscriptionRepository subscriptionRepository;
   final NotificationService notificationService;
   final ConnectivityService connectivityService;
   final DatabaseService databaseService;
@@ -144,6 +187,7 @@ class MyApp extends StatelessWidget {
     required this.operationJournalRepository,
     required this.expenseRepository,
     required this.financingRepository,
+    required this.subscriptionRepository,
     required this.notificationService,
     required this.connectivityService,
     required this.databaseService,
@@ -166,6 +210,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: operationJournalRepository),
         RepositoryProvider.value(value: expenseRepository),
         RepositoryProvider.value(value: financingRepository),
+        RepositoryProvider.value(value: subscriptionRepository),
       ],
       child: MultiProvider(
         providers: [
@@ -243,6 +288,11 @@ class MyApp extends StatelessWidget {
               create: (context) => FinancingBloc(
                 financingRepository: context.read<FinancingRepository>(),
                 operationJournalBloc: context.read<OperationJournalBloc>(),
+              ),
+            ),
+            BlocProvider<SubscriptionBloc>(
+              create: (context) => SubscriptionBloc(
+                subscriptionRepository: context.read<SubscriptionRepository>(),
               ),
             ),
           ],

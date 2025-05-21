@@ -42,6 +42,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Paramètres de notifications'),
         actions: [
           if (_hasChanges)

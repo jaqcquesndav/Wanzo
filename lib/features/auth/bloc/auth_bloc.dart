@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'dart:io'; // Import for File type
 import '../models/user.dart';
 import '../repositories/auth_repository.dart';
 
@@ -17,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginWithAuth0Requested>(_onAuthLoginWithAuth0Requested);
     on<AuthLoginWithDemoAccountRequested>(_onAuthLoginWithDemoAccountRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
+    on<AuthUserProfileUpdated>(_onAuthUserProfileUpdated); // Add handler for the new event
   }
 
   /// Vérifie si l'utilisateur est authentifié au démarrage
@@ -101,6 +103,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthUnauthenticated());
     } catch (e) {
       emit(AuthFailure(e.toString()));
+    }
+  }
+
+  /// Handles updating the user profile information
+  Future<void> _onAuthUserProfileUpdated(
+    AuthUserProfileUpdated event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (state is AuthAuthenticated) {
+      final currentUser = (state as AuthAuthenticated).user;
+      emit(const AuthProfileUpdateInProgress()); // Emit in-progress state
+
+      try {
+        // Pass the profileImageFile to the repository method
+        final User fullyUpdatedUser = await _authRepository.updateUserProfile(
+          event.updatedUser,
+          profileImageFile: event.profileImageFile, 
+        );
+        emit(AuthProfileUpdateSuccess(fullyUpdatedUser)); // Emit success state
+        emit(AuthAuthenticated(fullyUpdatedUser)); // Then emit authenticated with updated user
+      } catch (e) {
+        emit(AuthProfileUpdateFailure(e.toString(), originalUser: currentUser)); // Emit failure state
+        // Optionally, can re-emit AuthAuthenticated with the currentUser if the UI 
+        // shouldn't get stuck in a failure state indefinitely without user data.
+        // emit(AuthAuthenticated(currentUser)); 
+        print('Error updating profile via repository: $e'); 
+      }
+    } else {
+      emit(AuthFailure('User not authenticated, cannot update profile.'));
     }
   }
 }

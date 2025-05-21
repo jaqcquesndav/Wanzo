@@ -10,46 +10,43 @@ import 'database_service.dart';
 /// Service pour gérer les appels API
 class ApiService {
   static final ApiService _instance = ApiService._internal();
-  
+
   /// Instance unique du service (singleton)
   factory ApiService() => _instance;
-  
+
   ApiService._internal();
-    // Configuration de l'API
+
+  // Configuration de l'API
   static const String _apiBaseUrl = 'https://api.wanzo.app'; // À remplacer par l'URL de votre API
   static String get apiBaseUrl => _apiBaseUrl;
   static const Duration _timeout = Duration(seconds: 30);
   static const Duration _cacheExpiration = Duration(hours: 24);
-  
+
   // Services
   final Auth0Service _auth0Service = Auth0Service();
   final ConnectivityService _connectivityService = ConnectivityService();
   final DatabaseService _databaseService = DatabaseService();
-    /// Initialise le service
+
+  // Timer pour la synchronisation périodique
+  Timer? _syncTimer;
+
+  /// Initialise le service
   Future<void> init() async {
     await _connectivityService.init();
     await _auth0Service.init();
+    _startPeriodicSync(); // Démarrer la synchronisation périodique
   }
+
   /// Récupère une réponse mise en cache
   Future<Map<String, dynamic>?> _getCachedResponse(String url, String method) async {
     return await _databaseService.getCachedApiResponse(url, method);
   }
-  
-  /// Met en cache une réponse API
-  Future<void> _cacheResponse(String url, String method, Map<String, dynamic> response) async {
-    await _databaseService.cacheApiResponse(
-      url: url,
-      method: method,
-      response: response,
-      expiration: _cacheExpiration,
-    );
-  }
-  
+
   /// Vérifie si la requête peut utiliser le cache
   bool _canUseCache(String method) {
     return method == 'GET'; // Seules les requêtes GET sont mises en cache
   }
-  
+
   /// Enregistre une opération pour synchronisation ultérieure
   Future<void> _storeForSync(String endpoint, String method, Map<String, dynamic>? body) async {
     await _databaseService.savePendingOperation(
@@ -58,7 +55,7 @@ class ApiService {
       body: body,
     );
   }
-  
+
   /// Effectue une requête GET
   Future<Map<String, dynamic>> get(String endpoint, {Map<String, dynamic>? queryParams}) async {
     return _request(
@@ -66,7 +63,7 @@ class ApiService {
       method: 'GET',
     );
   }
-  
+
   /// Effectue une requête POST
   Future<Map<String, dynamic>> post(String endpoint, {Map<String, dynamic>? body}) async {
     return _request(
@@ -75,7 +72,7 @@ class ApiService {
       body: body,
     );
   }
-  
+
   /// Effectue une requête PUT
   Future<Map<String, dynamic>> put(String endpoint, {Map<String, dynamic>? body}) async {
     return _request(
@@ -84,7 +81,7 @@ class ApiService {
       body: body,
     );
   }
-  
+
   /// Effectue une requête DELETE
   Future<Map<String, dynamic>> delete(String endpoint) async {
     return _request(
@@ -92,19 +89,91 @@ class ApiService {
       method: 'DELETE',
     );
   }
-  
+
+  /// Effectue une requête POST avec un fichier (multipart)
+  Future<Map<String, dynamic>> postMultipart({
+    required String endpoint,
+    required File file,
+    String fileField = 'file', // Nom du champ pour le fichier
+    Map<String, String>? fields, // Champs texte supplémentaires
+  }) async {
+    final uri = _buildUri(endpoint);
+    final token = await _auth0Service.getAccessToken();
+
+    if (!_connectivityService.isConnected) {
+      debugPrint('Mode hors ligne: Enregistrement du téléversement de fichier pour synchronisation ultérieure.');
+      await _databaseService.savePendingFileUpload(
+        endpoint: endpoint,
+        filePath: file.path,
+        fileField: fileField,
+        fields: fields,
+      );
+      return {
+        'success': true,
+        'message': 'Fichier enregistré pour téléversement ultérieur en mode hors ligne.',
+        'offline_pending': true,
+      };
+    }
+
+    try {
+      var request = http.MultipartRequest('POST', uri);
+
+      // Ajouter les en-têtes
+      request.headers.addAll({
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      });
+
+      // Ajouter les champs texte
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // Ajouter le fichier
+      request.files.add(await http.MultipartFile.fromPath(
+        fileField,
+        file.path,
+      ));
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) {
+          return {};
+        }
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        _handleHttpError(response);
+        throw Exception('HTTP error ${response.statusCode} occurred. _handleHttpError should have thrown.');
+      }
+    } on SocketException catch (e) {
+      debugPrint('Erreur de socket lors de l\'envoi du fichier à $endpoint: $e');
+      throw Exception(
+          'Problème de connexion réseau lors de l\'envoi du fichier à $endpoint.');
+    } on TimeoutException catch (e) {
+      debugPrint('Délai d\'attente dépassé lors de l\'envoi du fichier à $endpoint: $e');
+      throw Exception(
+          'L\'envoi du fichier à $endpoint a pris trop de temps. Veuillez réessayer.');
+    } catch (e) {
+      debugPrint('Erreur lors de l\'envoi du fichier à $endpoint: $e');
+      throw Exception('Une erreur s\'est produite lors de l\'envoi du fichier à $endpoint: $e');
+    }
+  }
+
   /// Construit l'URI pour la requête
   Uri _buildUri(String endpoint, [Map<String, dynamic>? queryParams]) {
     final url = '$_apiBaseUrl/$endpoint';
-    
+
     if (queryParams != null) {
       return Uri.parse(url).replace(
         queryParameters: queryParams.map((key, value) => MapEntry(key, value.toString())),
       );
     }
-    
+
     return Uri.parse(url);
   }
+
   /// Effectue une requête HTTP avec gestion des erreurs et du token d'authentification
   Future<Map<String, dynamic>> _request({
     required Uri uri,
@@ -113,18 +182,15 @@ class ApiService {
     bool useOfflineCache = true,
   }) async {
     try {
-      // Vérifier la connectivité
       if (!_connectivityService.isConnected) {
         debugPrint('Mode hors ligne: tentative de récupération des données du cache');
-        // Si le mode offline est activé, essayer de récupérer les données du cache
         if (useOfflineCache) {
           final cachedData = await _getCachedResponse(uri.toString(), method);
           if (cachedData != null) {
             return cachedData;
           }
         }
-        
-        // Si c'est une requête de type écriture (POST, PUT, DELETE), stocker pour synchronisation future
+
         if (method != 'GET' && body != null) {
           final endpoint = uri.path.replaceFirst(_apiBaseUrl, '');
           await _databaseService.savePendingOperation(
@@ -135,23 +201,20 @@ class ApiService {
           debugPrint('Opération enregistrée pour synchronisation ultérieure: $method $endpoint');
           return {'success': true, 'message': 'Opération enregistrée pour synchronisation ultérieure'};
         }
-        
+
         throw const SocketException('Aucune connexion Internet disponible');
       }
-      
-      // Récupérer le token d'authentification
+
       final token = await _auth0Service.getAccessToken();
-      
-      // Préparer les en-têtes de la requête
+
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      
+
       http.Response response;
-      
-      // Effectuer la requête selon la méthode
+
       switch (method) {
         case 'GET':
           response = await http.get(
@@ -159,7 +222,7 @@ class ApiService {
             headers: headers,
           ).timeout(_timeout);
           break;
-          
+
         case 'POST':
           response = await http.post(
             uri,
@@ -167,7 +230,7 @@ class ApiService {
             body: body != null ? jsonEncode(body) : null,
           ).timeout(_timeout);
           break;
-          
+
         case 'PUT':
           response = await http.put(
             uri,
@@ -175,27 +238,25 @@ class ApiService {
             body: body != null ? jsonEncode(body) : null,
           ).timeout(_timeout);
           break;
-          
+
         case 'DELETE':
           response = await http.delete(
             uri,
             headers: headers,
           ).timeout(_timeout);
           break;
-          
+
         default:
           throw Exception('Méthode HTTP non supportée: $method');
       }
-      
-      // Traiter la réponse
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) {
           return {};
         }
-        
+
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        
-        // Mettre en cache les réponses des requêtes GET
+
         if (method == 'GET' && useOfflineCache) {
           await _databaseService.cacheApiResponse(
             url: uri.toString(),
@@ -204,16 +265,15 @@ class ApiService {
             expiration: _cacheExpiration,
           );
         }
-        
+
         return responseData;
       } else {
-        // Gérer les erreurs HTTP
         _handleHttpError(response);
         throw Exception('Erreur HTTP ${response.statusCode}: ${response.reasonPhrase}');
-      }    } on SocketException catch (e) {
+      }
+    } on SocketException catch (e) {
       debugPrint('Erreur de socket: $e');
-      
-      // En cas de problème de connexion, vérifier si une version en cache est disponible
+
       if (_canUseCache(method)) {
         final cachedResponse = await _getCachedResponse(uri.toString(), method);
         if (cachedResponse != null) {
@@ -221,20 +281,18 @@ class ApiService {
           return cachedResponse;
         }
       }
-      
-      // Pour les méthodes d'écriture (POST, PUT, DELETE), enregistrer pour synchronisation ultérieure
+
       if (!_canUseCache(method) && body != null) {
         final endpoint = uri.toString().replaceFirst(_apiBaseUrl, '');
         await _storeForSync(endpoint, method, body);
         debugPrint('Opération stockée pour synchronisation ultérieure: $method ${uri.toString()}');
         return {'success': true, 'message': 'Opération stockée pour synchronisation ultérieure'};
       }
-      
+
       throw Exception('Problème de connexion réseau. Veuillez vérifier votre connexion Internet.');
     } on TimeoutException catch (e) {
       debugPrint('Délai d\'attente dépassé: $e');
-      
-      // Même logique que pour les erreurs de socket
+
       if (_canUseCache(method)) {
         final cachedResponse = await _getCachedResponse(uri.toString(), method);
         if (cachedResponse != null) {
@@ -242,44 +300,39 @@ class ApiService {
           return cachedResponse;
         }
       }
-      
+
       throw Exception('La requête a pris trop de temps. Veuillez réessayer.');
     } catch (e) {
       debugPrint('Erreur lors de la requête API: $e');
       throw Exception('Une erreur s\'est produite: $e');
     }
   }
-  
+
   /// Gère les erreurs HTTP spécifiques
   void _handleHttpError(http.Response response) {
     final statusCode = response.statusCode;
-    
+
     switch (statusCode) {
       case 401:
-        // Non autorisé - problème d'authentification
         debugPrint('Erreur 401: Non autorisé');
         throw Exception('Session expirée. Veuillez vous reconnecter.');
-        
+
       case 403:
-        // Interdit - problème d'autorisation
         debugPrint('Erreur 403: Accès refusé');
         throw Exception('Vous n\'avez pas les droits nécessaires pour effectuer cette action.');
-        
+
       case 404:
-        // Non trouvé
         debugPrint('Erreur 404: Ressource non trouvée');
         throw Exception('La ressource demandée n\'existe pas.');
-        
+
       case 500:
       case 502:
       case 503:
       case 504:
-        // Erreurs serveur
         debugPrint('Erreur serveur: ${response.statusCode}');
         throw Exception('Une erreur serveur s\'est produite. Veuillez réessayer plus tard.');
-        
+
       default:
-        // Autres erreurs
         debugPrint('Erreur HTTP ${response.statusCode}: ${response.reasonPhrase}');
         try {
           final errorData = jsonDecode(response.body);
@@ -289,5 +342,162 @@ class ApiService {
           throw Exception('Une erreur s\'est produite (${response.statusCode}).');
         }
     }
+  }
+
+  // --- Synchronisation des données en attente ---
+
+  /// Démarre la synchronisation périodique des opérations en attente
+  void _startPeriodicSync() {
+    _syncPendingOperations();
+    _syncPendingFileUploads();
+
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (timer) async {
+      if (_connectivityService.isConnected) {
+        debugPrint("Vérification périodique pour les opérations et fichiers en attente...");
+        await _syncPendingOperations();
+        await _syncPendingFileUploads();
+      } else {
+        debugPrint("Mode hors ligne, synchronisation périodique ignorée.");
+      }
+    });
+  }
+
+  /// Synchronise les opérations en attente (POST, PUT, DELETE)
+  Future<void> _syncPendingOperations() async {
+    if (!_connectivityService.isConnected) return;
+
+    final pendingOperations = await _databaseService.getPendingOperations();
+    if (pendingOperations.isEmpty) {
+      debugPrint("Aucune opération en attente à synchroniser.");
+      return;
+    }
+
+    debugPrint("Synchronisation de ${pendingOperations.length} opération(s) en attente...");
+
+    for (final operation in pendingOperations) {
+      final String id = operation['id'] as String;
+      final String endpoint = operation['endpoint'] as String;
+      final String method = operation['method'] as String;
+      final Map<String, dynamic>? body = operation['body'] as Map<String, dynamic>?;
+
+      try {
+        debugPrint("Tentative de synchronisation: $method $endpoint");
+        await _request(
+          uri: _buildUri(endpoint),
+          method: method,
+          body: body,
+          useOfflineCache: false,
+        );
+        await _databaseService.markOperationAsSynchronized(id);
+        debugPrint("Opération $id synchronisée avec succès.");
+      } catch (e) {
+        debugPrint("Échec de la synchronisation de l'opération $id: $e");
+      }
+    }
+    debugPrint("Synchronisation des opérations en attente terminée.");
+  }
+
+  /// Synchronise les téléversements de fichiers en attente
+  Future<void> _syncPendingFileUploads() async {
+    if (!_connectivityService.isConnected) return;
+
+    final pendingUploads = await _databaseService.getPendingFileUploads();
+    if (pendingUploads.isEmpty) {
+      debugPrint("Aucun téléversement de fichier en attente à synchroniser.");
+      return;
+    }
+
+    debugPrint("Synchronisation de ${pendingUploads.length} téléversement(s) de fichier(s) en attente...");
+
+    const maxAttempts = 3;
+
+    for (final uploadJob in pendingUploads) {
+      final String id = uploadJob['id'] as String;
+      final String endpoint = uploadJob['endpoint'] as String;
+      final String filePath = uploadJob['filePath'] as String;
+      final String fileField = uploadJob['fileField'] as String;
+      final Map<String, String>? fields = uploadJob['fields'] as Map<String, String>?;
+      final int attempts = uploadJob['attempts'] as int;
+
+      if (attempts >= maxAttempts) {
+        debugPrint("Téléversement $id a atteint le nombre maximum de tentatives ($maxAttempts). Abandon.");
+        continue;
+      }
+
+      final file = File(filePath);
+      if (!await file.exists()) {
+        debugPrint("Fichier pour le téléversement $id ($filePath) n'existe plus. Suppression de la tâche.");
+        await _databaseService.deletePendingFileUpload(id);
+        continue;
+      }
+
+      try {
+        debugPrint("Tentative de synchronisation du téléversement de fichier: $endpoint, fichier: $filePath");
+        await _performActualPostMultipart(
+          endpoint: endpoint,
+          file: file,
+          fileField: fileField,
+          fields: fields,
+        );
+        await _databaseService.deletePendingFileUpload(id);
+        debugPrint("Téléversement de fichier $id synchronisé avec succès.");
+      } catch (e) {
+        debugPrint("Échec de la synchronisation du téléversement de fichier $id (tentative ${attempts + 1}): $e");
+        await _databaseService.updatePendingFileUploadAttempts(id, attempts + 1);
+      }
+    }
+    debugPrint("Synchronisation des téléversements de fichiers en attente terminée.");
+  }
+
+  /// Méthode interne pour effectuer réellement le postMultipart sans logique de sauvegarde offline
+  Future<Map<String, dynamic>> _performActualPostMultipart({
+    required String endpoint,
+    required File file,
+    String fileField = 'file',
+    Map<String, String>? fields,
+  }) async {
+    final uri = _buildUri(endpoint);
+    final token = await _auth0Service.getAccessToken();
+
+    try {
+      var request = http.MultipartRequest('POST', uri);
+      request.headers.addAll({
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      });
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      request.files.add(await http.MultipartFile.fromPath(
+        fileField,
+        file.path,
+      ));
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) return {};
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        _handleHttpError(response);
+        throw Exception('Erreur HTTP ${response.statusCode} lors du téléversement effectif. _handleHttpError aurait dû lever.');
+      }
+    } on SocketException catch (e) {
+      debugPrint('Erreur de socket lors du téléversement effectif pour $endpoint: $e');
+      throw Exception('Problème de connexion réseau lors du téléversement effectif pour $endpoint.');
+    } on TimeoutException catch (e) {
+      debugPrint('Délai dépassé lors du téléversement effectif pour $endpoint: $e');
+      throw Exception('Le téléversement effectif pour $endpoint a pris trop de temps.');
+    } catch (e) {
+      debugPrint('Erreur lors du téléversement effectif pour $endpoint: $e');
+      throw Exception('Une erreur s\'est produite lors du téléversement effectif pour $endpoint: $e');
+    }
+  }
+
+  /// Arrête la synchronisation périodique
+  void dispose() {
+    _syncTimer?.cancel();
   }
 }

@@ -11,6 +11,10 @@ import '../../inventory/repositories/inventory_repository.dart'; // Import Inven
 import '../../sales/bloc/sales_bloc.dart'; // Import SalesBloc
 import '../bloc/operation_journal_bloc.dart';
 import '../models/operation_journal_entry.dart';
+import 'package:wanzo/features/dashboard/services/journal_service.dart';
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
+import 'package:wanzo/features/settings/bloc/settings_event.dart';
+import 'package:wanzo/features/settings/bloc/settings_state.dart';
 
 /// Écran principal du tableau de bord
 class DashboardScreen extends StatefulWidget {
@@ -24,6 +28,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late OperationJournalBloc _operationJournalBloc;
   late SalesBloc _salesBloc;
   late InventoryRepository _inventoryRepository;
+  late SettingsBloc _settingsBloc; // Added SettingsBloc
+  late JournalService _journalService; // Added JournalService
+  Widget? _expandedViewWidget; // To hold the expanded card's content
 
   @override
   void initState() {
@@ -31,13 +38,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _operationJournalBloc = BlocProvider.of<OperationJournalBloc>(context);
     _salesBloc = BlocProvider.of<SalesBloc>(context);
     _inventoryRepository = RepositoryProvider.of<InventoryRepository>(context);
+    _settingsBloc = BlocProvider.of<SettingsBloc>(context); // Initialize SettingsBloc
+    _settingsBloc.add(LoadSettings()); // Load settings
+    _journalService = JournalService(); // Initialize JournalService
 
     final now = DateTime.now();
     _operationJournalBloc.add(LoadOperations(
         startDate: DateTime(now.year, now.month, 1),
         endDate: DateTime(now.year, now.month + 1, 0, 23, 59, 59)));
 
-    // Load sales for the last 7 days for the "Dernières Ventes" card
     _salesBloc.add(LoadSalesByDateRange(
         startDate: now.subtract(const Duration(days: 7)),
         endDate: now));
@@ -48,8 +57,157 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  void _expandRecentSales() {
+    setState(() {
+      _expandedViewWidget = _buildExpandedView(
+        title: 'Dernières Ventes',
+        content: _buildRecentSalesList(isExpanded: true), // Pass isExpanded
+        onCollapse: _collapseView,
+      );
+    });
+  }
+
+  void _expandOperationsJournal() {
+    setState(() {
+      _expandedViewWidget = _buildExpandedView(
+        title: 'Journal des Opérations',
+        content: _buildOperationsJournal(isExpanded: true), // Pass isExpanded
+        onCollapse: _collapseView,
+        isJournal: true,
+      );
+    });
+  }
+
+  void _collapseView() {
+    setState(() {
+      _expandedViewWidget = null;
+    });
+  }
+
+  Widget _buildExpandedView({
+    required String title,
+    required Widget content,
+    required VoidCallback onCollapse,
+    bool isJournal = false,
+  }) {
+    List<Widget> actions = [];
+    if (isJournal) {
+      actions.addAll([
+        IconButton(
+          icon: const Icon(Icons.picture_as_pdf),
+          tooltip: 'Exporter en PDF',
+          onPressed: () {
+            _exportOperationsJournalToPdf();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.print),
+          tooltip: 'Imprimer',
+          onPressed: () {
+            _printOperationsJournal();
+          },
+        ),
+      ]);
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: onCollapse,
+        ),
+        actions: actions,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(WanzoSpacing.md),
+        child: content,
+      ),
+    );
+  }
+
+  void _exportOperationsJournalToPdf() async {
+    final journalState = _operationJournalBloc.state;
+    final settingsState = _settingsBloc.state;
+
+    if (journalState is OperationJournalLoaded && settingsState is SettingsLoaded) {
+      try {
+        // Share the PDF
+        await _journalService.shareJournal(
+          groupedOperations: journalState.groupedOperations,
+          startDate: journalState.startDate,
+          endDate: journalState.endDate,
+          settings: settingsState.settings,
+          openingBalance: journalState.openingBalance, // Pass openingBalance
+          subject: 'Journal des Opérations Wanzo du ${DateFormat('dd/MM/yyyy', 'fr_FR').format(journalState.startDate)} au ${DateFormat('dd/MM/yyyy', 'fr_FR').format(journalState.endDate)}',
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Journal exporté et prêt pour le partage.')),
+        );
+
+      } catch (e) {
+        print("Error exporting/sharing journal PDF: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'exportation du PDF: $e')),
+        );
+      }
+    } else {
+      String message = 'Impossible d\'exporter le PDF. ';
+      if (journalState is! OperationJournalLoaded) {
+        message += 'Données du journal non chargées. ';
+      }
+      if (settingsState is! SettingsLoaded) {
+        message += 'Paramètres non chargés.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message.trim())),
+      );
+    }
+  }
+
+  void _printOperationsJournal() async {
+    final journalState = _operationJournalBloc.state;
+    final settingsState = _settingsBloc.state;
+
+    if (journalState is OperationJournalLoaded && settingsState is SettingsLoaded) {
+      try {
+        await _journalService.printJournal(
+          groupedOperations: journalState.groupedOperations,
+          startDate: journalState.startDate,
+          endDate: journalState.endDate,
+          settings: settingsState.settings,
+          openingBalance: journalState.openingBalance, // Pass openingBalance
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impression du journal lancée.')),
+        );
+      } catch (e) {
+        print("Error printing journal: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'impression: $e')),
+        );
+      }
+    } else {
+      String message = 'Impossible d\'imprimer. ';
+      if (journalState is! OperationJournalLoaded) {
+        message += 'Données du journal non chargées. ';
+      }
+      if (settingsState is! SettingsLoaded) {
+        message += 'Paramètres non chargés.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message.trim())),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_expandedViewWidget != null) {
+      return _expandedViewWidget!;
+    }
+
     return WanzoScaffold(
       currentIndex: 0, // Dashboard = index 0
       title: 'Tableau de bord',
@@ -254,7 +412,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Construit la section responsive pour les ventes récentes et le journal des opérations
   Widget _buildSalesOperationsCard() {
-    return _buildRecentSalesAndJournal();
+    return _buildRecentSalesAndJournal(
+      onExpandRecentSales: _expandRecentSales,
+      onExpandOperationsJournal: _expandOperationsJournal,
+    );
   }
 
   /// Construit les statistiques d'en-tête
@@ -513,7 +674,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit la liste des ventes récentes et le journal des opérations
-  Widget _buildRecentSalesAndJournal() {
+  Widget _buildRecentSalesAndJournal({
+    required VoidCallback onExpandRecentSales,
+    required VoidCallback onExpandOperationsJournal,
+  }) {
     return DefaultTabController(
       length: 2,
       child: Card(
@@ -541,8 +705,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 320, // Reduced height from 350 to 320
                 child: TabBarView(
                   children: [
-                    _buildRecentSalesList(),
-                    _buildOperationsJournal(),
+                    _buildRecentSalesList(
+                        isExpanded: false, onExpand: onExpandRecentSales),
+                    _buildOperationsJournal(
+                        isExpanded: false, onExpand: onExpandOperationsJournal),
                   ],
                 ),
               ),
@@ -554,37 +720,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit la liste des ventes récentes pour l'onglet
-  Widget _buildRecentSalesList() {
+  Widget _buildRecentSalesList({bool isExpanded = false, VoidCallback? onExpand}) {
     return BlocBuilder<SalesBloc, SalesState>(
       builder: (context, state) {
         if (state is SalesLoading) {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is SalesError) {
-          print("SalesError in _buildRecentSalesList: ${state.message}"); // Added logging
-          return Center(child: Text('Erreur: ${state.message}'));
+          print("SalesError in _buildRecentSalesList: ${state.message}");
+          return Column( // Ensure expand button can be placed if needed
+            children: [
+              if (!isExpanded && onExpand != null)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.fullscreen),
+                    tooltip: 'Agrandir',
+                    onPressed: onExpand,
+                  ),
+                ),
+              Expanded(child: Center(child: Text('Erreur: ${state.message}'))),
+            ],
+          );
         }
         if (state is SalesLoaded) {
           if (state.sales.isEmpty) {
-            print("_buildRecentSalesList: No sales data in SalesLoaded state."); // Added logging
-            return const Center(child: Text('Aucune vente récente.'));
+            print("_buildRecentSalesList: No sales data in SalesLoaded state.");
+            return Column(
+              children: [
+                if (!isExpanded && onExpand != null)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.fullscreen),
+                      tooltip: 'Agrandir',
+                      onPressed: onExpand,
+                    ),
+                  ),
+                const Expanded(child: Center(child: Text('Aucune vente récente.'))),
+              ],
+            );
           }
-          // Sort sales by date descending
           final sortedSales = List.from(state.sales);
           sortedSales.sort((a, b) => b.date.compareTo(a.date));
-          // Take the last 5 or fewer if not enough sales
           final recentSales = sortedSales.take(5).toList();
 
           if (recentSales.isEmpty) {
-            print("_buildRecentSalesList: recentSales list is empty after sorting and taking 5."); // Added logging
-            return const Center(child: Text('Aucune vente récente à afficher.'));
+            print("_buildRecentSalesList: recentSales list is empty after sorting and taking 5.");
+            return Column(
+              children: [
+                if (!isExpanded && onExpand != null)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.fullscreen),
+                      tooltip: 'Agrandir',
+                      onPressed: onExpand,
+                    ),
+                  ),
+                const Expanded(child: Center(child: Text('Aucune vente récente à afficher.'))),
+              ],
+            );
           }
 
-          print("_buildRecentSalesList: Displaying ${recentSales.length} recent sales."); // Added logging
+          print("_buildRecentSalesList: Displaying ${recentSales.length} recent sales.");
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (!isExpanded && onExpand != null)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.fullscreen),
+                    tooltip: 'Agrandir',
+                    onPressed: onExpand,
+                  ),
+                ),
               Expanded(
                 child: ListView.separated(
                   itemCount: recentSales.length,
@@ -720,27 +932,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit le journal des opérations
-  Widget _buildOperationsJournal() {
+  Widget _buildOperationsJournal({bool isExpanded = false, VoidCallback? onExpand}) {
     return BlocProvider.value(
       value: _operationJournalBloc,
       child: BlocBuilder<OperationJournalBloc, OperationJournalState>(
         builder: (context, state) {
-          if (state is OperationJournalLoading && state is! OperationJournalLoaded) {
+          if (state is OperationJournalLoading) { // Simplified loading check
             return const Center(child: CircularProgressIndicator());
           }
           if (state is OperationJournalError) {
-            return Center(
-                child: Text('Erreur: ${state.message}', textAlign: TextAlign.center));
+            return Column( // Ensure expand button can be placed
+              children: [
+                 Row(
+                  children: [
+                    // Potentially add a disabled filter or a placeholder
+                    const Spacer(), // Pushes button to the right
+                    if (!isExpanded && onExpand != null)
+                      IconButton(
+                        icon: const Icon(Icons.fullscreen),
+                        tooltip: 'Agrandir',
+                        onPressed: onExpand,
+                      ),
+                  ],
+                ),
+                Expanded(child: Center(child: Text('Erreur: ${state.message}', textAlign: TextAlign.center))),
+              ],
+            );
           }
           if (state is OperationJournalLoaded) {
             if (state.groupedOperations.isEmpty) {
-              return const Center(
-                child: Text('Aucune opération pour cette période.'),
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildPeriodFilter(state.startDate, state.endDate)),
+                      if (!isExpanded && onExpand != null)
+                        IconButton(
+                          icon: const Icon(Icons.fullscreen),
+                          tooltip: 'Agrandir',
+                          onPressed: onExpand,
+                        ),
+                    ],
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text('Aucune opération pour cette période.'),
+                    ),
+                  ),
+                ],
               );
             }
             return Column(
               children: [
-                _buildPeriodFilter(state.startDate, state.endDate),
+                Row(
+                  children: [
+                    Expanded(child: _buildPeriodFilter(state.startDate, state.endDate)),
+                    if (!isExpanded && onExpand != null)
+                      IconButton(
+                        icon: const Icon(Icons.fullscreen),
+                        tooltip: 'Agrandir',
+                        onPressed: onExpand,
+                      ),
+                  ],
+                ),
                 Expanded(
                   child: ListView.builder(
                     itemCount: state.groupedOperations.keys.length,

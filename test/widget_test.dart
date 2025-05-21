@@ -19,6 +19,11 @@ import 'package:wanzo/features/notifications/services/notification_service.dart'
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
 import 'package:wanzo/core/services/sync_service.dart';
+import 'package:wanzo/core/services/api_service.dart';
+import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart';
+import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
+import 'package:wanzo/features/financing/repositories/financing_repository.dart';
+import 'package:wanzo/features/subscription/repositories/subscription_repository.dart';
 import 'package:wanzo/main.dart';
 
 void main() {
@@ -32,6 +37,14 @@ void main() {
     final supplierRepository = SupplierRepository();
     final settingsRepository = SettingsRepository();
     final notificationRepository = NotificationRepository();
+    final operationJournalRepository = OperationJournalRepository();
+    final expenseRepository = ExpenseRepository();
+    final financingRepository = FinancingRepository();
+    final apiService = ApiService(); // Ensure ApiService is initialized
+    final subscriptionRepository = SubscriptionRepository(
+      expenseRepository: expenseRepository,
+      apiService: apiService, // Provide ApiService
+    );
     final notificationService = NotificationService();
     final connectivityService = ConnectivityService();
     final databaseService = DatabaseService();
@@ -47,9 +60,14 @@ void main() {
       supplierRepository: supplierRepository,
       settingsRepository: settingsRepository,
       notificationRepository: notificationRepository,
+      operationJournalRepository: operationJournalRepository,
+      expenseRepository: expenseRepository,
+      financingRepository: financingRepository,
+      subscriptionRepository: subscriptionRepository,
       notificationService: notificationService,
       connectivityService: connectivityService,
       databaseService: databaseService,
+      apiService: apiService,
       syncService: syncService,
     ));
 

@@ -17,6 +17,9 @@ void registerHiveAdapters() {
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(UserAdapter());
   }
+  if (!Hive.isAdapterRegistered(103)) { // IdStatusAdapter - Ensure this matches the typeId in user.g.dart
+    Hive.registerAdapter(IdStatusAdapter());
+  }
 
   // Sale models
   if (!Hive.isAdapterRegistered(1)) { // typeId for Sale

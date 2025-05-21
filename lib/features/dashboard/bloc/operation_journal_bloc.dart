@@ -27,12 +27,14 @@ class OperationJournalBloc
     emit(const OperationJournalLoading());
     try {
       final operations = await _repository.getOperations(event.startDate, event.endDate);
+      final openingBalance = await _repository.getOpeningBalance(event.startDate);
       final grouped = _groupOperationsByDay(operations);
       emit(OperationJournalLoaded(
         operations: operations,
         startDate: event.startDate,
         endDate: event.endDate,
         groupedOperations: grouped,
+        openingBalance: openingBalance, // Pass opening balance to state
       ));
     } catch (e) {
       emit(OperationJournalError('Erreur de chargement des opérations: $e'));

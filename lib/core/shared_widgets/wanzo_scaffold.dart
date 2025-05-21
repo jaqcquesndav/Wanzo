@@ -77,35 +77,37 @@ class WanzoScaffold extends StatelessWidget {
         onBackPressed: onBackPressed,
       ),
       body: body,
-      bottomNavigationBar: WanzoBottomNavigationBar(
-        currentIndex: currentIndex,
-        items: navigationItems,
-        onTap: (index) {
-          // Éviter de recharger la page courante
-          if (index == currentIndex) {
-            return;
-          }
-          switch (index) {
-            case 0:
-              context.go('/dashboard');
-              break;
-            case 1:
-              context.go('/sales');
-              break;
-            case 2:
-              context.go('/inventory');
-              break;
-            case 3:
-              context.go('/contacts');
-              break;
-            case 4:
-              context.go('/adha');
-              break;
-            default:
-              context.go('/dashboard');
-          }
-        },
-      ),
+      bottomNavigationBar: currentIndex >= 0 && currentIndex < navigationItems.length
+          ? WanzoBottomNavigationBar(
+              currentIndex: currentIndex,
+              items: navigationItems,
+              onTap: (index) {
+                // Éviter de recharger la page courante
+                if (index == currentIndex) {
+                  return;
+                }
+                switch (index) {
+                  case 0:
+                    context.go('/dashboard');
+                    break;
+                  case 1:
+                    context.go('/sales');
+                    break;
+                  case 2:
+                    context.go('/inventory');
+                    break;
+                  case 3:
+                    context.go('/contacts');
+                    break;
+                  case 4:
+                    context.go('/adha');
+                    break;
+                  default:
+                    context.go('/dashboard');
+                }
+              },
+            )
+          : null, // Do not build the bottom navigation bar if currentIndex is invalid
       floatingActionButton: floatingActionButton,
     );
   }

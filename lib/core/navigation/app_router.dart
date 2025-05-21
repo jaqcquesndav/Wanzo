@@ -32,6 +32,7 @@ import '../../features/contacts/screens/contacts_screen.dart'; // Import the new
 import '../../features/expenses/screens/add_expense_screen.dart'; // Added import
 import '../../features/financing/screens/add_financing_request_screen.dart';
 import '../../features/profile/screens/profile_screen.dart'; // Import ProfileScreen
+import '../../features/subscription/screens/subscription_screen.dart'; // Import SubscriptionScreen
 
 /// Configuration des routes de l'application
 class AppRouter {
@@ -275,6 +276,12 @@ class AppRouter {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // Route de gestion des abonnements
+      GoRoute(
+        path: '/subscription',
+        builder: (context, state) => const SubscriptionScreen(),
       ),
     ],
   );

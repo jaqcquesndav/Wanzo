@@ -18,13 +18,16 @@ class DatabaseService {
   
   static Database? _database;
   static const String _databaseName = 'wanzo_local.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2; // Incremented version
   
   /// Table pour stocker les réponses API mises en cache
   static const String tableApiCache = 'api_cache';
   
   /// Table pour stocker les données en attente de synchronisation
   static const String tablePendingSync = 'pending_sync';
+  
+  /// Table pour stocker les téléversements de fichiers en attente
+  static const String tablePendingFileUploads = 'pending_file_uploads';
   
   /// Obtient une instance de la base de données
   Future<Database> get database async {
@@ -43,13 +46,36 @@ class DatabaseService {
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade, // Added onUpgrade
     );
   }
-  /// Crée les tables de la base de données
+  
+  /// Crée les tables de la base de données lors de la première création
   Future<void> _onCreate(Database db, int version) async {
-    // Table pour le cache API
+    await _createApiCacheTable(db);
+    await _createPendingSyncTable(db);
+    await _createNotificationsTable(db);
+    await _createUserDataCacheTable(db);
+    await _createPendingFileUploadsTable(db); // Call new table creation
+  }
+  
+  /// Gère les migrations de la base de données lors d'une mise à niveau de version
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Migrations pour la version 2
+      await _createPendingFileUploadsTable(db);
+      debugPrint("Database upgraded to version 2: $tablePendingFileUploads table created.");
+    }
+    // Ajouter d'autres blocs if pour les versions futures
+    // if (oldVersion < 3) {
+    //   // Migrations pour la version 3
+    // }
+  }
+  
+  // Méthodes de création de table séparées pour la clarté
+  Future<void> _createApiCacheTable(Database db) async {
     await db.execute('''
-      CREATE TABLE $tableApiCache (
+      CREATE TABLE IF NOT EXISTS $tableApiCache (
         id TEXT PRIMARY KEY,
         url TEXT NOT NULL,
         method TEXT NOT NULL,
@@ -57,10 +83,11 @@ class DatabaseService {
         timestamp INTEGER NOT NULL
       )
     ''');
-    
-    // Table pour les données en attente de synchronisation
+  }
+  
+  Future<void> _createPendingSyncTable(Database db) async {
     await db.execute('''
-      CREATE TABLE $tablePendingSync (
+      CREATE TABLE IF NOT EXISTS $tablePendingSync (
         id TEXT PRIMARY KEY,
         endpoint TEXT NOT NULL,
         method TEXT NOT NULL,
@@ -69,10 +96,12 @@ class DatabaseService {
         synchronized INTEGER NOT NULL DEFAULT 0
       )
     ''');
-    
+  }
+  
+  Future<void> _createNotificationsTable(Database db) async {
     // Table pour les notifications
     await db.execute('''
-      CREATE TABLE notifications (
+      CREATE TABLE IF NOT EXISTS notifications (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         message TEXT NOT NULL,
@@ -84,16 +113,32 @@ class DatabaseService {
         synced INTEGER NOT NULL DEFAULT 0
       )
     ''');
-    
+  }
+  
+  Future<void> _createUserDataCacheTable(Database db) async {
     // Table pour le cache des données utilisateur
     await db.execute('''
-      CREATE TABLE user_data_cache (
+      CREATE TABLE IF NOT EXISTS user_data_cache (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
         data_type TEXT NOT NULL,
         data TEXT NOT NULL,
         timestamp INTEGER NOT NULL,
         UNIQUE(user_id, data_type)
+      )
+    ''');
+  }
+  
+  Future<void> _createPendingFileUploadsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tablePendingFileUploads (
+        id TEXT PRIMARY KEY,
+        endpoint TEXT NOT NULL,
+        filePath TEXT NOT NULL,
+        fileField TEXT NOT NULL,
+        fieldsJson TEXT, -- Store Map<String, String> as JSON string
+        timestamp INTEGER NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0
       )
     ''');
   }
@@ -253,5 +298,82 @@ class DatabaseService {
     );
     
     debugPrint('Nettoyage du cache expiré terminé');
+  }
+  
+  // --- Méthodes pour les téléversements de fichiers en attente ---
+  
+  /// Enregistre un téléversement de fichier en attente de synchronisation
+  Future<void> savePendingFileUpload({
+    required String endpoint,
+    required String filePath,
+    required String fileField,
+    Map<String, String>? fields,
+  }) async {
+    final db = await database;
+    final String id = 'file-${DateTime.now().millisecondsSinceEpoch}-${filePath.hashCode}';
+    
+    await db.insert(
+      tablePendingFileUploads,
+      {
+        'id': id,
+        'endpoint': endpoint,
+        'filePath': filePath,
+        'fileField': fileField,
+        'fieldsJson': fields != null ? jsonEncode(fields) : null,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'attempts': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    debugPrint('Téléversement de fichier en attente enregistré pour $endpoint: $filePath');
+  }
+  
+  /// Récupère les téléversements de fichiers en attente de synchronisation
+  Future<List<Map<String, dynamic>>> getPendingFileUploads() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tablePendingFileUploads,
+      orderBy: 'timestamp ASC',
+    );
+    
+    return maps.map((upload) {
+      final fieldsJson = upload['fieldsJson'] as String?;
+      final Map<String, String>? fieldsMap = fieldsJson != null
+          ? (jsonDecode(fieldsJson) as Map<String, dynamic>).map((key, value) => MapEntry(key, value.toString()))
+          : null;
+      
+      return {
+        'id': upload['id'],
+        'endpoint': upload['endpoint'],
+        'filePath': upload['filePath'],
+        'fileField': upload['fileField'],
+        'fields': fieldsMap,
+        'timestamp': upload['timestamp'],
+        'attempts': upload['attempts'],
+      };
+    }).toList();
+  }
+  
+  /// Met à jour le nombre de tentatives pour un téléversement en attente
+  Future<void> updatePendingFileUploadAttempts(String id, int attempts) async {
+    final db = await database;
+    await db.update(
+      tablePendingFileUploads,
+      {'attempts': attempts},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    debugPrint('Nombre de tentatives mis à jour pour le téléversement $id à $attempts');
+  }
+  
+  /// Supprime un téléversement de fichier en attente (par exemple, après succès)
+  Future<void> deletePendingFileUpload(String id) async {
+    final db = await database;
+    await db.delete(
+      tablePendingFileUploads,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    debugPrint('Téléversement de fichier en attente $id supprimé');
   }
 }

@@ -10,6 +10,9 @@ class WanzoColors {
   static const Color primaryLight = Color(0xFF2089B7);
   static const Color primaryDark = Color(0xFF156D93);
 
+  // Accent color (added)
+  static const Color accent = Color(0xFFFFA500); // Example: Orange accent
+
   // Couleurs interactives
   static const Color interactive = Color(0xFF1E90C3);
   static const Color interactiveLight = Color(0xFF2F9FCF);

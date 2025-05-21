@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -5,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth0_service.dart';
 import '../../../core/utils/connectivity_service.dart';
+import '../../../core/services/file_storage_service.dart'; // Import FileStorageService
 
 /// Classe gérant la connexion et la persistance des données utilisateur
 class AuthRepository {
@@ -16,6 +18,7 @@ class AuthRepository {
 
   final Auth0Service _auth0Service = Auth0Service();
   final ConnectivityService _connectivityService = ConnectivityService();
+  final FileStorageService _fileStorageService = FileStorageService(); // Instantiate FileStorageService
 
   /// Méthode d'initialisation
   Future<void> init() async {
@@ -135,5 +138,30 @@ class AuthRepository {
     final userBox = Hive.box<User>(_userBoxName);
     await userBox.clear(); // Supprime l'ancien utilisateur s'il existe
     await userBox.add(user);
+  }
+
+  /// Updates the user profile data in the backend and local cache.
+  Future<User> updateUserProfile(User updatedUser, {File? profileImageFile}) async { // Added profileImageFile parameter
+    User userToUpdate = updatedUser;
+    if (profileImageFile != null) {
+      // Upload the image and get the URL
+      final imageUrl = await _fileStorageService.uploadProfileImage(profileImageFile, updatedUser.id);
+      if (imageUrl != null) {
+        userToUpdate = userToUpdate.copyWith(picture: imageUrl);
+      } else {
+        // Handle image upload failure if necessary, e.g., by logging or showing a message
+        debugPrint('Failed to upload profile image.');
+      }
+    }
+
+    // TODO: Implement the actual API call to update user data on your backend.
+    // For now, we will simulate a delay and then save locally.
+    debugPrint('Simulating API call to update user profile for: ${userToUpdate.email}');
+    await Future.delayed(const Duration(seconds: 1)); // Simulate network latency
+
+    // After successful backend update, save the updated user data locally.
+    await _saveUserData(userToUpdate);
+    debugPrint('User profile updated and saved locally.');
+    return userToUpdate;
   }
 }

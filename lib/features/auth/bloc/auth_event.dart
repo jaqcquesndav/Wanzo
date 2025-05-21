@@ -41,3 +41,14 @@ class AuthLoginWithDemoAccountRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
+
+/// Event to update the user profile
+class AuthUserProfileUpdated extends AuthEvent {
+  final User updatedUser;
+  final File? profileImageFile; // Added to carry the actual image file
+
+  const AuthUserProfileUpdated(this.updatedUser, {this.profileImageFile}); // Updated constructor
+
+  @override
+  List<Object?> get props => [updatedUser, profileImageFile]; // Updated props
+}

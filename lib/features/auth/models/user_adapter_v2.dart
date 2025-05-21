@@ -1,14 +1,9 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+import 'package:hive/hive.dart';
+import 'user.dart'; // Assuming User and IdStatus are in user.dart
 
-part of 'user.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
-
-class UserAdapter extends TypeAdapter<User> {
+class UserAdapterV2 extends TypeAdapter<User> {
   @override
-  final int typeId = 0;
+  final int typeId = 0; // Must be the same as the original UserAdapter typeId
 
   @override
   User read(BinaryReader reader) {
@@ -16,6 +11,7 @@ class UserAdapter extends TypeAdapter<User> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
+
     return User(
       id: fields[0] as String,
       name: fields[1] as String,
@@ -27,15 +23,18 @@ class UserAdapter extends TypeAdapter<User> {
       jobTitle: fields[7] as String?,
       physicalAddress: fields[8] as String?,
       idCard: fields[9] as String?,
-      idCardStatus: fields[10] as IdStatus,
+      // Migration logic: If field 10 is null, default to IdStatus.UNKNOWN
+      idCardStatus: fields[10] == null ? IdStatus.UNKNOWN : fields[10] as IdStatus,
       idCardStatusReason: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
+    // This write logic should be identical to the one in the generated user.g.dart
+    // It ensures that when data is re-saved during migration, it's in the correct new format.
     writer
-      ..writeByte(12)
+      ..writeByte(12) // Total number of fields
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -57,7 +56,7 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(9)
       ..write(obj.idCard)
       ..writeByte(10)
-      ..write(obj.idCardStatus)
+      ..write(obj.idCardStatus) // Writes the non-null IdStatus
       ..writeByte(11)
       ..write(obj.idCardStatusReason);
   }
@@ -68,56 +67,7 @@ class UserAdapter extends TypeAdapter<User> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class IdStatusAdapter extends TypeAdapter<IdStatus> {
-  @override
-  final int typeId = 103;
-
-  @override
-  IdStatus read(BinaryReader reader) {
-    switch (reader.readByte()) {
-      case 0:
-        return IdStatus.PENDING;
-      case 1:
-        return IdStatus.ACTIVE;
-      case 2:
-        return IdStatus.BLOCKED;
-      case 3:
-        return IdStatus.UNKNOWN;
-      default:
-        return IdStatus.PENDING;
-    }
-  }
-
-  @override
-  void write(BinaryWriter writer, IdStatus obj) {
-    switch (obj) {
-      case IdStatus.PENDING:
-        writer.writeByte(0);
-        break;
-      case IdStatus.ACTIVE:
-        writer.writeByte(1);
-        break;
-      case IdStatus.BLOCKED:
-        writer.writeByte(2);
-        break;
-      case IdStatus.UNKNOWN:
-        writer.writeByte(3);
-        break;
-    }
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is IdStatusAdapter &&
+      other is UserAdapterV2 &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

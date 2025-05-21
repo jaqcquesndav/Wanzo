@@ -140,10 +140,13 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               context.read<AuthBloc>().add(const AuthLogoutRequested());
             } else if (value == 'profile') {
               // Navigation vers le profil
-              context.go('/profile'); // Navigate to ProfileScreen
+              context.push('/profile'); // MODIFIED: Use context.push for profile
             } else if (value == 'settings') {
               // Navigation vers les paramètres
-              context.go('/settings'); // MODIFIED: Use context.go to navigate
+              context.push('/settings'); // MODIFIED: Use context.push to navigate
+            } else if (value == 'subscription') { // Added this block
+              // Navigation vers la gestion des abonnements
+              context.push('/subscription');
             }
           },
           itemBuilder: (BuildContext context) => [
@@ -155,6 +158,17 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
                   const Icon(Icons.person, color: WanzoColors.primary),
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Profil'),
+                ],
+              ),
+            ),
+            // Option de gestion des abonnements
+            PopupMenuItem<String>( // Added this item
+              value: 'subscription',
+              child: Row(
+                children: [
+                  const Icon(Icons.subscriptions, color: WanzoColors.primary), // Changed from WanzoColors.accent
+                  const SizedBox(width: WanzoSpacing.sm),
+                  const Text('Gestion des abonnements'),
                 ],
               ),
             ),

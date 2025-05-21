@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart'; // Added go_router import
 import '../bloc/notifications_bloc.dart';
 import '../models/notification_model.dart';
 import '../../../constants/colors.dart';
@@ -27,6 +28,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton( // Added leading IconButton for back navigation
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) { // Check if there's a route to pop
+              context.pop();
+            } else {
+              // If not, navigate to a default route (e.g., dashboard)
+              context.go('/dashboard'); 
+            }
+          },
+        ),
         title: const Text('Notifications'),
         actions: [
           // Bouton pour marquer toutes les notifications comme lues
@@ -234,7 +246,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         iconColor = Colors.green;
         break;
       case NotificationType.info:
-      default:
         iconData = Icons.info;
         iconColor = Colors.blue;
         break;

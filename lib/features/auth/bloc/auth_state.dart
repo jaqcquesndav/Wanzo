@@ -42,3 +42,29 @@ class AuthFailure extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+/// State indicating that a profile update is in progress
+class AuthProfileUpdateInProgress extends AuthState {
+  const AuthProfileUpdateInProgress();
+}
+
+/// State indicating that a profile update has succeeded
+/// It might carry the updated user if needed, but AuthAuthenticated already does.
+class AuthProfileUpdateSuccess extends AuthState {
+  final User user; // Optionally include the user if specific UI changes depend on it here
+  const AuthProfileUpdateSuccess(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
+/// State indicating that a profile update has failed
+class AuthProfileUpdateFailure extends AuthState {
+  final String error;
+  final User? originalUser; // Optionally carry the original user to allow reverting or retrying
+
+  const AuthProfileUpdateFailure(this.error, {this.originalUser});
+
+  @override
+  List<Object?> get props => [error, originalUser];
+}
