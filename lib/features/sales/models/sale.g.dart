@@ -8,7 +8,7 @@ part of 'sale.dart';
 
 class SaleAdapter extends TypeAdapter<Sale> {
   @override
-  final int typeId = 1;
+  final int typeId = 7;
 
   @override
   Sale read(BinaryReader reader) {
@@ -115,7 +115,7 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
 
 class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
   @override
-  final int typeId = 5;
+  final int typeId = 6;
 
   @override
   SaleStatus read(BinaryReader reader) {
@@ -156,3 +156,57 @@ class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Sale _$SaleFromJson(Map<String, dynamic> json) => Sale(
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      customerId: json['customerId'] as String,
+      customerName: json['customerName'] as String,
+      items: (json['items'] as List<dynamic>)
+          .map((e) => SaleItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalAmount: (json['totalAmount'] as num).toDouble(),
+      paidAmount: (json['paidAmount'] as num).toDouble(),
+      paymentMethod: json['paymentMethod'] as String,
+      status: $enumDecode(_$SaleStatusEnumMap, json['status']),
+      notes: json['notes'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$SaleToJson(Sale instance) => <String, dynamic>{
+      'id': instance.id,
+      'date': instance.date.toIso8601String(),
+      'customerId': instance.customerId,
+      'customerName': instance.customerName,
+      'items': instance.items.map((e) => e.toJson()).toList(),
+      'totalAmount': instance.totalAmount,
+      'paidAmount': instance.paidAmount,
+      'paymentMethod': instance.paymentMethod,
+      'status': _$SaleStatusEnumMap[instance.status]!,
+      'notes': instance.notes,
+    };
+
+const _$SaleStatusEnumMap = {
+  SaleStatus.pending: 'pending',
+  SaleStatus.completed: 'completed',
+  SaleStatus.cancelled: 'cancelled',
+};
+
+SaleItem _$SaleItemFromJson(Map<String, dynamic> json) => SaleItem(
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      quantity: (json['quantity'] as num).toDouble(),
+      unitPrice: (json['unitPrice'] as num).toDouble(),
+      totalPrice: (json['totalPrice'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$SaleItemToJson(SaleItem instance) => <String, dynamic>{
+      'productId': instance.productId,
+      'productName': instance.productName,
+      'quantity': instance.quantity,
+      'unitPrice': instance.unitPrice,
+      'totalPrice': instance.totalPrice,
+    };

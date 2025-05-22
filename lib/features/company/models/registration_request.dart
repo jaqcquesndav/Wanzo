@@ -1,7 +1,11 @@
 import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'business_sector.dart';
 
+part 'registration_request.g.dart';
+
 /// Modèle pour la demande d'inscription
+@JsonSerializable(explicitToJson: true)
 class RegistrationRequest extends Equatable {
   /// Nom de l'utilisateur
   final String ownerName;
@@ -39,6 +43,12 @@ class RegistrationRequest extends Equatable {
     required this.sector,
   });
   
+  /// Creates a RegistrationRequest from a JSON object.
+  factory RegistrationRequest.fromJson(Map<String, dynamic> json) => _$RegistrationRequestFromJson(json);
+
+  /// Converts this RegistrationRequest instance to a JSON object.
+  Map<String, dynamic> toJson() => _$RegistrationRequestToJson(this);
+
   /// Crée une copie avec des valeurs modifiées
   RegistrationRequest copyWith({
     String? ownerName,

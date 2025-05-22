@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wanzo/constants/constants.dart';
+import 'package:wanzo/features/auth/screens/forgot_password_screen.dart';
 import '../bloc/auth_bloc.dart';
 import '../../../features/connectivity/widgets/subtle_offline_indicator.dart';
 
@@ -211,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        // TODO: Implémenter la récupération de mot de passe
+                                        Navigator.of(context).pushNamed(ForgotPasswordScreen.routeName);
                                       },
                                       child: const Text('Mot de passe oublié?'),
                                     ),

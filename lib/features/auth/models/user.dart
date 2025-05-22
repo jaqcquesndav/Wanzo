@@ -1,146 +1,121 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'user.g.dart';
 
-// Enum for ID Status
-@HiveType(typeId: 103) // Changed typeId from 100 to 103 to avoid conflict
+@HiveType(typeId: 1) // Consistent typeId for IdStatus
 enum IdStatus {
   @HiveField(0)
   PENDING,
   @HiveField(1)
-  ACTIVE,
+  VERIFIED,
   @HiveField(2)
-  BLOCKED,
+  REJECTED,
   @HiveField(3)
-  UNKNOWN
+  UNKNOWN,
 }
 
-/// Modèle représentant un utilisateur de l'application
+// Helper for IdStatus JSON conversion
+IdStatus _idStatusFromJson(String? statusString) {
+  if (statusString == null) return IdStatus.UNKNOWN;
+  switch (statusString.toLowerCase()) {
+    case 'pending':
+      return IdStatus.PENDING;
+    case 'verified':
+      return IdStatus.VERIFIED;
+    case 'rejected':
+      return IdStatus.REJECTED;
+    default:
+      return IdStatus.UNKNOWN;
+  }
+}
+
+String? _idStatusToString(IdStatus? status) {
+  if (status == null) return null;
+  return status.toString().split('.').last.toUpperCase(); // Consistent with common API enum representation
+}
+
+/// Modèle représentant un utilisateur
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
 @HiveType(typeId: 0)
 class User extends Equatable {
-  /// Identifiant unique de l'utilisateur
   @HiveField(0)
-  final String id;
+  final String id; // Assuming API sends 'id', not 'sub' primarily.
 
-  /// Nom de l'utilisateur
   @HiveField(1)
   final String name;
 
-  /// Email de l'utilisateur
   @HiveField(2)
   final String email;
 
-  /// Numéro de téléphone de l'utilisateur
   @HiveField(3)
-  final String phone;
+  final String phone; // API key will be 'phone_number' due to fieldRename
 
-  /// Rôle de l'utilisateur dans l'entreprise
   @HiveField(4)
   final String role;
 
-  /// Token d'authentification
   @HiveField(5)
-  final String token;
+  final String? token;
 
-  /// URL de l'image de profil
   @HiveField(6)
   final String? picture;
 
-  /// Fonction dans l'entreprise
   @HiveField(7)
   final String? jobTitle;
 
-  /// Adresse physique
   @HiveField(8)
   final String? physicalAddress;
 
-  /// Informations de la carte d'identité
   @HiveField(9)
   final String? idCard;
 
-  /// Statut de la carte d'identité
   @HiveField(10)
-  final IdStatus idCardStatus; // Changed to non-nullable, defaulting to UNKNOWN
+  @JsonKey(fromJson: _idStatusFromJson, toJson: _idStatusToString)
+  final IdStatus? idCardStatus;
 
-  /// Raison du statut de la carte d'identité (si applicable)
   @HiveField(11)
   final String? idCardStatusReason;
 
-  /// Constructeur
+  @HiveField(12)
+  final String? companyId;
+
+  @HiveField(13)
+  final String? companyName;
+
+  @HiveField(14)
+  final String? rccmNumber;
+
+  @HiveField(15)
+  final String? companyLocation;
+
+  @HiveField(16)
+  final String? businessSector;
+
   const User({
     required this.id,
     required this.name,
     required this.email,
     required this.phone,
     required this.role,
-    required this.token,
+    this.token,
     this.picture,
     this.jobTitle,
     this.physicalAddress,
     this.idCard,
-    this.idCardStatus = IdStatus.UNKNOWN, // Default value
+    this.idCardStatus,
     this.idCardStatusReason,
+    this.companyId,
+    this.companyName,
+    this.rccmNumber,
+    this.companyLocation,
+    this.businessSector,
   });
 
-  /// Constructeur vide pour représenter un utilisateur non connecté
-  factory User.empty() {
-    return const User(
-      id: '',
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-      token: '',
-      jobTitle: '',
-      physicalAddress: '',
-      idCard: '',
-      idCardStatus: IdStatus.UNKNOWN,
-      idCardStatusReason: '',
-    );
-  }
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
-  /// Transforme un JSON en objet User
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
-      role: json['role'] as String,
-      token: json['token'] as String,
-      picture: json['picture'] as String?,
-      jobTitle: json['jobTitle'] as String?,
-      physicalAddress: json['physicalAddress'] as String?,
-      idCard: json['idCard'] as String?,
-      idCardStatus: json['idCardStatus'] != null
-          ? IdStatus.values.firstWhere(
-              (e) => e.toString() == json['idCardStatus'],
-              orElse: () => IdStatus.UNKNOWN)
-          : IdStatus.UNKNOWN,
-      idCardStatusReason: json['idCardStatusReason'] as String?,
-    );
-  }
+  Map<String, dynamic> toJson() => _$UserToJson(this);
 
-  /// Transforme l'objet User en JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'role': role,
-      'token': token,
-      'picture': picture,
-      'jobTitle': jobTitle,
-      'physicalAddress': physicalAddress,
-      'idCard': idCard,
-      'idCardStatus': idCardStatus.toString(), // Store enum as string
-      'idCardStatusReason': idCardStatusReason,
-    };
-  }
-
-  /// Crée une copie de l'objet User avec des propriétés modifiées
   User copyWith({
     String? id,
     String? name,
@@ -154,6 +129,11 @@ class User extends Equatable {
     String? idCard,
     IdStatus? idCardStatus,
     String? idCardStatusReason,
+    String? companyId,
+    String? companyName,
+    String? rccmNumber,
+    String? companyLocation,
+    String? businessSector,
   }) {
     return User(
       id: id ?? this.id,
@@ -168,6 +148,11 @@ class User extends Equatable {
       idCard: idCard ?? this.idCard,
       idCardStatus: idCardStatus ?? this.idCardStatus,
       idCardStatusReason: idCardStatusReason ?? this.idCardStatusReason,
+      companyId: companyId ?? this.companyId,
+      companyName: companyName ?? this.companyName,
+      rccmNumber: rccmNumber ?? this.rccmNumber,
+      companyLocation: companyLocation ?? this.companyLocation,
+      businessSector: businessSector ?? this.businessSector,
     );
   }
 
@@ -184,6 +169,11 @@ class User extends Equatable {
         physicalAddress,
         idCard,
         idCardStatus,
-        idCardStatusReason
+        idCardStatusReason,
+        companyId,
+        companyName,
+        rccmNumber,
+        companyLocation,
+        businessSector,
       ];
 }

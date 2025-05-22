@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'supplier.g.dart';
 
 /// Modèle de données pour un fournisseur
-@HiveType(typeId: 12)
+@HiveType(typeId: 24)
+@JsonSerializable(explicitToJson: true)
 class Supplier extends Equatable {
   /// Identifiant unique du fournisseur
   @HiveField(0)
@@ -74,6 +76,9 @@ class Supplier extends Equatable {
     this.paymentTerms = '',
   });
 
+  factory Supplier.fromJson(Map<String, dynamic> json) => _$SupplierFromJson(json);
+  Map<String, dynamic> toJson() => _$SupplierToJson(this);
+
   /// Crée une copie du fournisseur avec des valeurs modifiées
   Supplier copyWith({
     String? id,
@@ -126,7 +131,8 @@ class Supplier extends Equatable {
 }
 
 /// Catégories de fournisseurs
-@HiveType(typeId: 13)
+@HiveType(typeId: 25)
+@JsonEnum()
 enum SupplierCategory {
   /// Fournisseur principal ou stratégique
   @HiveField(0)

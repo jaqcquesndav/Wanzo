@@ -1,10 +1,23 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'settings.g.dart';
 
+@HiveType(typeId: 28) // New unique typeId for CurrencyType
+@JsonEnum()
+enum CurrencyType {
+  @HiveField(0)
+  fc, // Franc Congolais
+  @HiveField(1)
+  cdf, // Congolese Franc (alternative representation)
+  @HiveField(2)
+  usd, // US Dollar
+}
+
 /// Modèle pour les paramètres de l'application
-@HiveType(typeId: 14)
+@HiveType(typeId: 26) // Existing typeId for Settings
+@JsonSerializable(explicitToJson: true)
 class Settings extends Equatable {
   /// Nom de l'entreprise
   @HiveField(0)
@@ -28,7 +41,7 @@ class Settings extends Equatable {
 
   /// Devise utilisée par l'entreprise
   @HiveField(5)
-  final String currency;
+  final CurrencyType currency; // Changed from String
 
   /// Format de date préféré
   @HiveField(6)
@@ -85,29 +98,31 @@ class Settings extends Equatable {
   /// Fréquence de sauvegarde automatique (en jours)
   @HiveField(19)
   final int backupFrequency;
+
   /// Email pour les rapports automatiques
   @HiveField(20)
   final String reportEmail;
-  
+
   /// Numéro RCCM (Registre du Commerce et du Crédit Mobilier)
   @HiveField(21)
   final String rccmNumber;
-    /// Numéro d'identification nationale
+
+  /// Numéro d'identification nationale
   @HiveField(22)
   final String idNatNumber;
-  
+
   /// Notifications push activées
   @HiveField(23)
   final bool pushNotificationsEnabled;
-  
+
   /// Notifications in-app activées
   @HiveField(24)
   final bool inAppNotificationsEnabled;
-  
+
   /// Notifications par email activées
   @HiveField(25)
   final bool emailNotificationsEnabled;
-  
+
   /// Notifications sonores activées
   @HiveField(26)
   final bool soundNotificationsEnabled;
@@ -118,7 +133,7 @@ class Settings extends Equatable {
     this.companyPhone = '',
     this.companyEmail = '',
     this.companyLogo = '',
-    this.currency = 'FC',
+    this.currency = CurrencyType.fc, // Default to FC
     this.dateFormat = 'DD/MM/YYYY',
     this.themeMode = AppThemeMode.system,
     this.language = 'fr',
@@ -132,7 +147,8 @@ class Settings extends Equatable {
     this.defaultProductCategory = 'Général',
     this.lowStockAlertDays = 7,
     this.backupEnabled = false,
-    this.backupFrequency = 7,    this.reportEmail = '',
+    this.backupFrequency = 7,
+    this.reportEmail = '',
     this.rccmNumber = '',
     this.idNatNumber = '',
     this.pushNotificationsEnabled = true,
@@ -140,14 +156,17 @@ class Settings extends Equatable {
     this.emailNotificationsEnabled = false,
     this.soundNotificationsEnabled = true,
   });
-  /// Crée une copie de l'objet Settings avec des valeurs modifiées
+
+  factory Settings.fromJson(Map<String, dynamic> json) => _$SettingsFromJson(json);
+  Map<String, dynamic> toJson() => _$SettingsToJson(this);
+
   Settings copyWith({
     String? companyName,
     String? companyAddress,
     String? companyPhone,
     String? companyEmail,
     String? companyLogo,
-    String? currency,
+    CurrencyType? currency, // Changed
     String? dateFormat,
     AppThemeMode? themeMode,
     String? language,
@@ -161,7 +180,8 @@ class Settings extends Equatable {
     String? defaultProductCategory,
     int? lowStockAlertDays,
     bool? backupEnabled,
-    int? backupFrequency,    String? reportEmail,
+    int? backupFrequency,
+    String? reportEmail,
     String? rccmNumber,
     String? idNatNumber,
     bool? pushNotificationsEnabled,
@@ -175,7 +195,7 @@ class Settings extends Equatable {
       companyPhone: companyPhone ?? this.companyPhone,
       companyEmail: companyEmail ?? this.companyEmail,
       companyLogo: companyLogo ?? this.companyLogo,
-      currency: currency ?? this.currency,
+      currency: currency ?? this.currency, // Changed
       dateFormat: dateFormat ?? this.dateFormat,
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
@@ -187,8 +207,10 @@ class Settings extends Equatable {
       defaultInvoiceNotes: defaultInvoiceNotes ?? this.defaultInvoiceNotes,
       taxIdentificationNumber: taxIdentificationNumber ?? this.taxIdentificationNumber,
       defaultProductCategory: defaultProductCategory ?? this.defaultProductCategory,
-      lowStockAlertDays: lowStockAlertDays ?? this.lowStockAlertDays,      backupEnabled: backupEnabled ?? this.backupEnabled,
-      backupFrequency: backupFrequency ?? this.backupFrequency,      reportEmail: reportEmail ?? this.reportEmail,
+      lowStockAlertDays: lowStockAlertDays ?? this.lowStockAlertDays,
+      backupEnabled: backupEnabled ?? this.backupEnabled,
+      backupFrequency: backupFrequency ?? this.backupFrequency,
+      reportEmail: reportEmail ?? this.reportEmail,
       rccmNumber: rccmNumber ?? this.rccmNumber,
       idNatNumber: idNatNumber ?? this.idNatNumber,
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
@@ -205,7 +227,7 @@ class Settings extends Equatable {
         companyPhone,
         companyEmail,
         companyLogo,
-        currency,
+        currency, // Changed
         dateFormat,
         themeMode,
         language,
@@ -218,7 +240,9 @@ class Settings extends Equatable {
         taxIdentificationNumber,
         defaultProductCategory,
         lowStockAlertDays,
-        backupEnabled,        backupFrequency,        reportEmail,
+        backupEnabled,
+        backupFrequency,
+        reportEmail,
         rccmNumber,
         idNatNumber,
         pushNotificationsEnabled,
@@ -229,17 +253,13 @@ class Settings extends Equatable {
 }
 
 /// Modes de thème pour l'application
-@HiveType(typeId: 15)
+@HiveType(typeId: 27) // Existing typeId for AppThemeMode
+@JsonEnum()
 enum AppThemeMode {
-  /// Thème clair
   @HiveField(0)
   light,
-
-  /// Thème sombre
   @HiveField(1)
   dark,
-
-  /// Suit le thème du système
   @HiveField(2)
   system,
 }

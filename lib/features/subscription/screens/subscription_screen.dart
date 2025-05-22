@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart'; // Re-added for context.pop() and con
 import 'package:intl/intl.dart';
 import 'package:wanzo/constants/colors.dart';
 import 'package:wanzo/constants/spacing.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart'; // Added import
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart'; // Added import
+import 'package:wanzo/features/settings/bloc/settings_state.dart'; // Added import
+import 'package:wanzo/features/settings/models/settings.dart'; // Added import
 import 'package:wanzo/features/subscription/bloc/subscription_bloc.dart';
 import 'package:wanzo/features/subscription/models/subscription_tier_model.dart';
 import 'package:wanzo/features/subscription/models/invoice_model.dart';
-import 'package:wanzo/features/subscription/models/payment_method_model.dart';
 import 'package:wanzo/features/subscription/repositories/subscription_repository.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -93,6 +96,16 @@ class _SubscriptionViewState extends State<SubscriptionView> {
 
   @override
   Widget build(BuildContext context) {
+    final settingsState = context.watch<SettingsBloc>().state;
+    CurrencyType currencyType;
+    if (settingsState is SettingsLoaded) {
+      currencyType = settingsState.settings.currency;
+    } else if (settingsState is SettingsUpdated) {
+      currencyType = settingsState.settings.currency;
+    } else {
+      currencyType = CurrencyType.cdf; // Default currency
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestion des Abonnements'),
@@ -139,7 +152,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
           if (state is SubscriptionLoading || state is SubscriptionInitial) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is SubscriptionLoaded) {
-            return _buildLoadedState(context, state);
+            return _buildLoadedState(context, state, currencyType); // Pass currencyType
           } else if (state is SubscriptionError) {
             return Center(
               child: Column(
@@ -163,23 +176,14 @@ class _SubscriptionViewState extends State<SubscriptionView> {
     );
   }
 
-  Widget _buildLoadedState(BuildContext context, SubscriptionLoaded state) {
+  Widget _buildLoadedState(BuildContext context, SubscriptionLoaded state, CurrencyType currencyType) { // Added currencyType parameter
     if (_selectedPaymentMethod == null && state.paymentMethods.isNotEmpty) {
       if (state.paymentMethods.any((pm) => pm.type == 'card')) {
         _selectedPaymentMethod = 'card';
       } else if (state.paymentMethods.any((pm) => pm.type == 'mobile_money')) {
         _selectedPaymentMethod = 'mobile_money';
       } else {
-        _selectedPaymentMethod = state.paymentMethods.first.type;
-      }
-    }
-    if (_selectedPaymentMethod == null && state.paymentMethods.isNotEmpty) {
-      if (state.paymentMethods.any((pm) => pm.type == 'card')) {
-        _selectedPaymentMethod = 'card';
-      } else if (state.paymentMethods.any((pm) => pm.type == 'mobile_money')) {
-        _selectedPaymentMethod = 'mobile_money';
-      } else {
-        _selectedPaymentMethod = state.paymentMethods.first.type;
+        _selectedPaymentMethod = state.paymentMethods.first.id; // Use id for groupValue
       }
     }
 
@@ -189,16 +193,16 @@ class _SubscriptionViewState extends State<SubscriptionView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Nos Offres d\'Abonnement'),
-          _buildSubscriptionTiers(context, state.tiers, state.currentTier),
+          _buildSubscriptionTiers(context, state.tiers, state.currentTier, currencyType), // Pass currencyType
           const SizedBox(height: WanzoSpacing.lg),
           _buildSectionTitle('Votre Abonnement Actuel'),
-          _buildCurrentSubscriptionStatus(context, state.currentTier),
+          _buildCurrentSubscriptionStatus(context, state.currentTier, currencyType), // Pass currencyType
           const SizedBox(height: WanzoSpacing.lg),
           _buildSectionTitle('Utilisation des Tokens Adha'),
           _buildTokenUsage(context, state.tokenUsage, state.availableTokens),
           const SizedBox(height: WanzoSpacing.lg),
           _buildSectionTitle('Historique des Factures'),
-          _buildInvoiceList(context, state.invoices),
+          _buildInvoiceList(context, state.invoices, currencyType), // Pass currencyType
           const SizedBox(height: WanzoSpacing.lg),
           _buildSectionTitle('Méthodes de Paiement'),
           _buildPaymentMethods(context, state),
@@ -227,7 +231,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
     );
   }
 
-  Widget _buildSubscriptionTiers(BuildContext context, List<SubscriptionTier> tiers, SubscriptionTier currentTier) {
+  Widget _buildSubscriptionTiers(BuildContext context, List<SubscriptionTier> tiers, SubscriptionTier currentTier, CurrencyType currencyType) { // Added currencyType
     return SizedBox(
       height: 290,
       child: ListView.builder(
@@ -236,13 +240,15 @@ class _SubscriptionViewState extends State<SubscriptionView> {
         itemBuilder: (context, index) {
           final tier = tiers[index];
           final bool isCurrent = tier.type == currentTier.type;
-          return _buildTierCard(context, tier, isCurrent);
+          return _buildTierCard(context, tier, isCurrent, currencyType); // Pass currencyType
         },
       ),
     );
   }
 
-  Widget _buildTierCard(BuildContext context, SubscriptionTier tier, bool isCurrent) {
+  Widget _buildTierCard(BuildContext context, SubscriptionTier tier, bool isCurrent, CurrencyType currencyType) { // Added currencyType
+    final double priceAmount = double.tryParse(tier.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
     return Card(
       elevation: isCurrent ? 6 : 2,
       shape: RoundedRectangleBorder(
@@ -258,7 +264,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
           children: [
             Text(tier.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: WanzoColors.primary)),
             const SizedBox(height: WanzoSpacing.xs),
-            Text(tier.price, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            Text(tier.price.toLowerCase() == "gratuit" ? "Gratuit" : formatCurrency(priceAmount, currencyType), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: WanzoSpacing.sm),
             Text('Utilisateurs: ${tier.users}'),
             Text('Tokens Adha: ${tier.adhaTokens}'),
@@ -295,11 +301,13 @@ class _SubscriptionViewState extends State<SubscriptionView> {
     );
   }
 
-  Widget _buildCurrentSubscriptionStatus(BuildContext context, SubscriptionTier currentTier) {
+  Widget _buildCurrentSubscriptionStatus(BuildContext context, SubscriptionTier currentTier, CurrencyType currencyType) { // Added currencyType
+    final double priceAmount = double.tryParse(currentTier.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
     return Card(
       child: ListTile(
         title: Text('Plan actuel: ${currentTier.name}'),
-        subtitle: Text('Prix: ${currentTier.price}'),
+        subtitle: Text('Prix: ${currentTier.price.toLowerCase() == "gratuit" ? "Gratuit" : formatCurrency(priceAmount, currencyType)}'),
       ),
     );
   }
@@ -335,7 +343,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
     );
   }
 
-  Widget _buildInvoiceList(BuildContext context, List<Invoice> invoices) {
+  Widget _buildInvoiceList(BuildContext context, List<Invoice> invoices, CurrencyType currencyType) { // Added currencyType parameter
     if (invoices.isEmpty) {
       return const Center(
         child: Padding(
@@ -353,7 +361,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
           final invoice = invoices[index];
           return ListTile(
             title: Text('Facture ${invoice.id} - ${_invoiceDateFormat.format(invoice.date)}'),
-            subtitle: Text('Montant: ${NumberFormat("#,##0", "fr_FR").format(invoice.amount)} FCFA - Statut: ${invoice.status}'),
+            subtitle: Text('Montant: ${formatCurrency(invoice.amount, currencyType)} - Statut: ${invoice.status}'),
             trailing: IconButton(
               icon: const Icon(Icons.download_for_offline_outlined),
               tooltip: 'Télécharger la facture',

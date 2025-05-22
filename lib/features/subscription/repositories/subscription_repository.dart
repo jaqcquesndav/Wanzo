@@ -1,6 +1,7 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:uuid/uuid.dart';
-import 'package:wanzo/core/services/api_service.dart';
+import 'package:wanzo/core/services/api_client.dart';
 import 'package:wanzo/features/expenses/models/expense.dart';
 import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/subscription/models/subscription_tier_model.dart';
@@ -9,24 +10,25 @@ import 'package:wanzo/features/subscription/models/payment_method_model.dart';
 
 class SubscriptionRepository {
   final ExpenseRepository _expenseRepository;
-  final ApiService _apiService;
+  final ApiClient _apiService;
   final _uuid = const Uuid();
 
   SubscriptionRepository({
     required ExpenseRepository expenseRepository,
-    required ApiService apiService,
+    required ApiClient apiService,
   })  : _expenseRepository = expenseRepository,
         _apiService = apiService;
 
   Future<List<SubscriptionTier>> getSubscriptionTiers() async {
     try {
-      final response = await _apiService.get('subscription/tiers');
-      if (response['data'] != null && response['data'] is List) {
-        return (response['data'] as List)
+      final responseData = await _apiService.get('subscription/tiers', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null && responseData['data'] is List) {
+        return (responseData['data'] as List)
             .map((tierData) => SubscriptionTier.fromJson(tierData))
             .toList();
       }
-      return [];
+      print('Error fetching subscription tiers: Invalid responseData structure: $responseData');
+      return _tiers_fallback;
     } catch (e) {
       print('Error fetching subscription tiers: $e');
       return _tiers_fallback;
@@ -35,10 +37,11 @@ class SubscriptionRepository {
 
   Future<SubscriptionTier> getCurrentUserSubscription() async {
     try {
-      final response = await _apiService.get('subscription/current');
-      if (response['data'] != null) {
-        return SubscriptionTier.fromJson(response['data']);
+      final responseData = await _apiService.get('subscription/current', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null) {
+        return SubscriptionTier.fromJson(responseData['data']);
       }
+      print('Error fetching current subscription: Invalid responseData structure: $responseData');
       return _currentTier_fallback;
     } catch (e) {
       print('Error fetching current subscription: $e');
@@ -48,10 +51,11 @@ class SubscriptionRepository {
 
   Future<double> getTokenUsage() async {
     try {
-      final response = await _apiService.get('subscription/token-usage');
-      if (response['data'] != null && response['data']['usage_percentage'] != null) {
-        return (response['data']['usage_percentage'] as num).toDouble();
+      final responseData = await _apiService.get('subscription/token-usage', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null && responseData['data']['usage_percentage'] != null) {
+        return (responseData['data']['usage_percentage'] as num).toDouble();
       }
+      print('Error fetching token usage: Invalid responseData structure: $responseData');
       return 0.0;
     } catch (e) {
       print('Error fetching token usage: $e');
@@ -61,10 +65,11 @@ class SubscriptionRepository {
 
   Future<int> getAvailableTokens() async {
     try {
-      final response = await _apiService.get('subscription/available-tokens');
-      if (response['data'] != null && response['data']['tokens'] != null) {
-        return (response['data']['tokens'] as num).toInt();
+      final responseData = await _apiService.get('subscription/available-tokens', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null && responseData['data']['tokens'] != null) {
+        return (responseData['data']['tokens'] as num).toInt();
       }
+      print('Error fetching available tokens: Invalid responseData structure: $responseData');
       return 0;
     } catch (e) {
       print('Error fetching available tokens: $e');
@@ -74,13 +79,14 @@ class SubscriptionRepository {
 
   Future<List<Invoice>> getInvoices() async {
     try {
-      final response = await _apiService.get('subscription/invoices');
-      if (response['data'] != null && response['data'] is List) {
-        return (response['data'] as List)
+      final responseData = await _apiService.get('subscription/invoices', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null && responseData['data'] is List) {
+        return (responseData['data'] as List)
             .map((invoiceData) => Invoice.fromJson(invoiceData))
             .toList();
       }
-      return [];
+      print('Error fetching invoices: Invalid responseData structure: $responseData');
+      return _invoices_fallback;
     } catch (e) {
       print('Error fetching invoices: $e');
       return _invoices_fallback;
@@ -89,13 +95,14 @@ class SubscriptionRepository {
 
   Future<List<PaymentMethod>> getPaymentMethods() async {
     try {
-      final response = await _apiService.get('subscription/payment-methods');
-      if (response['data'] != null && response['data'] is List) {
-        return (response['data'] as List)
+      final responseData = await _apiService.get('subscription/payment-methods', requiresAuth: true);
+      if (responseData != null && responseData['data'] != null && responseData['data'] is List) {
+        return (responseData['data'] as List)
             .map((pmData) => PaymentMethod.fromJson(pmData))
             .toList();
       }
-      return [];
+      print('Error fetching payment methods: Invalid responseData structure: $responseData');
+      return _paymentMethods_fallback;
     } catch (e) {
       print('Error fetching payment methods: $e');
       return _paymentMethods_fallback;
@@ -113,11 +120,13 @@ class SubscriptionRepository {
   Future<void> changeSubscriptionTier(SubscriptionTierType newTierType) async {
     print('SubscriptionRepository: Attempting to change subscription to $newTierType via API');
     try {
-      final response = await _apiService.post('subscription/change-tier', body: {'newTierType': newTierType.toString().split('.').last});
-      print('SubscriptionRepository: API call to change tier successful. Response: $response');
+      await _apiService.post('subscription/change-tier', 
+        body: {'newTierType': newTierType.toString().split('.').last},
+        requiresAuth: true
+      );
+      print('SubscriptionRepository: API call to change tier successful.');
 
       final newTierData = _tiers_fallback.firstWhere((t) => t.type == newTierType, orElse: () => _currentTier_fallback);
-
       final tierPrice = _parsePrice(newTierData.price);
       if (tierPrice > 0) {
         final expense = Expense(
@@ -144,8 +153,11 @@ class SubscriptionRepository {
   Future<void> topUpAdhaTokens(double amount) async {
     print('SubscriptionRepository: Attempting to top up Adha tokens for $amount FCFA via API');
     try {
-      final response = await _apiService.post('subscription/topup-tokens', body: {'amount': amount});
-      print('SubscriptionRepository: API call to topup tokens successful. Response: $response');
+      await _apiService.post('subscription/topup-tokens', 
+        body: {'amount': amount.toString()},
+        requiresAuth: true
+      );
+      print('SubscriptionRepository: API call to topup tokens successful.');
 
       const double fcfaPerToken = 10.0;
       int tokensToAdd = (amount / fcfaPerToken).round();
@@ -173,19 +185,26 @@ class SubscriptionRepository {
   Future<String> uploadPaymentProof(File imageFile) async {
     print('SubscriptionRepository: Uploading payment proof via API: ${imageFile.path}');
     try {
-      // Use postMultipart for file uploads
       final response = await _apiService.postMultipart(
-        endpoint: 'subscription/upload-proof',
+        'subscription/upload-proof',
         file: imageFile,
-        fileField: 'proofImage', // Make sure this matches the backend expected field name
+        fileField: 'proofImage',
+        requiresAuth: true
       );
       
-      if (response['data'] != null && response['data']['proofUrl'] != null) {
-        final proofUrl = response['data']['proofUrl'] as String;
-        print('SubscriptionRepository: Proof uploaded successfully via API. URL: $proofUrl');
-        return proofUrl;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['data'] != null && responseData['data']['proofUrl'] != null) {
+          final proofUrl = responseData['data']['proofUrl'] as String;
+          print('SubscriptionRepository: Proof uploaded successfully via API. URL: $proofUrl');
+          return proofUrl;
+        }
+        print('Error uploading payment proof: Invalid responseData structure in 2xx response: ${response.body}');
+        throw Exception('Payment proof upload failed: Invalid API response structure.');
+      } else {
+        print('Error uploading payment proof: Status ${response.statusCode}, Body: ${response.body}');
+        throw Exception('Payment proof upload failed: Status code ${response.statusCode}.');
       }
-      throw Exception('Payment proof upload failed: Invalid API response structure.');
     } catch (e) {
       print('Error uploading payment proof via API: $e');
       throw Exception('Failed to upload payment proof: $e');
@@ -200,35 +219,6 @@ class SubscriptionRepository {
 
   SubscriptionTier _currentTier_fallback = SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium, isCurrent: true);
 
-  final List<Invoice> _invoices_fallback = [
-    Invoice(id: 'INV-2024-001', date: DateTime.now().subtract(const Duration(days: 35)), amount: 5000, status: 'Payée', downloadUrl: 'https://example.com/invoice/INV-2024-001.pdf'),
-    Invoice(id: 'INV-2024-002', date: DateTime.now().subtract(const Duration(days: 5)), amount: 5000, status: 'En attente', downloadUrl: 'https://example.com/invoice/INV-2024-002.pdf'),
-  ];
-
-  final List<PaymentMethod> _paymentMethods_fallback = [
-    PaymentMethod(id: 'pm_card_123', name: 'Visa **** 1234', type: 'card', details: 'Expire 12/26'),
-    PaymentMethod(id: 'pm_momo_456', name: 'Orange Money 77xxxxxx', type: 'mobile_money', details: 'Principal'),
-  ];
-}
-
-extension SubscriptionTierCopyWith on SubscriptionTier {
-  SubscriptionTier copyWith({
-    String? name,
-    String? price,
-    String? users,
-    List<String>? features,
-    String? adhaTokens,
-    SubscriptionTierType? type,
-    bool? isCurrent,
-  }) {
-    return SubscriptionTier(
-      name: name ?? this.name,
-      price: price ?? this.price,
-      users: users ?? this.users,
-      features: features ?? this.features,
-      adhaTokens: adhaTokens ?? this.adhaTokens,
-      type: type ?? this.type,
-      isCurrent: isCurrent ?? this.isCurrent,
-    );
-  }
+  final List<Invoice> _invoices_fallback = [];
+  final List<PaymentMethod> _paymentMethods_fallback = [];
 }

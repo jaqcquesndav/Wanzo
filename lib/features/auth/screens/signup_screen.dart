@@ -58,8 +58,10 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _validateCurrentStep() {
     switch (_currentStep) {
       case 0: // Informations personnelles
+        final String email = _emailController.text.trim(); // Trim email once
         if (_ownerNameController.text.trim().isEmpty) return false;
-        if (_emailController.text.trim().isEmpty || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text)) return false;
+        // Use the trimmed email for both isEmpty and regex checks
+        if (email.isEmpty || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) return false;
         if (_phoneController.text.trim().isEmpty) return false;
         if (_passwordController.text.isEmpty || _passwordController.text.length < 8) return false;
         if (_passwordController.text != _confirmPasswordController.text) return false;

@@ -3,7 +3,7 @@ import '../models/settings.dart';
 
 /// Repository pour gérer les paramètres de l'application
 class SettingsRepository {
-  static const _settingsBoxName = 'settings';
+  static const _settingsBoxName = 'settingsBox'; // Corrected box name to match main.dart
   static const _settingsKey = 'app_settings';
   
   late Box<Settings> _settingsBox;
@@ -11,12 +11,16 @@ class SettingsRepository {
   /// Initialise le repository
   Future<void> init() async {
     // Enregistrement des adaptateurs Hive
-    if (!Hive.isAdapterRegistered(7)) {
+    if (!Hive.isAdapterRegistered(SettingsAdapter().typeId)) { // Use adapter typeId
       Hive.registerAdapter(SettingsAdapter());
     }
     
-    if (!Hive.isAdapterRegistered(8)) {
+    if (!Hive.isAdapterRegistered(AppThemeModeAdapter().typeId)) { // Use adapter typeId
       Hive.registerAdapter(AppThemeModeAdapter());
+    }
+    
+    if (!Hive.isAdapterRegistered(CurrencyTypeAdapter().typeId)) { // Register CurrencyTypeAdapter
+      Hive.registerAdapter(CurrencyTypeAdapter());
     }
     
     _settingsBox = await Hive.openBox<Settings>(_settingsBoxName);
@@ -41,27 +45,33 @@ class SettingsRepository {
   Future<Settings> updateSettings(Settings updates) async {
     final currentSettings = await getSettings();
     final newSettings = currentSettings.copyWith(
-      companyName: updates.companyName != '' ? updates.companyName : null,
-      companyAddress: updates.companyAddress != '' ? updates.companyAddress : null,
-      companyPhone: updates.companyPhone != '' ? updates.companyPhone : null,
-      companyEmail: updates.companyEmail != '' ? updates.companyEmail : null,
-      companyLogo: updates.companyLogo != '' ? updates.companyLogo : null,
-      currency: updates.currency != '' ? updates.currency : null,
-      dateFormat: updates.dateFormat != '' ? updates.dateFormat : null,
-      themeMode: updates.themeMode != currentSettings.themeMode ? updates.themeMode : null,
-      language: updates.language != '' ? updates.language : null,
-      showTaxes: updates.showTaxes != currentSettings.showTaxes ? updates.showTaxes : null,
-      defaultTaxRate: updates.defaultTaxRate != currentSettings.defaultTaxRate ? updates.defaultTaxRate : null,
-      invoiceNumberFormat: updates.invoiceNumberFormat != '' ? updates.invoiceNumberFormat : null,
-      invoicePrefix: updates.invoicePrefix != '' ? updates.invoicePrefix : null,
-      defaultPaymentTerms: updates.defaultPaymentTerms != '' ? updates.defaultPaymentTerms : null,
-      defaultInvoiceNotes: updates.defaultInvoiceNotes != '' ? updates.defaultInvoiceNotes : null,
-      taxIdentificationNumber: updates.taxIdentificationNumber != '' ? updates.taxIdentificationNumber : null,
-      defaultProductCategory: updates.defaultProductCategory != '' ? updates.defaultProductCategory : null,
-      lowStockAlertDays: updates.lowStockAlertDays != currentSettings.lowStockAlertDays ? updates.lowStockAlertDays : null,
-      backupEnabled: updates.backupEnabled != currentSettings.backupEnabled ? updates.backupEnabled : null,
-      backupFrequency: updates.backupFrequency != currentSettings.backupFrequency ? updates.backupFrequency : null,
-      reportEmail: updates.reportEmail != '' ? updates.reportEmail : null,
+      companyName: updates.companyName != '' ? updates.companyName : currentSettings.companyName,
+      companyAddress: updates.companyAddress != '' ? updates.companyAddress : currentSettings.companyAddress,
+      companyPhone: updates.companyPhone != '' ? updates.companyPhone : currentSettings.companyPhone,
+      companyEmail: updates.companyEmail != '' ? updates.companyEmail : currentSettings.companyEmail,
+      companyLogo: updates.companyLogo != '' ? updates.companyLogo : currentSettings.companyLogo,
+      currency: updates.currency != currentSettings.currency ? updates.currency : currentSettings.currency, // Adjusted for enum
+      dateFormat: updates.dateFormat != '' ? updates.dateFormat : currentSettings.dateFormat,
+      themeMode: updates.themeMode != currentSettings.themeMode ? updates.themeMode : currentSettings.themeMode,
+      language: updates.language != '' ? updates.language : currentSettings.language,
+      showTaxes: updates.showTaxes != currentSettings.showTaxes ? updates.showTaxes : currentSettings.showTaxes,
+      defaultTaxRate: updates.defaultTaxRate != currentSettings.defaultTaxRate ? updates.defaultTaxRate : currentSettings.defaultTaxRate,
+      invoiceNumberFormat: updates.invoiceNumberFormat != '' ? updates.invoiceNumberFormat : currentSettings.invoiceNumberFormat,
+      invoicePrefix: updates.invoicePrefix != '' ? updates.invoicePrefix : currentSettings.invoicePrefix,
+      defaultPaymentTerms: updates.defaultPaymentTerms != '' ? updates.defaultPaymentTerms : currentSettings.defaultPaymentTerms,
+      defaultInvoiceNotes: updates.defaultInvoiceNotes != '' ? updates.defaultInvoiceNotes : currentSettings.defaultInvoiceNotes,
+      taxIdentificationNumber: updates.taxIdentificationNumber != '' ? updates.taxIdentificationNumber : currentSettings.taxIdentificationNumber,
+      defaultProductCategory: updates.defaultProductCategory != '' ? updates.defaultProductCategory : currentSettings.defaultProductCategory,
+      lowStockAlertDays: updates.lowStockAlertDays != currentSettings.lowStockAlertDays ? updates.lowStockAlertDays : currentSettings.lowStockAlertDays,
+      backupEnabled: updates.backupEnabled != currentSettings.backupEnabled ? updates.backupEnabled : currentSettings.backupEnabled,
+      backupFrequency: updates.backupFrequency != currentSettings.backupFrequency ? updates.backupFrequency : currentSettings.backupFrequency,
+      reportEmail: updates.reportEmail != '' ? updates.reportEmail : currentSettings.reportEmail,
+      rccmNumber: updates.rccmNumber != '' ? updates.rccmNumber : currentSettings.rccmNumber,
+      idNatNumber: updates.idNatNumber != '' ? updates.idNatNumber : currentSettings.idNatNumber,
+      pushNotificationsEnabled: updates.pushNotificationsEnabled != currentSettings.pushNotificationsEnabled ? updates.pushNotificationsEnabled : currentSettings.pushNotificationsEnabled,
+      inAppNotificationsEnabled: updates.inAppNotificationsEnabled != currentSettings.inAppNotificationsEnabled ? updates.inAppNotificationsEnabled : currentSettings.inAppNotificationsEnabled,
+      emailNotificationsEnabled: updates.emailNotificationsEnabled != currentSettings.emailNotificationsEnabled ? updates.emailNotificationsEnabled : currentSettings.emailNotificationsEnabled,
+      soundNotificationsEnabled: updates.soundNotificationsEnabled != currentSettings.soundNotificationsEnabled ? updates.soundNotificationsEnabled : currentSettings.soundNotificationsEnabled,
     );
     
     await saveSettings(newSettings);
@@ -79,87 +89,110 @@ class SettingsRepository {
 /// Adaptateur Hive pour Settings
 class SettingsAdapter extends TypeAdapter<Settings> {
   @override
-  final int typeId = 7;
+  final int typeId = 26; // Match typeId in Settings model
 
   @override
   Settings read(BinaryReader reader) {
-    final companyName = reader.readString();
-    final companyAddress = reader.readString();
-    final companyPhone = reader.readString();
-    final companyEmail = reader.readString();
-    final companyLogo = reader.readString();
-    final currency = reader.readString();
-    final dateFormat = reader.readString();
-    final themeModeIndex = reader.readInt();
-    final language = reader.readString();
-    final showTaxes = reader.readBool();
-    final defaultTaxRate = reader.readDouble();
-    final invoiceNumberFormat = reader.readString();
-    final invoicePrefix = reader.readString();
-    final defaultPaymentTerms = reader.readString();
-    final defaultInvoiceNotes = reader.readString();
-    final taxIdentificationNumber = reader.readString();
-    final defaultProductCategory = reader.readString();
-    final lowStockAlertDays = reader.readInt();
-    final backupEnabled = reader.readBool();
-    final backupFrequency = reader.readInt();
-    final reportEmail = reader.readString();
-    
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
     return Settings(
-      companyName: companyName,
-      companyAddress: companyAddress,
-      companyPhone: companyPhone,
-      companyEmail: companyEmail,
-      companyLogo: companyLogo,
-      currency: currency,
-      dateFormat: dateFormat,
-      themeMode: AppThemeMode.values[themeModeIndex],
-      language: language,
-      showTaxes: showTaxes,
-      defaultTaxRate: defaultTaxRate,
-      invoiceNumberFormat: invoiceNumberFormat,
-      invoicePrefix: invoicePrefix,
-      defaultPaymentTerms: defaultPaymentTerms,
-      defaultInvoiceNotes: defaultInvoiceNotes,
-      taxIdentificationNumber: taxIdentificationNumber,
-      defaultProductCategory: defaultProductCategory,
-      lowStockAlertDays: lowStockAlertDays,
-      backupEnabled: backupEnabled,
-      backupFrequency: backupFrequency,
-      reportEmail: reportEmail,
+      companyName: fields[0] as String,
+      companyAddress: fields[1] as String,
+      companyPhone: fields[2] as String,
+      companyEmail: fields[3] as String,
+      companyLogo: fields[4] as String,
+      currency: fields[5] as CurrencyType, // Read as CurrencyType
+      dateFormat: fields[6] as String,
+      themeMode: fields[7] as AppThemeMode,
+      language: fields[8] as String,
+      showTaxes: fields[9] as bool,
+      defaultTaxRate: fields[10] as double,
+      invoiceNumberFormat: fields[11] as String,
+      invoicePrefix: fields[12] as String,
+      defaultPaymentTerms: fields[13] as String,
+      defaultInvoiceNotes: fields[14] as String,
+      taxIdentificationNumber: fields[15] as String,
+      defaultProductCategory: fields[16] as String,
+      lowStockAlertDays: fields[17] as int,
+      backupEnabled: fields[18] as bool,
+      backupFrequency: fields[19] as int,
+      reportEmail: fields[20] as String,
+      rccmNumber: fields[21] as String,
+      idNatNumber: fields[22] as String,
+      pushNotificationsEnabled: fields[23] as bool,
+      inAppNotificationsEnabled: fields[24] as bool,
+      emailNotificationsEnabled: fields[25] as bool,
+      soundNotificationsEnabled: fields[26] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Settings obj) {
-    writer.writeString(obj.companyName);
-    writer.writeString(obj.companyAddress);
-    writer.writeString(obj.companyPhone);
-    writer.writeString(obj.companyEmail);
-    writer.writeString(obj.companyLogo);
-    writer.writeString(obj.currency);
-    writer.writeString(obj.dateFormat);
-    writer.writeInt(obj.themeMode.index);
-    writer.writeString(obj.language);
-    writer.writeBool(obj.showTaxes);
-    writer.writeDouble(obj.defaultTaxRate);
-    writer.writeString(obj.invoiceNumberFormat);
-    writer.writeString(obj.invoicePrefix);
-    writer.writeString(obj.defaultPaymentTerms);
-    writer.writeString(obj.defaultInvoiceNotes);
-    writer.writeString(obj.taxIdentificationNumber);
-    writer.writeString(obj.defaultProductCategory);
-    writer.writeInt(obj.lowStockAlertDays);
-    writer.writeBool(obj.backupEnabled);
-    writer.writeInt(obj.backupFrequency);
-    writer.writeString(obj.reportEmail);
+    writer
+      ..writeByte(27) // Number of fields
+      ..writeByte(0)
+      ..write(obj.companyName)
+      ..writeByte(1)
+      ..write(obj.companyAddress)
+      ..writeByte(2)
+      ..write(obj.companyPhone)
+      ..writeByte(3)
+      ..write(obj.companyEmail)
+      ..writeByte(4)
+      ..write(obj.companyLogo)
+      ..writeByte(5)
+      ..write(obj.currency) // Write CurrencyType enum
+      ..writeByte(6)
+      ..write(obj.dateFormat)
+      ..writeByte(7)
+      ..write(obj.themeMode)
+      ..writeByte(8)
+      ..write(obj.language)
+      ..writeByte(9)
+      ..write(obj.showTaxes)
+      ..writeByte(10)
+      ..write(obj.defaultTaxRate)
+      ..writeByte(11)
+      ..write(obj.invoiceNumberFormat)
+      ..writeByte(12)
+      ..write(obj.invoicePrefix)
+      ..writeByte(13)
+      ..write(obj.defaultPaymentTerms)
+      ..writeByte(14)
+      ..write(obj.defaultInvoiceNotes)
+      ..writeByte(15)
+      ..write(obj.taxIdentificationNumber)
+      ..writeByte(16)
+      ..write(obj.defaultProductCategory)
+      ..writeByte(17)
+      ..write(obj.lowStockAlertDays)
+      ..writeByte(18)
+      ..write(obj.backupEnabled)
+      ..writeByte(19)
+      ..write(obj.backupFrequency)
+      ..writeByte(20)
+      ..write(obj.reportEmail)
+      ..writeByte(21)
+      ..write(obj.rccmNumber)
+      ..writeByte(22)
+      ..write(obj.idNatNumber)
+      ..writeByte(23)
+      ..write(obj.pushNotificationsEnabled)
+      ..writeByte(24)
+      ..write(obj.inAppNotificationsEnabled)
+      ..writeByte(25)
+      ..write(obj.emailNotificationsEnabled)
+      ..writeByte(26)
+      ..write(obj.soundNotificationsEnabled);
   }
 }
 
 /// Adaptateur Hive pour AppThemeMode
 class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
   @override
-  final int typeId = 8;
+  final int typeId = 27; // Match typeId in AppThemeMode enum
 
   @override
   AppThemeMode read(BinaryReader reader) {
@@ -169,5 +202,21 @@ class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
   @override
   void write(BinaryWriter writer, AppThemeMode obj) {
     writer.writeInt(obj.index);
+  }
+}
+
+/// Adaptateur Hive pour CurrencyType
+class CurrencyTypeAdapter extends TypeAdapter<CurrencyType> {
+  @override
+  final int typeId = 28; // Match typeId in CurrencyType enum
+
+  @override
+  CurrencyType read(BinaryReader reader) {
+    return CurrencyType.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, CurrencyType obj) {
+    writer.writeByte(obj.index);
   }
 }

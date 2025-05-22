@@ -63,3 +63,31 @@ class CustomerAdapter extends TypeAdapter<Customer> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Customer _$CustomerFromJson(Map<String, dynamic> json) => Customer(
+      id: json['id'] as String,
+      fullName: json['fullName'] as String,
+      phoneNumber: json['phoneNumber'] as String,
+      email: json['email'] as String?,
+      address: json['address'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      notes: json['notes'] as String?,
+      totalPurchases: (json['totalPurchases'] as num?)?.toDouble(),
+      profilePicture: json['profilePicture'] as String?,
+    );
+
+Map<String, dynamic> _$CustomerToJson(Customer instance) => <String, dynamic>{
+      'id': instance.id,
+      'fullName': instance.fullName,
+      'phoneNumber': instance.phoneNumber,
+      if (instance.email case final value?) 'email': value,
+      if (instance.address case final value?) 'address': value,
+      'createdAt': instance.createdAt.toIso8601String(),
+      if (instance.notes case final value?) 'notes': value,
+      if (instance.totalPurchases case final value?) 'totalPurchases': value,
+      if (instance.profilePicture case final value?) 'profilePicture': value,
+    };

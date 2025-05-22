@@ -1,13 +1,15 @@
-﻿import "package:flutter/material.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
-import "package:go_router/go_router.dart";
-import "package:intl/intl.dart";
-import "../../../constants/spacing.dart";
-import "../bloc/sales_bloc.dart";
-import "../models/sale.dart";
-import '../../settings/bloc/settings_bloc.dart';
-import '../../settings/bloc/settings_state.dart';
-import '../../invoice/services/invoice_service.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart';
+import 'package:wanzo/constants/spacing.dart';
+import 'package:wanzo/features/sales/bloc/sales_bloc.dart';
+import 'package:wanzo/features/sales/models/sale.dart';
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
+import 'package:wanzo/features/settings/bloc/settings_state.dart';
+import 'package:wanzo/features/settings/models/settings.dart';
+import 'package:wanzo/features/invoice/services/invoice_service.dart';
 
 /// Écran de détails d'une vente
 class SaleDetailsScreen extends StatelessWidget {
@@ -20,10 +22,15 @@ class SaleDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(
-      symbol: "FC",
-      decimalDigits: 0,
-    );
+    final settingsState = context.watch<SettingsBloc>().state;
+    CurrencyType currencyType;
+    if (settingsState is SettingsLoaded) {
+      currencyType = settingsState.settings.currency;
+    } else if (settingsState is SettingsUpdated) {
+      currencyType = settingsState.settings.currency;
+    } else {
+      currencyType = CurrencyType.cdf; // Default currency
+    }
 
     Color statusColor;
     String statusText;
@@ -134,7 +141,7 @@ class SaleDetailsScreen extends StatelessWidget {
                         Chip(
                           label: Text(
                             statusText,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
@@ -192,7 +199,7 @@ class SaleDetailsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          currencyFormat.format(sale.totalAmount),
+                          formatCurrency(sale.totalAmount, currencyType),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -201,8 +208,8 @@ class SaleDetailsScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Payé"),
-                        Text(currencyFormat.format(sale.paidAmount)),
+                        const Text("Payé"),
+                        Text(formatCurrency(sale.paidAmount, currencyType)),
                       ],
                     ),
                     const SizedBox(height: WanzoSpacing.xs),
@@ -219,8 +226,7 @@ class SaleDetailsScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          currencyFormat.format(
-                              sale.totalAmount - sale.paidAmount),
+                          formatCurrency(sale.totalAmount - sale.paidAmount, currencyType),
                           style: TextStyle(
                             color: sale.totalAmount > sale.paidAmount
                                 ? Colors.red
@@ -253,10 +259,10 @@ class SaleDetailsScreen extends StatelessWidget {
                   return ListTile(
                     title: Text(item.productName),
                     subtitle: Text(
-                      "${item.quantity} × ${currencyFormat.format(item.unitPrice)}",
+                      "${item.quantity.toInt()} × ${formatCurrency(item.unitPrice, currencyType)}",
                     ),
                     trailing: Text(
-                      currencyFormat.format(item.totalPrice),
+                      formatCurrency(item.totalPrice, currencyType),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   );
@@ -330,18 +336,18 @@ class SaleDetailsScreen extends StatelessWidget {
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Confirmer la suppression"),
         content: const Text(
             "Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible."),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text("Annuler"),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               context.read<SalesBloc>().add(DeleteSale(sale.id));
               GoRouter.of(context).pop();
             },
@@ -360,27 +366,38 @@ class SaleDetailsScreen extends StatelessWidget {
     final invoiceService = InvoiceService();
     final settingsBloc = context.read<SettingsBloc>();
     final settingsState = settingsBloc.state;
+    Settings? currentSettings;
+
+    if (settingsState is SettingsLoaded) {
+      currentSettings = settingsState.settings;
+    } else if (settingsState is SettingsUpdated) {
+      currentSettings = settingsState.settings;
+    }
     
     try {
-      if (settingsState is SettingsLoaded) {
+      if (currentSettings != null) {
         // Générer et afficher la facture/ticket avec les paramètres
-        final pdfPath = await invoiceService.generateInvoicePdf(sale, settingsState.settings);
-        await invoiceService.previewDocument(pdfPath);
+        final pdfPath = await invoiceService.generateInvoicePdf(sale, currentSettings);
+        if (context.mounted) {
+          await invoiceService.previewDocument(pdfPath);
+        }
       } else {
-        // Fallback si les paramètres ne sont pas disponibles
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Impossible de générer la facture : paramètres non chargés'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Impossible de générer la facture : paramètres non chargés'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(        SnackBar(
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur lors de la génération de la facture: $e'),
           backgroundColor: Colors.red,
-        ),
-      );
+        ));
+      }
     }
   }
 
@@ -389,30 +406,37 @@ class SaleDetailsScreen extends StatelessWidget {
     final invoiceService = InvoiceService();
     final settingsBloc = context.read<SettingsBloc>();
     final settingsState = settingsBloc.state;
+    Settings? currentSettings;
+
+    if (settingsState is SettingsLoaded) {
+      currentSettings = settingsState.settings;
+    } else if (settingsState is SettingsUpdated) {
+      currentSettings = settingsState.settings;
+    }
     
     try {
-      if (settingsState is SettingsLoaded) {
-        // Customer phone number might not be directly on sale object.
-        // Pass null for now, or retrieve if available and necessary.
+      if (currentSettings != null) {
         await invoiceService.shareInvoice(
           sale, 
-          settingsState.settings,
-          // customerPhoneNumber: sale.customerPhoneNumber, // Example if available
+          currentSettings,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Impossible de partager : paramètres non chargés'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Impossible de partager : paramètres non chargés'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(        SnackBar(
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur lors du partage de la facture: $e'),
           backgroundColor: Colors.red,
-        ),
-      );
+        ));
+      }
     }
   }
 }

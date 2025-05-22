@@ -213,3 +213,61 @@ class ProductUnitAdapter extends TypeAdapter<ProductUnit> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Product _$ProductFromJson(Map<String, dynamic> json) => Product(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String? ?? '',
+      barcode: json['barcode'] as String? ?? '',
+      category: $enumDecode(_$ProductCategoryEnumMap, json['category']),
+      costPrice: (json['costPrice'] as num).toDouble(),
+      sellingPrice: (json['sellingPrice'] as num).toDouble(),
+      stockQuantity: (json['stockQuantity'] as num).toDouble(),
+      unit: $enumDecode(_$ProductUnitEnumMap, json['unit']),
+      alertThreshold: (json['alertThreshold'] as num?)?.toDouble() ?? 5,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      imagePath: json['imagePath'] as String?,
+    );
+
+Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'barcode': instance.barcode,
+      'category': _$ProductCategoryEnumMap[instance.category]!,
+      'costPrice': instance.costPrice,
+      'sellingPrice': instance.sellingPrice,
+      'stockQuantity': instance.stockQuantity,
+      'unit': _$ProductUnitEnumMap[instance.unit]!,
+      'alertThreshold': instance.alertThreshold,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      if (instance.imagePath case final value?) 'imagePath': value,
+    };
+
+const _$ProductCategoryEnumMap = {
+  ProductCategory.food: 'food',
+  ProductCategory.drink: 'drink',
+  ProductCategory.electronics: 'electronics',
+  ProductCategory.clothing: 'clothing',
+  ProductCategory.household: 'household',
+  ProductCategory.hygiene: 'hygiene',
+  ProductCategory.office: 'office',
+  ProductCategory.other: 'other',
+};
+
+const _$ProductUnitEnumMap = {
+  ProductUnit.piece: 'piece',
+  ProductUnit.kg: 'kg',
+  ProductUnit.g: 'g',
+  ProductUnit.l: 'l',
+  ProductUnit.ml: 'ml',
+  ProductUnit.package: 'package',
+  ProductUnit.box: 'box',
+  ProductUnit.other: 'other',
+};

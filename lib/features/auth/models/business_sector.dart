@@ -1,17 +1,27 @@
 import 'package:equatable/equatable.dart';
+import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'business_sector.g.dart';
 
 /// Modèle représentant un secteur d'activité pour une entreprise
+@JsonSerializable()
+@HiveType(typeId: 4) // Added HiveType
 class BusinessSector extends Equatable {
   /// Identifiant unique du secteur
+  @HiveField(0) // Added HiveField
   final String id;
   
   /// Nom du secteur d'activité
+  @HiveField(1) // Added HiveField
   final String name;
   
   /// Description du secteur
+  @HiveField(2) // Added HiveField
   final String description;
   
   /// Icône représentant le secteur
+  @HiveField(3) // Added HiveField
   final String icon;
   
   /// Constructeur
@@ -24,6 +34,12 @@ class BusinessSector extends Equatable {
   
   @override
   List<Object?> get props => [id, name, description, icon];
+
+  /// Creates a BusinessSector from a JSON object.
+  factory BusinessSector.fromJson(Map<String, dynamic> json) => _$BusinessSectorFromJson(json);
+
+  /// Converts this BusinessSector instance to a JSON object.
+  Map<String, dynamic> toJson() => _$BusinessSectorToJson(this);
 }
 
 /// Liste des secteurs d'activité courants en Afrique

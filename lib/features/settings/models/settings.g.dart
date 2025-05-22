@@ -8,7 +8,7 @@ part of 'settings.dart';
 
 class SettingsAdapter extends TypeAdapter<Settings> {
   @override
-  final int typeId = 14;
+  final int typeId = 26;
 
   @override
   Settings read(BinaryReader reader) {
@@ -120,7 +120,7 @@ class SettingsAdapter extends TypeAdapter<Settings> {
 
 class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
   @override
-  final int typeId = 15;
+  final int typeId = 27;
 
   @override
   AppThemeMode read(BinaryReader reader) {
@@ -161,3 +161,83 @@ class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
+      companyName: json['companyName'] as String? ?? '',
+      companyAddress: json['companyAddress'] as String? ?? '',
+      companyPhone: json['companyPhone'] as String? ?? '',
+      companyEmail: json['companyEmail'] as String? ?? '',
+      companyLogo: json['companyLogo'] as String? ?? '',
+      currency: json['currency'] as String? ?? 'FC',
+      dateFormat: json['dateFormat'] as String? ?? 'DD/MM/YYYY',
+      themeMode:
+          $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
+              AppThemeMode.system,
+      language: json['language'] as String? ?? 'fr',
+      showTaxes: json['showTaxes'] as bool? ?? true,
+      defaultTaxRate: (json['defaultTaxRate'] as num?)?.toDouble() ?? 16.0,
+      invoiceNumberFormat:
+          json['invoiceNumberFormat'] as String? ?? 'INV-{YEAR}-{SEQ}',
+      invoicePrefix: json['invoicePrefix'] as String? ?? 'INV',
+      defaultPaymentTerms:
+          json['defaultPaymentTerms'] as String? ?? 'Paiement sous 30 jours',
+      defaultInvoiceNotes: json['defaultInvoiceNotes'] as String? ??
+          'Merci pour votre confiance !',
+      taxIdentificationNumber: json['taxIdentificationNumber'] as String? ?? '',
+      defaultProductCategory:
+          json['defaultProductCategory'] as String? ?? 'Général',
+      lowStockAlertDays: (json['lowStockAlertDays'] as num?)?.toInt() ?? 7,
+      backupEnabled: json['backupEnabled'] as bool? ?? false,
+      backupFrequency: (json['backupFrequency'] as num?)?.toInt() ?? 7,
+      reportEmail: json['reportEmail'] as String? ?? '',
+      rccmNumber: json['rccmNumber'] as String? ?? '',
+      idNatNumber: json['idNatNumber'] as String? ?? '',
+      pushNotificationsEnabled:
+          json['pushNotificationsEnabled'] as bool? ?? true,
+      inAppNotificationsEnabled:
+          json['inAppNotificationsEnabled'] as bool? ?? true,
+      emailNotificationsEnabled:
+          json['emailNotificationsEnabled'] as bool? ?? false,
+      soundNotificationsEnabled:
+          json['soundNotificationsEnabled'] as bool? ?? true,
+    );
+
+Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
+      'companyName': instance.companyName,
+      'companyAddress': instance.companyAddress,
+      'companyPhone': instance.companyPhone,
+      'companyEmail': instance.companyEmail,
+      'companyLogo': instance.companyLogo,
+      'currency': instance.currency,
+      'dateFormat': instance.dateFormat,
+      'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
+      'language': instance.language,
+      'showTaxes': instance.showTaxes,
+      'defaultTaxRate': instance.defaultTaxRate,
+      'invoiceNumberFormat': instance.invoiceNumberFormat,
+      'invoicePrefix': instance.invoicePrefix,
+      'defaultPaymentTerms': instance.defaultPaymentTerms,
+      'defaultInvoiceNotes': instance.defaultInvoiceNotes,
+      'taxIdentificationNumber': instance.taxIdentificationNumber,
+      'defaultProductCategory': instance.defaultProductCategory,
+      'lowStockAlertDays': instance.lowStockAlertDays,
+      'backupEnabled': instance.backupEnabled,
+      'backupFrequency': instance.backupFrequency,
+      'reportEmail': instance.reportEmail,
+      'rccmNumber': instance.rccmNumber,
+      'idNatNumber': instance.idNatNumber,
+      'pushNotificationsEnabled': instance.pushNotificationsEnabled,
+      'inAppNotificationsEnabled': instance.inAppNotificationsEnabled,
+      'emailNotificationsEnabled': instance.emailNotificationsEnabled,
+      'soundNotificationsEnabled': instance.soundNotificationsEnabled,
+    };
+
+const _$AppThemeModeEnumMap = {
+  AppThemeMode.light: 'light',
+  AppThemeMode.dark: 'dark',
+  AppThemeMode.system: 'system',
+};

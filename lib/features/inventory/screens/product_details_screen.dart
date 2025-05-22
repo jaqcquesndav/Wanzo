@@ -10,17 +10,20 @@ import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
-import '../models/stock_transaction.dart'; // Added import
-import 'add_product_screen.dart';
+import '../models/stock_transaction.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart';
+import 'package:wanzo/features/settings/models/settings.dart';
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
+import 'package:wanzo/features/settings/bloc/settings_state.dart';
 
 /// Écran de détails d'un produit
 class ProductDetailsScreen extends StatefulWidget {
   /// ID du produit
   final String productId;
-  
+
   /// Produit (optionnel, peut être obtenu à partir de l'ID)
   final Product? product;
-  
+
   const ProductDetailsScreen({
     super.key,
     required this.productId,
@@ -33,12 +36,12 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Charger les détails du produit si non fournis
     if (widget.product == null) {
       context.read<InventoryBloc>().add(LoadProduct(widget.productId));
@@ -47,7 +50,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       context.read<InventoryBloc>().add(LoadProductTransactions(widget.productId));
     }
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -70,7 +73,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
             ),
           );
         }
-      },      builder: (context, state) {
+      },
+      builder: (context, state) {
         if (state is InventoryLoading && widget.product == null) {
           return const WanzoScaffold(
             currentIndex: 2, // Stock a l'index 2
@@ -78,10 +82,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        
-        final product = widget.product ?? 
-          (state is ProductLoaded ? state.product : null);
-        
+
+        final product = widget.product ??
+            (state is ProductLoaded ? state.product : null);
+
         if (product == null) {
           return WanzoScaffold(
             currentIndex: 2, // Stock a l'index 2
@@ -91,9 +95,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               child: Text('Produit non trouvé'),
             ),
           );
-        }        
+        }
         final transactions = state is ProductLoaded ? state.transactions : [];
-        
+
         return WanzoScaffold(
           currentIndex: 2, // Stock a l'index 2
           title: 'Détails: ${product.name}',
@@ -122,12 +126,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [                    // Onglet "Informations"
+                  children: [
+                    // Onglet "Informations"
                     SingleChildScrollView(
                       padding: const EdgeInsets.all(WanzoSpacing.md),
                       child: _buildProductDetails(context, product),
                     ),
-                    
+
                     // Onglet "Historique"
                     _buildTransactionsHistory(context, transactions),
                   ],
@@ -147,21 +152,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       },
     );
   }
-  
+
   /// Construire les détails du produit
   Widget _buildProductDetails(BuildContext context, Product product) {
-    final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
-      decimalDigits: 0,
-    );
-    
+    final settingsState = context.watch<SettingsBloc>().state;
+    CurrencyType currency = CurrencyType.usd; // Default currency
+
+    if (settingsState is SettingsLoaded) {
+      currency = settingsState.settings.currency;
+    } else if (settingsState is SettingsUpdated) {
+      currency = settingsState.settings.currency;
+    }
+    // If settings are not loaded, it will use the default USD. 
+    // Consider showing a loading indicator or an error if settings are crucial and not loaded.
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // En-tête avec statut et quantité
         _buildStockStatusCard(context, product),
         const SizedBox(height: WanzoSpacing.lg),
-        
+
         // Informations générales
         _buildSectionCard(
           context,
@@ -206,7 +217,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
           ),
         ),
         const SizedBox(height: WanzoSpacing.lg),
-        
+
         // Informations de prix
         _buildSectionCard(
           context,
@@ -217,19 +228,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               _buildInfoRow(
                 context,
                 label: 'Prix d\'achat',
-                value: currencyFormat.format(product.costPrice),
+                value: formatCurrency(product.costPrice, currency),
               ),
               const Divider(),
               _buildInfoRow(
                 context,
                 label: 'Prix de vente',
-                value: currencyFormat.format(product.sellingPrice),
+                value: formatCurrency(product.sellingPrice, currency),
               ),
               const Divider(),
               _buildInfoRow(
                 context,
                 label: 'Marge bénéficiaire',
-                value: currencyFormat.format(product.profitMargin),
+                value: formatCurrency(product.profitMargin, currency),
                 valueColor: product.profitMargin > 0 ? Colors.green : Colors.red,
               ),
               const Divider(),
@@ -243,7 +254,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
           ),
         ),
         const SizedBox(height: WanzoSpacing.lg),
-        
+
         // Informations de stock
         _buildSectionCard(
           context,
@@ -267,13 +278,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               _buildInfoRow(
                 context,
                 label: 'Valeur du stock',
-                value: currencyFormat.format(product.stockValue),
+                value: formatCurrency(product.stockValue, currency),
               ),
             ],
           ),
         ),
         const SizedBox(height: WanzoSpacing.lg),
-        
+
         // Dates
         _buildSectionCard(
           context,
@@ -299,13 +310,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ],
     );
   }
-  
+
   /// Construire la carte de statut de stock
   Widget _buildStockStatusCard(BuildContext context, Product product) {
     Color statusColor;
     String statusText;
     IconData statusIcon;
-    
+
     if (product.stockQuantity <= 0) {
       statusColor = Colors.red;
       statusText = 'Rupture de stock';
@@ -319,7 +330,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       statusText = 'En stock';
       statusIcon = Icons.check_circle;
     }
-    
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -342,7 +353,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               ),
             ),
             const SizedBox(width: WanzoSpacing.md),
-            
+
             // Informations de stock
             Expanded(
               child: Column(
@@ -371,7 +382,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                 ],
               ),
             ),
-            
+
             // Bouton pour ajouter du stock
             IconButton(
               icon: const Icon(Icons.add_circle),
@@ -379,7 +390,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               onPressed: () => _showQuickStockAdjustmentDialog(context, product, true),
               tooltip: 'Ajouter du stock',
             ),
-            
+
             // Bouton pour retirer du stock
             IconButton(
               icon: const Icon(Icons.remove_circle),
@@ -394,7 +405,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ),
     );
   }
-  
+
   /// Construire une section dans une carte
   Widget _buildSectionCard(
     BuildContext context, {
@@ -427,7 +438,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ),
     );
   }
-  
+
   /// Construire une ligne d'information
   Widget _buildInfoRow(
     BuildContext context, {
@@ -457,7 +468,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ),
     );
   }
-  
+
   /// Construire l'historique des transactions
   Widget _buildTransactionsHistory(BuildContext context, List<dynamic> transactions) {
     // Si aucune transaction n'est disponible
@@ -489,7 +500,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
         ),
       );
     }
-    
+
     // Temporairement, utilisez une approche compatible jusqu'à ce que StockTransaction soit correctement implémenté
     return ListView(
       padding: const EdgeInsets.all(WanzoSpacing.md),
@@ -507,11 +518,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ],
     );
   }
-  
+
   /// Afficher le dialogue d'ajustement rapide du stock
   void _showQuickStockAdjustmentDialog(BuildContext context, Product product, bool isAddition) {
     final TextEditingController quantityController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -520,10 +531,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(isAddition 
-                ? 'Combien d\'unités souhaitez-vous ajouter au stock ?'
-                : 'Combien d\'unités souhaitez-vous retirer du stock ?'
-              ),
+              Text(isAddition
+                  ? 'Combien d\'unités souhaitez-vous ajouter au stock ?'
+                  : 'Combien d\'unités souhaitez-vous retirer du stock ?'),
               const SizedBox(height: WanzoSpacing.md),
               TextField(
                 controller: quantityController,
@@ -545,10 +555,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
             ElevatedButton(
               onPressed: () {
                 final quantity = double.tryParse(quantityController.text);
-                
+
                 if (quantity != null && quantity > 0) {
                   final adjustedQuantity = isAddition ? quantity : -quantity;
-                  
+
                   if (!isAddition && product.stockQuantity < quantity) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -558,23 +568,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                     );
                     return;
                   }
-                  
+
                   Navigator.pop(context);
-                  
+
                   // Créer la transaction
                   final transaction = StockTransaction(
                     id: '', // Sera généré par le repository
                     productId: product.id,
-                    type: isAddition 
-                        ? StockTransactionType.purchase 
+                    type: isAddition
+                        ? StockTransactionType.purchase
                         : StockTransactionType.sale,
                     quantity: adjustedQuantity,
                     date: DateTime.now(),
-                    notes: isAddition 
-                        ? 'Ajout manuel de stock' 
+                    notes: isAddition
+                        ? 'Ajout manuel de stock'
                         : 'Retrait manuel de stock',
                   );
-                  
+
                   context.read<InventoryBloc>().add(AddStockTransaction(transaction));
                 }
               },
@@ -585,14 +595,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       },
     );
   }
-  
+
   /// Afficher le dialogue d'ajout de transaction
   void _showAddTransactionDialog(BuildContext context, Product product) {
     final TextEditingController quantityController = TextEditingController();
     final TextEditingController notesController = TextEditingController();
-    
+
     StockTransactionType transactionType = StockTransactionType.purchase;
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -631,7 +641,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       },
                     ),
                     const SizedBox(height: WanzoSpacing.md),
-                    
+
                     // Quantité
                     const Text(
                       'Quantité',
@@ -647,7 +657,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: WanzoSpacing.md),
-                    
+
                     // Notes
                     const Text(
                       'Notes (optionnel)',
@@ -673,7 +683,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                 ElevatedButton(
                   onPressed: () {
                     final quantity = double.tryParse(quantityController.text);
-                    
+
                     if (quantity == null || quantity <= 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -683,18 +693,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       );
                       return;
                     }
-                    
+
                     Navigator.pop(context);
-                    
+
                     // Déterminer si c'est une entrée ou une sortie
                     double adjustedQuantity = quantity;
                     if (transactionType == StockTransactionType.sale ||
                         transactionType == StockTransactionType.transferOut ||
                         transactionType == StockTransactionType.damaged ||
-                        transactionType == StockTransactionType.lost) { 
+                        transactionType == StockTransactionType.lost) {
                       adjustedQuantity = -quantity;
                     }
-                    
+
                     // Vérifier s'il y a assez de stock pour les sorties
                     if (adjustedQuantity < 0 && product.stockQuantity < quantity) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -705,7 +715,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       );
                       return;
                     }
-                    
+
                     // Créer la transaction
                     final transaction = StockTransaction(
                       id: '', // Sera généré par le repository
@@ -715,7 +725,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       date: DateTime.now(),
                       notes: notesController.text,
                     );
-                    
+
                     context.read<InventoryBloc>().add(AddStockTransaction(transaction));
                   },
                   child: const Text('Ajouter'),
@@ -727,7 +737,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       },
     );
   }
-  
+
   /// Afficher les détails d'une transaction
   void _showTransactionDetailsDialog(BuildContext context, StockTransaction transaction) {
     showDialog(
@@ -781,7 +791,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       },
     );
   }
-  
+
   /// Construire une ligne de détail de transaction
   Widget _buildTransactionDetailRow(
     BuildContext context, {
@@ -807,12 +817,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       ],
     );
   }
-  
+
   /// Naviguer vers l'écran d'édition de produit
   void _navigateToEditProduct(BuildContext context, Product product) {
     context.push('/inventory/edit/${product.id}', extra: product);
   }
-  
+
   /// Obtenir le nom d'une catégorie
   String _getCategoryName(ProductCategory category) {
     switch (category) {
@@ -834,7 +844,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
         return 'Autres';
     }
   }
-  
+
   /// Obtenir le nom d'une unité
   String _getUnitName(ProductUnit unit) {
     switch (unit) {
@@ -856,7 +866,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
         return 'unité(s)';
     }
   }
-  
+
   /// Obtenir le nom d'un type de transaction
   String _getTransactionTypeName(StockTransactionType type) {
     switch (type) {

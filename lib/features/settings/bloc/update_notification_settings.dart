@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
-import '../models/settings.dart';
+import './settings_event.dart'; // Import the base class
 
 /// Événement pour mettre à jour les paramètres de notification
-class UpdateNotificationSettings extends SettingsEvent {
+class UpdateNotificationSettingsEvent extends SettingsEvent { // Changed class name and fixed extends
   /// Notifications push activées
   final bool pushNotificationsEnabled;
   
@@ -15,7 +15,7 @@ class UpdateNotificationSettings extends SettingsEvent {
   /// Notifications sonores activées
   final bool soundNotificationsEnabled;
   
-  const UpdateNotificationSettings({
+  const UpdateNotificationSettingsEvent({
     required this.pushNotificationsEnabled,
     required this.inAppNotificationsEnabled,
     required this.emailNotificationsEnabled,

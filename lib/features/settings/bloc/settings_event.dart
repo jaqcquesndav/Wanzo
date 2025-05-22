@@ -76,7 +76,7 @@ class UpdateCompanyInfo extends SettingsEvent {
 /// Mise à jour des paramètres de facture
 class UpdateInvoiceSettings extends SettingsEvent {
   /// Devise utilisée
-  final String? currency;
+  final CurrencyType? currency;
   
   /// Format de numéro de facture
   final String? invoiceNumberFormat;

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:intl/intl.dart'; // Not used in this version
 import 'package:uuid/uuid.dart';
 import '../../../constants/constants.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
+import '../../settings/bloc/settings_bloc.dart';
+import '../../settings/bloc/settings_state.dart';
+import '../../settings/models/settings.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../bloc/financing_bloc.dart';
 import '../models/financing_request.dart';
 
@@ -20,12 +23,9 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _reasonController = TextEditingController();
-  String _selectedCurrency = 'USD'; // Default currency
   FinancingType _selectedFinancingType = FinancingType.cashCredit;
   FinancialInstitution _selectedInstitution = FinancialInstitution.bonneMoisson;
-  int _creditScore = 75; // Example credit score, fetch from a relevant source
-
-  final List<String> _currencies = ['USD', 'CDF'];
+  int _creditScore = 75;
 
   void _showCreditScoreInfo() {
     showDialog(
@@ -61,7 +61,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
     );
   }
 
-  void _submitRequest() {
+  void _submitRequest(CurrencyType currencyType) {
     if (_formKey.currentState!.validate()) {
       final amount = double.tryParse(_amountController.text);
       if (amount == null || amount <= 0) {
@@ -74,7 +74,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
       final newRequest = FinancingRequest(
         id: const Uuid().v4(),
         amount: amount,
-        currency: _selectedCurrency,
+        currency: currencyType.name,
         reason: _reasonController.text,
         type: _selectedFinancingType,
         institution: _selectedInstitution,
@@ -87,146 +87,149 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WanzoScaffold(
-      title: 'Nouvelle Demande de Financement',
-      currentIndex: 0, // Or appropriate index if part of main navigation
-      body: BlocListener<FinancingBloc, FinancingState>(
-        listener: (context, state) {
-          if (state is FinancingOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-            context.pop(); // Go back after success
-          } else if (state is FinancingError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erreur: ${state.message}')),
-            );
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(WanzoSpacing.md),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: <Widget>[
-                // Credit Score Header
-                Card(
-                  color: WanzoColors.primary.withOpacity(0.1),
-                  elevation: 0,
-                  child: ListTile(
-                    leading: Icon(Icons.shield_outlined, color: WanzoColors.primary, size: 30),
-                    title: Text(
-                      'Votre Cote de Crédit: $_creditScore / 100',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: WanzoColors.primary),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.info_outline, color: WanzoColors.primary),
-                      onPressed: _showCreditScoreInfo,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: WanzoSpacing.lg),
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        CurrencyType currentCurrencyType = CurrencyType.usd;
+        String currencySymbol = getCurrencySymbol(currentCurrencyType);
 
-                TextFormField(
-                  controller: _amountController,
-                  decoration: const InputDecoration(labelText: 'Montant demandé'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer un montant.';
-                    }
-                    if (double.tryParse(value) == null ||
-                        double.parse(value) <= 0) {
-                      return 'Veuillez entrer un montant valide.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: WanzoSpacing.md),
-                DropdownButtonFormField<String>(
-                  value: _selectedCurrency,
-                  decoration: const InputDecoration(labelText: 'Devise'),
-                  items: _currencies.map((String currency) {
-                    return DropdownMenuItem<String>(
-                      value: currency,
-                      child: Text(currency),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedCurrency = newValue!;
-                    });
-                  },
-                ),
-                const SizedBox(height: WanzoSpacing.md),
-                TextFormField(
-                  controller: _reasonController,
-                  decoration: const InputDecoration(labelText: 'Motif de la demande'),
-                  maxLines: 3,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer le motif.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: WanzoSpacing.md),
-                DropdownButtonFormField<FinancingType>(
-                  value: _selectedFinancingType,
-                  decoration: const InputDecoration(labelText: 'Type de financement'),
-                  items: FinancingType.values.map((FinancingType type) {
-                    return DropdownMenuItem<FinancingType>(
-                      value: type,
-                      child: Text(type.displayName),
-                    );
-                  }).toList(),
-                  onChanged: (FinancingType? newValue) {
-                    setState(() {
-                      _selectedFinancingType = newValue!;
-                    });
-                  },
-                ),
-                const SizedBox(height: WanzoSpacing.md),
-                DropdownButtonFormField<FinancialInstitution>(
-                  value: _selectedInstitution,
-                  decoration: const InputDecoration(labelText: 'Institution Financière'),
-                  items: FinancialInstitution.values
-                      .map((FinancialInstitution institution) {
-                    return DropdownMenuItem<FinancialInstitution>(
-                      value: institution,
-                      child: Text(institution.displayName),
-                    );
-                  }).toList(),
-                  onChanged: (FinancialInstitution? newValue) {
-                    setState(() {
-                      _selectedInstitution = newValue!;
-                    });
-                  },
-                ),
-                const SizedBox(height: WanzoSpacing.xl),
-                ElevatedButton(
-                  onPressed: _submitRequest,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: WanzoColors.primary),
-                  child: BlocBuilder<FinancingBloc, FinancingState>(
-                    builder: (context, state) {
-                      if (state is FinancingLoading) {
-                        return const SizedBox(
-                          width: 20, height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+        if (settingsState is SettingsLoaded) {
+          currentCurrencyType = settingsState.settings.currency;
+          currencySymbol = getCurrencySymbol(currentCurrencyType);
+        } else if (settingsState is SettingsUpdated) {
+          currentCurrencyType = settingsState.settings.currency;
+          currencySymbol = getCurrencySymbol(currentCurrencyType);
+        }
+
+        return WanzoScaffold(
+          title: 'Nouvelle Demande de Financement',
+          currentIndex: 0,
+          body: BlocListener<FinancingBloc, FinancingState>(
+            listener: (context, financingBlocState) {
+              if (financingBlocState is FinancingOperationSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(financingBlocState.message)),
+                );
+                if (context.canPop()) {
+                  context.pop();
+                }
+              } else if (financingBlocState is FinancingError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur: ${financingBlocState.message}')),
+                );
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(WanzoSpacing.md),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: <Widget>[
+                    Card(
+                      color: WanzoColors.primary.withOpacity(0.1),
+                      elevation: 0,
+                      child: ListTile(
+                        leading: Icon(Icons.shield_outlined, color: WanzoColors.primary, size: 30),
+                        title: Text(
+                          'Votre Cote de Crédit: $_creditScore / 100',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, color: WanzoColors.primary),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.info_outline, color: WanzoColors.primary),
+                          onPressed: _showCreditScoreInfo,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: WanzoSpacing.lg),
+
+                    TextFormField(
+                      controller: _amountController,
+                      decoration: InputDecoration(
+                        labelText: 'Montant demandé',
+                        prefixText: '$currencySymbol ',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez entrer un montant.';
+                        }
+                        if (double.tryParse(value) == null ||
+                            double.parse(value) <= 0) {
+                          return 'Veuillez entrer un montant valide.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: WanzoSpacing.md),
+                    TextFormField(
+                      controller: _reasonController,
+                      decoration: const InputDecoration(labelText: 'Motif de la demande'),
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez entrer le motif.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: WanzoSpacing.md),
+                    DropdownButtonFormField<FinancingType>(
+                      value: _selectedFinancingType,
+                      decoration: const InputDecoration(labelText: 'Type de financement'),
+                      items: FinancingType.values.map((FinancingType type) {
+                        return DropdownMenuItem<FinancingType>(
+                          value: type,
+                          child: Text(type.displayName),
                         );
-                      }
-                      return const Text('Soumettre la Demande',
-                          style: TextStyle(color: Colors.white));
-                    },
-                  ),
+                      }).toList(),
+                      onChanged: (FinancingType? newValue) {
+                        setState(() {
+                          _selectedFinancingType = newValue!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: WanzoSpacing.md),
+                    DropdownButtonFormField<FinancialInstitution>(
+                      value: _selectedInstitution,
+                      decoration: const InputDecoration(labelText: 'Institution Financière'),
+                      items: FinancialInstitution.values
+                          .map((FinancialInstitution institution) {
+                        return DropdownMenuItem<FinancialInstitution>(
+                          value: institution,
+                          child: Text(institution.displayName),
+                        );
+                      }).toList(),
+                      onChanged: (FinancialInstitution? newValue) {
+                        setState(() {
+                          _selectedInstitution = newValue!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: WanzoSpacing.xl),
+                    ElevatedButton(
+                      onPressed: () => _submitRequest(currentCurrencyType),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: WanzoColors.primary),
+                      child: BlocBuilder<FinancingBloc, FinancingState>(
+                        builder: (context, financingBlocState) {
+                          if (financingBlocState is FinancingLoading) {
+                            return const SizedBox(
+                              width: 20, height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                            );
+                          }
+                          return const Text('Soumettre la Demande',
+                              style: TextStyle(color: Colors.white));
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

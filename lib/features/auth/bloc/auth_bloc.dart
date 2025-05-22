@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Changed import
 import 'package:equatable/equatable.dart';
 import 'dart:io'; // Import for File type
 import '../models/user.dart';
@@ -117,18 +117,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       try {
         // Pass the profileImageFile to the repository method
-        final User fullyUpdatedUser = await _authRepository.updateUserProfile(
+        await _authRepository.updateUserProfile( // Changed: await the void call
           event.updatedUser,
-          profileImageFile: event.profileImageFile, 
+          profileImage: event.profileImageFile, // Changed: corrected parameter name
         );
-        emit(AuthProfileUpdateSuccess(fullyUpdatedUser)); // Emit success state
-        emit(AuthAuthenticated(fullyUpdatedUser)); // Then emit authenticated with updated user
+        // Fetch the potentially updated user after the update operation
+        final User? fullyUpdatedUser = await _authRepository.getCurrentUser(); 
+
+        if (fullyUpdatedUser != null) {
+          emit(AuthProfileUpdateSuccess(fullyUpdatedUser)); // Emit success state
+          emit(AuthAuthenticated(fullyUpdatedUser)); // Then emit authenticated with updated user
+        } else {
+          // Handle case where user might be null after update (e.g., if update caused logout or error)
+          emit(AuthProfileUpdateFailure('Failed to retrieve user after update.', originalUser: currentUser));
+          emit(AuthAuthenticated(currentUser)); // Revert to original user on failure to fetch
+        }
       } catch (e) {
         emit(AuthProfileUpdateFailure(e.toString(), originalUser: currentUser)); // Emit failure state
-        // Optionally, can re-emit AuthAuthenticated with the currentUser if the UI 
-        // shouldn't get stuck in a failure state indefinitely without user data.
-        // emit(AuthAuthenticated(currentUser)); 
-        print('Error updating profile via repository: $e'); 
+        emit(AuthAuthenticated(currentUser)); 
       }
     } else {
       emit(AuthFailure('User not authenticated, cannot update profile.'));

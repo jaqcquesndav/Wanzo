@@ -24,7 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _physicalAddressController;
   late TextEditingController _idCardController;
   late TextEditingController _idCardStatusReasonController; // New controller
-  late IdStatus _selectedIdStatus; // To hold the selected ID status, non-nullable
+  late IdStatus? _selectedIdStatus; // To hold the selected ID status, now nullable to match User model
 
   File? _profileImageFile;
   final ImagePicker _picker = ImagePicker();
@@ -40,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _jobTitleController = TextEditingController(text: widget.user.jobTitle);
     _physicalAddressController = TextEditingController(text: widget.user.physicalAddress);
     _idCardController = TextEditingController(text: widget.user.idCard);
-    _selectedIdStatus = widget.user.idCardStatus; // Initialize status
+    _selectedIdStatus = widget.user.idCardStatus ?? IdStatus.PENDING; // Initialize status, provide a default if null
     _idCardStatusReasonController = TextEditingController(text: widget.user.idCardStatusReason); // Initialize reason
   }
 

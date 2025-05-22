@@ -1,11 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'notification_model.g.dart';
 
 /// Type de notification
-@HiveType(typeId: 11)
+@HiveType(typeId: 29)
+@JsonEnum()
 enum NotificationType {
   /// Notification d'information
   @HiveField(0)
@@ -37,7 +39,8 @@ enum NotificationType {
 }
 
 /// Modèle pour les notifications de l'application
-@HiveType(typeId: 10)
+@HiveType(typeId: 28)
+@JsonSerializable(explicitToJson: true)
 class NotificationModel extends Equatable {
   /// Identifiant unique de la notification
   @HiveField(0)
@@ -82,6 +85,9 @@ class NotificationModel extends Equatable {
     this.actionRoute,
     this.additionalData,
   });
+
+  factory NotificationModel.fromJson(Map<String, dynamic> json) => _$NotificationModelFromJson(json);
+  Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
   
   /// Crée une nouvelle notification avec un ID généré automatiquement
   factory NotificationModel.create({

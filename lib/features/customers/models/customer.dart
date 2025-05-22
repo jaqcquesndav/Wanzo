@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'customer.g.dart';
 
 /// Modèle représentant un client
 @HiveType(typeId: 5)
+@JsonSerializable(explicitToJson: true)
 class Customer extends Equatable {
   /// Identifiant unique du client
   @HiveField(0)
@@ -54,6 +56,12 @@ class Customer extends Equatable {
     this.totalPurchases,
     this.profilePicture,
   });
+
+  /// Crée une instance de Customer à partir d'une carte JSON
+  factory Customer.fromJson(Map<String, dynamic> json) => _$CustomerFromJson(json);
+
+  /// Convertit une instance de Customer en carte JSON
+  Map<String, dynamic> toJson() => _$CustomerToJson(this);
   
   /// Crée une copie de ce client avec les champs donnés remplacés par les nouvelles valeurs
   Customer copyWith({

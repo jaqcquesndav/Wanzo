@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../services/auth0_service.dart';
+import '../services/offline_auth_service.dart'; // Import OfflineAuthService
 import '../../../core/utils/connectivity_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Import FlutterSecureStorage
+import '../../../core/services/database_service.dart'; // Import DatabaseService
 
 /// Widget pour gérer la connexion avec Auth0
 class Auth0Login extends StatefulWidget {
@@ -24,14 +27,23 @@ class _Auth0LoginState extends State<Auth0Login> {
     super.initState();
     _checkOfflineAuthAvailability();
   }
+
   /// Vérifie si l'authentification hors ligne est disponible
   Future<void> _checkOfflineAuthAvailability() async {
-    final auth0Service = Auth0Service();
+    final connectivityService = ConnectivityService();
+    final databaseService = DatabaseService();
+    final secureStorage = const FlutterSecureStorage();
+
+    final offlineAuthServiceInstance = OfflineAuthService(
+      secureStorage: secureStorage,
+      databaseService: databaseService,
+      connectivityService: connectivityService,
+    );
+    final auth0Service = Auth0Service(offlineAuthService: offlineAuthServiceInstance);
     await auth0Service.init();
-    final offlineAuthService = auth0Service.offlineAuthService;
-    
-    final isAvailable = await offlineAuthService.canLoginOffline();
-    
+
+    final isAvailable = await offlineAuthServiceInstance.canLoginOffline();
+
     if (mounted) {
       setState(() {
         _offlineAuthAvailable = isAvailable;

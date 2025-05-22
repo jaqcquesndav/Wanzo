@@ -15,6 +15,8 @@ import 'package:wanzo/features/dashboard/services/journal_service.dart';
 import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
 import 'package:wanzo/features/settings/bloc/settings_event.dart';
 import 'package:wanzo/features/settings/bloc/settings_state.dart';
+import 'package:wanzo/features/settings/models/settings.dart'; // Added for CurrencyType
+import 'package:wanzo/core/utils/currency_formatter.dart'; // Added for formatCurrency
 
 /// Écran principal du tableau de bord
 class DashboardScreen extends StatefulWidget {
@@ -61,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _expandedViewWidget = _buildExpandedView(
         title: 'Dernières Ventes',
-        content: _buildRecentSalesList(isExpanded: true), // Pass isExpanded
+        content: _buildRecentSalesList(context, CurrencyType.cdf, isExpanded: true), // Pass isExpanded
         onCollapse: _collapseView,
       );
     });
@@ -71,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _expandedViewWidget = _buildExpandedView(
         title: 'Journal des Opérations',
-        content: _buildOperationsJournal(isExpanded: true), // Pass isExpanded
+        content: _buildOperationsJournal(context, CurrencyType.cdf, isExpanded: true), // Pass isExpanded
         onCollapse: _collapseView,
         isJournal: true,
       );
@@ -204,6 +206,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settingsState = context.watch<SettingsBloc>().state; // Watch SettingsBloc
+    CurrencyType currencyType = CurrencyType.cdf; // Default currency
+
+    if (settingsState is SettingsLoaded) {
+      currencyType = settingsState.settings.currency;
+    } else if (settingsState is SettingsUpdated) {
+      currencyType = settingsState.settings.currency;
+    }
+
     if (_expandedViewWidget != null) {
       return _expandedViewWidget!;
     }
@@ -211,7 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return WanzoScaffold(
       currentIndex: 0, // Dashboard = index 0
       title: 'Tableau de bord',
-      body: _buildDashboardContent(),
+      body: _buildDashboardContent(context, currencyType), // Pass currencyType
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Afficher un menu d'actions rapides
@@ -369,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit le contenu du tableau de bord
-  Widget _buildDashboardContent() {
+  Widget _buildDashboardContent(BuildContext context, CurrencyType currencyType) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(WanzoSpacing.md),
       child: Column(
@@ -396,30 +407,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // En-tête avec les statistiques principales
-          _buildHeaderStats(),
+          _buildHeaderStats(context, currencyType),
           const SizedBox(height: WanzoSpacing.lg),
 
           // Graphique des ventes récentes
-          _buildSalesChart(),
+          _buildSalesChart(context, currencyType),
           const SizedBox(height: WanzoSpacing.lg),
 
           // Section pour les dernières ventes et le journal des opérations
-          _buildSalesOperationsCard(),
+          _buildSalesOperationsCard(context, currencyType),
         ],
       ),
     );
   }
 
   /// Construit la section responsive pour les ventes récentes et le journal des opérations
-  Widget _buildSalesOperationsCard() {
+  Widget _buildSalesOperationsCard(BuildContext context, CurrencyType currencyType) {
     return _buildRecentSalesAndJournal(
+      context,
+      currencyType,
       onExpandRecentSales: _expandRecentSales,
       onExpandOperationsJournal: _expandOperationsJournal,
     );
   }
 
   /// Construit les statistiques d'en-tête
-  Widget _buildHeaderStats() {
+  Widget _buildHeaderStats(BuildContext context, CurrencyType currencyType) {
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: WanzoSpacing.md,
@@ -429,29 +442,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         _buildStatCard(
           title: 'Ventes du jour',
-          value: '150.000 FC',
+          value: 150000,
+          currencyType: currencyType,
           icon: Icons.insert_chart,
           color: WanzoColors.primary,
           increase: '+8% vs hier',
         ),
         _buildStatCard(
           title: 'Clients servis',
-          value: '24',
+          value: 24,
           icon: Icons.people,
           color: WanzoColors.info,
           increase: '+3 vs hier',
+          isMonetary: false,
         ),
         _buildStatCard(
           title: 'À recevoir',
-          value: '450.000 FC',
+          value: 450000,
+          currencyType: currencyType,
           icon: Icons.account_balance_wallet,
           color: WanzoColors.success,
         ),
         _buildStatCard(
           title: 'Transactions',
-          value: 'N/A',
+          value: 0,
           icon: Icons.receipt_long,
           color: Colors.teal,
+          isMonetary: false,
         ),
       ],
     );
@@ -460,11 +477,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Construit une carte de statistique
   Widget _buildStatCard({
     required String title,
-    required String value,
+    required double value,
+    CurrencyType? currencyType,
     required IconData icon,
     required Color color,
     String? increase,
+    bool isMonetary = true,
   }) {
+    String displayValue;
+    if (isMonetary) {
+      if (currencyType == null) {
+        displayValue = 'N/A';
+        print("Warning: currencyType is null for monetary StatCard '$title'");
+      } else {
+        displayValue = formatCurrency(value, currencyType);
+      }
+    } else {
+      displayValue = NumberFormat.compact().format(value);
+    }
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -494,7 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const Spacer(),
             Text(
-              value,
+              displayValue,
               style: const TextStyle(
                 fontSize: WanzoTypography.fontSizeLg,
                 fontWeight: WanzoTypography.fontWeightBold,
@@ -516,7 +547,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit un graphique des ventes récentes
-  Widget _buildSalesChart() {
+  Widget _buildSalesChart(BuildContext context, CurrencyType currencyType) {
     // Mock data for the last 7 days
     final List<FlSpot> spots = [
       const FlSpot(0, 3), // Day 1
@@ -633,11 +664,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 40,
+                        reservedSize: 50, // Adjusted for potentially longer currency strings
                         getTitlesWidget: (double value, TitleMeta meta) {
                            // Show only a few labels to avoid clutter
                            if (value == meta.min || value == meta.max || value == (meta.min + meta.max) / 2) {
-                            return Text(NumberFormat.compact().format(value * 10000), style: const TextStyle(color: Colors.black54, fontSize: 10), textAlign: TextAlign.left);
+                            // Assuming chart Y values are raw numbers, format them
+                            return Text(formatCurrency(value, currencyType), style: const TextStyle(color: Colors.black54, fontSize: 10), textAlign: TextAlign.left);
                            }
                            return Container();
                         },
@@ -674,7 +706,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit la liste des ventes récentes et le journal des opérations
-  Widget _buildRecentSalesAndJournal({
+  Widget _buildRecentSalesAndJournal(
+    BuildContext context,
+    CurrencyType currencyType,
+    {
     required VoidCallback onExpandRecentSales,
     required VoidCallback onExpandOperationsJournal,
   }) {
@@ -705,9 +740,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 320, // Reduced height from 350 to 320
                 child: TabBarView(
                   children: [
-                    _buildRecentSalesList(
+                    _buildRecentSalesList(context, currencyType,
                         isExpanded: false, onExpand: onExpandRecentSales),
-                    _buildOperationsJournal(
+                    _buildOperationsJournal(context, currencyType,
                         isExpanded: false, onExpand: onExpandOperationsJournal),
                   ],
                 ),
@@ -720,7 +755,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit la liste des ventes récentes pour l'onglet
-  Widget _buildRecentSalesList({bool isExpanded = false, VoidCallback? onExpand}) {
+  Widget _buildRecentSalesList(BuildContext context, CurrencyType currencyType, {bool isExpanded = false, VoidCallback? onExpand}) {
     return BlocBuilder<SalesBloc, SalesState>(
       builder: (context, state) {
         if (state is SalesLoading) {
@@ -891,7 +926,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '${NumberFormat.currency(locale: 'fr_FR', symbol: 'FC', decimalDigits: 0).format(sale.totalAmount)} - ${sale.customerName}',
+                            '${formatCurrency(sale.totalAmount, currencyType)} - ${sale.customerName}',
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -932,7 +967,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit le journal des opérations
-  Widget _buildOperationsJournal({bool isExpanded = false, VoidCallback? onExpand}) {
+  Widget _buildOperationsJournal(BuildContext context, CurrencyType currencyType, {bool isExpanded = false, VoidCallback? onExpand}) {
     return BlocProvider.value(
       value: _operationJournalBloc,
       child: BlocBuilder<OperationJournalBloc, OperationJournalState>(
@@ -1040,7 +1075,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           DataCell(Text(op.description, overflow: TextOverflow.ellipsis, maxLines: 2)),
                                           DataCell(Text(op.type.displayName)),
                                           DataCell(Text(
-                                            NumberFormat.currency(locale: 'fr_FR', symbol: 'FC', decimalDigits: 0).format(op.amount),
+                                            formatCurrency(op.amount, currencyType),
                                             textAlign: TextAlign.end,
                                             style: TextStyle(color: op.amount < 0 ? WanzoColors.error : WanzoColors.success),
                                           )),

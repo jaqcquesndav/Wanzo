@@ -15,6 +15,10 @@ import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart'; // Added
+import 'package:wanzo/features/settings/models/settings.dart'; // Added
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart'; // Added
+import 'package:wanzo/features/settings/bloc/settings_state.dart'; // Added
 
 /// Écran d'ajout de produit
 class AddProductScreen extends StatefulWidget {
@@ -166,6 +170,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settingsState = context.watch<SettingsBloc>().state;
+    CurrencyType currency = CurrencyType.usd; // Default currency
+    String currencySymbol = getCurrencyString(currency); // Default symbol
+
+    if (settingsState is SettingsLoaded) {
+      currency = settingsState.settings.currency;
+      currencySymbol = getCurrencyString(currency);
+    } else if (settingsState is SettingsUpdated) {
+      currency = settingsState.settings.currency;
+      currencySymbol = getCurrencyString(currency);
+    }
+
     return BlocListener<InventoryBloc, InventoryState>(
       listener: (context, state) {
         if (state is InventoryOperationSuccess) {
@@ -350,10 +366,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 // Prix d'achat
                 TextFormField(
                   controller: _costPriceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prix d\'achat (FC)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.store),
+                  decoration: InputDecoration(
+                    labelText: 'Prix d\'achat ($currencySymbol)',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.store),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -379,10 +395,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 // Prix de vente
                 TextFormField(
                   controller: _sellingPriceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prix de vente (FC)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.sell),
+                  decoration: InputDecoration(
+                    labelText: 'Prix de vente ($currencySymbol)',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.sell),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -612,7 +628,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _confirmDelete() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Supprimer le produit'),
           content: const Text(
@@ -620,12 +636,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 context.read<InventoryBloc>().add(DeleteProduct(widget.product!.id));
               },
               style: ElevatedButton.styleFrom(

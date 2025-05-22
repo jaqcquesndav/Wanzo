@@ -1,22 +1,25 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\features\sales\models\sale.dart
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'sale.g.dart';
 
 /// Statut possible d'une vente
-@HiveType(typeId: 5) // Changed typeId to 5
+@HiveType(typeId: 6)
+@JsonEnum()
 enum SaleStatus {
-  @HiveField(0) // Added HiveField annotation for enum values
+  @HiveField(0)
   pending,    // En attente
-  @HiveField(1) // Added HiveField annotation for enum values
+  @HiveField(1)
   completed,  // Terminée
-  @HiveField(2) // Added HiveField annotation for enum values
+  @HiveField(2)
   cancelled,  // Annulée
 }
 
 /// Modèle représentant une vente
-@HiveType(typeId: 1)
+@HiveType(typeId: 7)
+@JsonSerializable(explicitToJson: true)
 class Sale extends Equatable {
   /// Identifiant unique de la vente
   @HiveField(0)
@@ -72,9 +75,13 @@ class Sale extends Equatable {
     this.notes = '',
   });
 
+  factory Sale.fromJson(Map<String, dynamic> json) => _$SaleFromJson(json);
+  Map<String, dynamic> toJson() => _$SaleToJson(this);
+
   /// Vérifier si la vente est entièrement payée
   bool get isFullyPaid => paidAmount >= totalAmount;
-    /// Montant restant à payer
+  
+  /// Montant restant à payer
   double get remainingAmount => totalAmount - paidAmount;
 
   /// Crée une copie de cette vente avec les données fournies remplaçant les données existantes
@@ -121,6 +128,7 @@ class Sale extends Equatable {
 
 /// Modèle représentant un article dans une vente
 @HiveType(typeId: 2)
+@JsonSerializable(explicitToJson: true)
 class SaleItem extends Equatable {
   /// Identifiant du produit
   @HiveField(0)
@@ -150,6 +158,9 @@ class SaleItem extends Equatable {
     required this.unitPrice,
     required this.totalPrice,
   });
+
+  factory SaleItem.fromJson(Map<String, dynamic> json) => _$SaleItemFromJson(json);
+  Map<String, dynamic> toJson() => _$SaleItemToJson(this);
 
   @override
   List<Object?> get props => [productId, productName, quantity, unitPrice, totalPrice];

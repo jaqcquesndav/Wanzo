@@ -28,6 +28,12 @@ class NotificationRepository {
   /// Stream qui émet la liste des notifications à chaque changement
   Stream<List<NotificationModel>> get notifications => _notificationsController.stream;
 
+  /// Retourne le nombre de notifications en attente de synchronisation
+  Future<int> getPendingSyncCount() async {
+    await _updatePendingSyncCount();
+    return _pendingSyncCount;
+  }
+
   /// Initialise le repository
   Future<void> init() async {
     try {

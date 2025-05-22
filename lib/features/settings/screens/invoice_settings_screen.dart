@@ -20,7 +20,7 @@ class InvoiceSettingsScreen extends StatefulWidget {
 class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  late final TextEditingController _currencyController;
+  late CurrencyType? _selectedCurrency;
   late final TextEditingController _invoiceNumberFormatController;
   late final TextEditingController _invoicePrefixController;
   late final TextEditingController _paymentTermsController;
@@ -35,7 +35,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
     super.initState();
     
     // Initialise les contrôleurs avec les valeurs actuelles
-    _currencyController = TextEditingController(text: widget.settings.currency);
+    _selectedCurrency = widget.settings.currency;
     _invoiceNumberFormatController = TextEditingController(text: widget.settings.invoiceNumberFormat);
     _invoicePrefixController = TextEditingController(text: widget.settings.invoicePrefix);
     _paymentTermsController = TextEditingController(text: widget.settings.defaultPaymentTerms);
@@ -47,7 +47,6 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
     _showTaxes = widget.settings.showTaxes;
     
     // Écouteurs pour détecter les changements
-    _currencyController.addListener(_onFieldChanged);
     _invoiceNumberFormatController.addListener(_onFieldChanged);
     _invoicePrefixController.addListener(_onFieldChanged);
     _paymentTermsController.addListener(_onFieldChanged);
@@ -57,7 +56,6 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
   
   @override
   void dispose() {
-    _currencyController.dispose();
     _invoiceNumberFormatController.dispose();
     _invoicePrefixController.dispose();
     _paymentTermsController.dispose();
@@ -69,7 +67,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
   /// Détecte les changements dans les champs
   void _onFieldChanged() {
     final hasChanges = 
-        _currencyController.text != widget.settings.currency ||
+        _selectedCurrency != widget.settings.currency ||
         _invoiceNumberFormatController.text != widget.settings.invoiceNumberFormat ||
         _invoicePrefixController.text != widget.settings.invoicePrefix ||
         _paymentTermsController.text != widget.settings.defaultPaymentTerms ||
@@ -142,16 +140,27 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                 const SizedBox(height: 16),
                 
                 // Devise
-                TextFormField(
-                  controller: _currencyController,
+                DropdownButtonFormField<CurrencyType>(
+                  value: _selectedCurrency,
                   decoration: const InputDecoration(
                     labelText: 'Devise',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.attach_money),
-                    hintText: 'FC, \$, €, ...',
                   ),
+                  items: CurrencyType.values.map((CurrencyType currency) {
+                    return DropdownMenuItem<CurrencyType>(
+                      value: currency,
+                      child: Text(currency.toString().split('.').last.toUpperCase()),
+                    );
+                  }).toList(),
+                  onChanged: (CurrencyType? newValue) {
+                    setState(() {
+                      _selectedCurrency = newValue;
+                      _hasChanges = true;
+                    });
+                  },
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null) {
                       return 'La devise est obligatoire';
                     }
                     return null;
@@ -206,14 +215,14 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                             decoration: BoxDecoration(
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(8),
-                              image: widget.settings.companyLogo != null && widget.settings.companyLogo!.isNotEmpty
+                              image: widget.settings.companyLogo.isNotEmpty
                                   ? DecorationImage(
-                                      image: _getImageProvider(widget.settings.companyLogo!),
+                                      image: _getImageProvider(widget.settings.companyLogo),
                                       fit: BoxFit.contain,
                                     )
                                   : null,
                             ),
-                            child: widget.settings.companyLogo == null || widget.settings.companyLogo!.isEmpty
+                            child: widget.settings.companyLogo.isEmpty
                                 ? const Icon(
                                     Icons.business,
                                     size: 30,
@@ -410,7 +419,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
       }
       
       context.read<SettingsBloc>().add(UpdateInvoiceSettings(
-        currency: _currencyController.text.trim(),
+        currency: _selectedCurrency,
         invoiceNumberFormat: _invoiceNumberFormatController.text.trim(),
         invoicePrefix: _invoicePrefixController.text.trim(),
         defaultPaymentTerms: _paymentTermsController.text.trim(),

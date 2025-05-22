@@ -6,6 +6,7 @@ import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
+import '../../features/auth/screens/forgot_password_screen.dart'; // Ajout de l'import
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/inventory/models/product.dart';
@@ -95,6 +96,12 @@ class AppRouter {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      
+      // Route pour le mot de passe oublié
+      GoRoute(
+        path: ForgotPasswordScreen.routeName,
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       
       // Route du tableau de bord (protégée)

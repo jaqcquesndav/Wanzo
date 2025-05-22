@@ -68,16 +68,6 @@ class UpdateSale extends SalesEvent {
   List<Object?> get props => [sale];
 }
 
-/// Événement pour supprimer une vente
-class DeleteSale extends SalesEvent {
-  final String id;
-
-  const DeleteSale(this.id);
-
-  @override
-  List<Object?> get props => [id];
-}
-
 /// Événement pour mettre à jour le statut d'une vente
 class UpdateSaleStatus extends SalesEvent {
   final String id;
@@ -87,4 +77,14 @@ class UpdateSaleStatus extends SalesEvent {
 
   @override
   List<Object?> get props => [id, status];
+}
+
+/// Événement pour supprimer une vente
+class DeleteSale extends SalesEvent {
+  final String id;
+
+  const DeleteSale(this.id);
+
+  @override
+  List<Object?> get props => [id];
 }

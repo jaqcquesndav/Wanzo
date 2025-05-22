@@ -7,71 +7,62 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wanzo/core/navigation/app_router.dart';
+import 'package:wanzo/features/auth/bloc/auth_bloc.dart';
 import 'package:wanzo/features/auth/repositories/auth_repository.dart';
-import 'package:wanzo/features/inventory/repositories/inventory_repository.dart';
-import 'package:wanzo/features/sales/repositories/sales_repository.dart';
-import 'package:wanzo/features/adha/repositories/adha_repository.dart';
-import 'package:wanzo/features/customer/repositories/customer_repository.dart';
-import 'package:wanzo/features/supplier/repositories/supplier_repository.dart';
-import 'package:wanzo/features/settings/repositories/settings_repository.dart';
-import 'package:wanzo/features/notifications/repositories/notification_repository.dart';
-import 'package:wanzo/features/notifications/services/notification_service.dart';
+import 'package:wanzo/features/auth/services/auth0_service.dart';
+import 'package:wanzo/features/auth/services/offline_auth_service.dart';
+import 'package:wanzo/features/auth/models/user.dart'; // Import User model
+
+// Import core services
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
-import 'package:wanzo/core/services/sync_service.dart';
-import 'package:wanzo/core/services/api_service.dart';
-import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart';
-import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
-import 'package:wanzo/features/financing/repositories/financing_repository.dart';
-import 'package:wanzo/features/subscription/repositories/subscription_repository.dart';
-import 'package:wanzo/main.dart';
+
+import 'package:hive_flutter/hive_flutter.dart'; // Corrected Hive import
+import 'package:wanzo/main.dart'; // Import MyApp
 
 void main() {
-  testWidgets('App initializes correctly', (WidgetTester tester) async {
-    // Création des instances de repositories pour les tests
-    final authRepository = AuthRepository();
-    final salesRepository = SalesRepository();
-    final inventoryRepository = InventoryRepository();
-    final adhaRepository = AdhaRepository();
-    final customerRepository = CustomerRepository();
-    final supplierRepository = SupplierRepository();
-    final settingsRepository = SettingsRepository();
-    final notificationRepository = NotificationRepository();
-    final operationJournalRepository = OperationJournalRepository();
-    final expenseRepository = ExpenseRepository();
-    final financingRepository = FinancingRepository();
-    final apiService = ApiService(); // Ensure ApiService is initialized
-    final subscriptionRepository = SubscriptionRepository(
-      expenseRepository: expenseRepository,
-      apiService: apiService, // Provide ApiService
-    );
-    final notificationService = NotificationService();
-    final connectivityService = ConnectivityService();
-    final databaseService = DatabaseService();
-    final syncService = SyncService();
-    
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp(
-      authRepository: authRepository,
-      salesRepository: salesRepository,
-      inventoryRepository: inventoryRepository,
-      adhaRepository: adhaRepository,
-      customerRepository: customerRepository,
-      supplierRepository: supplierRepository,
-      settingsRepository: settingsRepository,
-      notificationRepository: notificationRepository,
-      operationJournalRepository: operationJournalRepository,
-      expenseRepository: expenseRepository,
-      financingRepository: financingRepository,
-      subscriptionRepository: subscriptionRepository,
-      notificationService: notificationService,
-      connectivityService: connectivityService,
-      databaseService: databaseService,
-      apiService: apiService,
-      syncService: syncService,
-    ));
+  setUpAll(() async {
+    // Initialize Hive for testing
+    await Hive.initFlutter(); // Ensure Hive is initialized for tests
+    Hive.registerAdapter(UserAdapter()); // Register UserAdapter
+    await Hive.openBox<User>('userBox');
+  });
 
-    // Vérifier que l'app se lance sans erreur
-    expect(find.byType(MaterialApp), findsWidgets);
+  tearDownAll(() async {
+    await Hive.close();
+  });
+
+  testWidgets('App initializes correctly', (WidgetTester tester) async {
+    // Minimal services for auth flow
+    final connectivityService = ConnectivityService();
+    await connectivityService.init(); // Assuming init method exists
+
+    final databaseService = DatabaseService();
+    const secureStorage = FlutterSecureStorage();
+
+    final offlineAuthService = OfflineAuthService(
+      secureStorage: secureStorage,
+      databaseService: databaseService,
+      connectivityService: connectivityService,
+    );
+
+    final auth0Service = Auth0Service(offlineAuthService: offlineAuthService);
+    await auth0Service.init(); // Call init
+
+    final authRepository = AuthRepository(auth0Service: auth0Service);
+    await authRepository.init(); // Call init
+
+    final authBloc = AuthBloc(authRepository: authRepository);
+
+    final appRouter = AppRouter(authBloc: authBloc);
+
+    // Build our app and trigger a frame.
+    // MyApp now only takes appRouter.router
+    await tester.pumpWidget(MyApp(appRouter: appRouter.router));
+
+    // Verify that the app launches and shows MaterialApp
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'business_sector.g.dart';
 
 /// Modèle pour les secteurs d'activité en Afrique
 @HiveType(typeId: 12)
+@JsonSerializable()
 class BusinessSector extends Equatable {
   /// Identifiant unique du secteur
   @HiveField(0)
@@ -25,6 +27,9 @@ class BusinessSector extends Equatable {
     this.description = '',
   });
   
+  factory BusinessSector.fromJson(Map<String, dynamic> json) => _$BusinessSectorFromJson(json);
+  Map<String, dynamic> toJson() => _$BusinessSectorToJson(this);
+
   @override
   List<Object?> get props => [id, name, description];
 }

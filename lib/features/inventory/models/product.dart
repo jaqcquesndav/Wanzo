@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'product.g.dart';
 
 /// Catégorie de produit
 @HiveType(typeId: 20)
+@JsonEnum()
 enum ProductCategory {
   @HiveField(0)
   food,        // Alimentation
@@ -33,6 +35,7 @@ enum ProductCategory {
 
 /// Unité de mesure d'un produit
 @HiveType(typeId: 21)
+@JsonEnum()
 enum ProductUnit {
   @HiveField(0)
   piece,      // Pièce
@@ -61,6 +64,7 @@ enum ProductUnit {
 
 /// Modèle représentant un produit dans l'inventaire
 @HiveType(typeId: 22)
+@JsonSerializable(explicitToJson: true)
 class Product extends Equatable {
   /// Identifiant unique du produit
   @HiveField(0)
@@ -130,6 +134,9 @@ class Product extends Equatable {
     required this.updatedAt,
     this.imagePath,
   });
+
+  factory Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductToJson(this);
   
   /// Vérifie si le stock est bas
   bool get isLowStock => stockQuantity <= alertThreshold;
@@ -157,7 +164,7 @@ class Product extends Equatable {
     double? alertThreshold,
     DateTime? createdAt,
     DateTime? updatedAt,
-    String? imagePath, // Added imagePath
+    String? imagePath,
   }) {
     return Product(
       id: id ?? this.id,
@@ -172,7 +179,7 @@ class Product extends Equatable {
       alertThreshold: alertThreshold ?? this.alertThreshold,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      imagePath: imagePath ?? this.imagePath, // Added imagePath
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -190,6 +197,6 @@ class Product extends Equatable {
     alertThreshold,
     createdAt,
     updatedAt,
-    imagePath, // Added imagePath
+    imagePath,
   ];
 }

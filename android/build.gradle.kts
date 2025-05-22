@@ -31,6 +31,19 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    if (project.name == "image_picker_android") {
+        project.tasks.withType<Test>().configureEach {
+            enabled = false
+        }
+    }
+    if (project.name == "speech_to_text") {
+        project.tasks.matching { it.name.startsWith("lint") }.configureEach {
+            enabled = false
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

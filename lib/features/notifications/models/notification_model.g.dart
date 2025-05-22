@@ -8,7 +8,7 @@ part of 'notification_model.dart';
 
 class NotificationModelAdapter extends TypeAdapter<NotificationModel> {
   @override
-  final int typeId = 10;
+  final int typeId = 28;
 
   @override
   NotificationModel read(BinaryReader reader) {
@@ -63,7 +63,7 @@ class NotificationModelAdapter extends TypeAdapter<NotificationModel> {
 
 class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
   @override
-  final int typeId = 11;
+  final int typeId = 29;
 
   @override
   NotificationType read(BinaryReader reader) {
@@ -124,3 +124,41 @@ class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+NotificationModel _$NotificationModelFromJson(Map<String, dynamic> json) =>
+    NotificationModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      message: json['message'] as String,
+      type: $enumDecode(_$NotificationTypeEnumMap, json['type']),
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      isRead: json['isRead'] as bool? ?? false,
+      actionRoute: json['actionRoute'] as String?,
+      additionalData: json['additionalData'] as String?,
+    );
+
+Map<String, dynamic> _$NotificationModelToJson(NotificationModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'message': instance.message,
+      'type': _$NotificationTypeEnumMap[instance.type]!,
+      'timestamp': instance.timestamp.toIso8601String(),
+      'isRead': instance.isRead,
+      if (instance.actionRoute case final value?) 'actionRoute': value,
+      if (instance.additionalData case final value?) 'additionalData': value,
+    };
+
+const _$NotificationTypeEnumMap = {
+  NotificationType.info: 'info',
+  NotificationType.success: 'success',
+  NotificationType.warning: 'warning',
+  NotificationType.error: 'error',
+  NotificationType.lowStock: 'lowStock',
+  NotificationType.sale: 'sale',
+  NotificationType.payment: 'payment',
+};

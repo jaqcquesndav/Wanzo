@@ -8,7 +8,7 @@ part of 'business_sector.dart';
 
 class BusinessSectorAdapter extends TypeAdapter<BusinessSector> {
   @override
-  final int typeId = 12;
+  final int typeId = 4;
 
   @override
   BusinessSector read(BinaryReader reader) {
@@ -20,19 +20,22 @@ class BusinessSectorAdapter extends TypeAdapter<BusinessSector> {
       id: fields[0] as String,
       name: fields[1] as String,
       description: fields[2] as String,
+      icon: fields[3] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, BusinessSector obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.description);
+      ..write(obj.description)
+      ..writeByte(3)
+      ..write(obj.icon);
   }
 
   @override
@@ -55,6 +58,7 @@ BusinessSector _$BusinessSectorFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String? ?? '',
+      icon: json['icon'] as String? ?? 'business',
     );
 
 Map<String, dynamic> _$BusinessSectorToJson(BusinessSector instance) =>
@@ -62,4 +66,5 @@ Map<String, dynamic> _$BusinessSectorToJson(BusinessSector instance) =>
       'id': instance.id,
       'name': instance.name,
       'description': instance.description,
+      'icon': instance.icon,
     };

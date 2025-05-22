@@ -1,10 +1,12 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\features\auth\providers\auth_provider.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth0_service.dart';
 import '../services/offline_auth_service.dart';
 import '../models/user.dart';
 import '../../../core/utils/connectivity_service.dart';
+import '../../../core/services/database_service.dart'; // Ensure DatabaseService is imported
 
 /// Énumération des états d'authentification
 enum AuthStatus {
@@ -23,9 +25,9 @@ enum AuthStatus {
 
 /// Provider pour gérer l'état d'authentification
 class AuthProvider extends ChangeNotifier {
-  final Auth0Service _auth0Service = Auth0Service();
+  final Auth0Service _auth0Service;
   late final OfflineAuthService _offlineAuthService;
-  final ConnectivityService _connectivityService = ConnectivityService();
+  final ConnectivityService _connectivityService;
   
   AuthStatus _status = AuthStatus.indeterminate;
   User? _user;
@@ -41,7 +43,22 @@ class AuthProvider extends ChangeNotifier {
   bool get isOfflineMode => _offlineMode;
   
   /// Constructeur
-  AuthProvider() {
+  AuthProvider()
+      : _connectivityService = ConnectivityService(),
+        _offlineAuthService = OfflineAuthService(
+            secureStorage: const FlutterSecureStorage(),
+            // Instantiate DatabaseService and ConnectivityService for OfflineAuthService
+            databaseService: DatabaseService(), 
+            connectivityService: ConnectivityService(), 
+          ),
+        // Pass the _offlineAuthService instance to Auth0Service
+        _auth0Service = Auth0Service(
+          offlineAuthService: OfflineAuthService( 
+            secureStorage: const FlutterSecureStorage(),
+            databaseService: DatabaseService(),
+            connectivityService: ConnectivityService(),
+          ),
+        ) {
     _initialize();
   }
   

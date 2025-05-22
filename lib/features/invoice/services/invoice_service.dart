@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -9,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../sales/models/sale.dart';
 import '../../settings/models/settings.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart';
 
 /// Service pour générer et imprimer des factures et tickets de caisse
 class InvoiceService {
@@ -16,14 +16,10 @@ class InvoiceService {
   Future<String> generateInvoicePdf(Sale sale, Settings settings) async {
     final pdf = pw.Document();
     
-    final regularFont = pw.Font.helvetica(); // Use standard Helvetica
-    final boldFont = pw.Font.helveticaBold(); // Use standard Helvetica Bold
+    final regularFont = pw.Font.helvetica();
+    final boldFont = pw.Font.helveticaBold();
     
-    // Formater les montants selon la devise configurée
-    final currencyFormat = NumberFormat.currency(
-      symbol: settings.currency,
-      decimalDigits: 0,
-    );
+    final CurrencyType currency = settings.currency;
     
     // Vérifier si un logo d'entreprise existe
     pw.Widget? logoWidget;
@@ -41,23 +37,19 @@ class InvoiceService {
           }
         }
       } catch (e) {
-        // Si le logo ne peut pas être chargé, on n'affiche rien
         print('Erreur lors du chargement du logo: $e');
       }
     }
     
-    // Date formatée
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
     final formattedDate = dateFormat.format(sale.date);
     
-    // Numéro de facture formaté selon le modèle configuré
     String invoiceNumber = settings.invoiceNumberFormat;
     invoiceNumber = invoiceNumber
         .replaceAll('{YEAR}', sale.date.year.toString())
         .replaceAll('{MONTH}', sale.date.month.toString().padLeft(2, '0'))
         .replaceAll('{SEQ}', sale.id.substring(0, 8));
     
-    // Calcul des totaux
     final subtotal = sale.items.fold<double>(
       0, (sum, item) => sum + (item.quantity * item.unitPrice)
     );
@@ -69,7 +61,6 @@ class InvoiceService {
     
     final total = subtotal + taxAmount;
     
-    // Création du PDF
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -77,7 +68,6 @@ class InvoiceService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // En-tête avec logo et informations de l'entreprise
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
@@ -130,7 +120,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 20),
               
-              // Informations client
               pw.Container(
                 padding: const pw.EdgeInsets.all(10),
                 decoration: pw.BoxDecoration(
@@ -151,7 +140,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 20),
               
-              // Tableau des articles
               pw.Table(
                 border: pw.TableBorder.all(color: PdfColors.grey400),
                 columnWidths: {
@@ -161,7 +149,6 @@ class InvoiceService {
                   3: const pw.FlexColumnWidth(2),
                 },
                 children: [
-                  // En-tête du tableau
                   pw.TableRow(
                     decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                     children: [
@@ -199,7 +186,6 @@ class InvoiceService {
                     ],
                   ),
                   
-                  // Lignes des articles
                   ...sale.items.map((item) {
                     final itemTotal = item.quantity * item.unitPrice;
                     return pw.TableRow(
@@ -218,14 +204,14 @@ class InvoiceService {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(5),
                           child: pw.Text(
-                            currencyFormat.format(item.unitPrice),
+                            formatCurrency(item.unitPrice, currency),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(5),
                           child: pw.Text(
-                            currencyFormat.format(itemTotal),
+                            formatCurrency(itemTotal, currency),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
@@ -237,7 +223,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 10),
               
-              // Récapitulatif des montants
               pw.Container(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Column(
@@ -256,7 +241,7 @@ class InvoiceService {
                         pw.Container(
                           width: 120,
                           child: pw.Text(
-                            currencyFormat.format(subtotal),
+                            formatCurrency(subtotal, currency),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
@@ -277,7 +262,7 @@ class InvoiceService {
                           pw.Container(
                             width: 120,
                             child: pw.Text(
-                              currencyFormat.format(taxAmount),
+                              formatCurrency(taxAmount, currency),
                               textAlign: pw.TextAlign.right,
                             ),
                           ),
@@ -304,7 +289,7 @@ class InvoiceService {
                           pw.Container(
                             width: 120,
                             child: pw.Text(
-                              currencyFormat.format(total),
+                              formatCurrency(total, currency),
                               style: pw.TextStyle(
                                 font: boldFont,
                                 fontSize: 12,
@@ -321,7 +306,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 30),
               
-              // Conditions de paiement et notes
               if (settings.defaultPaymentTerms.isNotEmpty) ...[
                 pw.Text(
                   'Conditions de paiement:',
@@ -343,7 +327,6 @@ class InvoiceService {
               
               pw.Spacer(),
               
-              // Pied de page personnalisé
               pw.Center(
                 child: pw.Column(
                   children: [
@@ -369,7 +352,6 @@ class InvoiceService {
       ),
     );
     
-    // Enregistrer le PDF
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/invoice_${sale.id}.pdf');
     await file.writeAsBytes(await pdf.save());
@@ -383,10 +365,9 @@ class InvoiceService {
       final pdfPath = await generateInvoicePdf(sale, settings);
       final file = XFile(pdfPath);
 
-      // Texte de partage (peut être personnalisé)
       String shareText = 'Voici votre facture N° ${sale.id.substring(0,8)} concernant ${sale.items.first.productName}.';
       if (customerPhoneNumber != null) {
-        shareText += '\nPartage via WhatsApp: wa.me/$customerPhoneNumber'; // Exemple pour pré-remplir (nécessite une gestion plus avancée)
+        shareText += '\nPartage via WhatsApp: wa.me/$customerPhoneNumber';
       }
 
       await Share.shareXFiles(
@@ -396,7 +377,6 @@ class InvoiceService {
       );
     } catch (e) {
       print('Erreur lors du partage de la facture: $e');
-      // Gérer l'erreur, par exemple afficher un message à l'utilisateur
       throw Exception('Impossible de partager la facture: $e');
     }
   }
@@ -405,16 +385,11 @@ class InvoiceService {
   Future<String> generateReceiptPdf(Sale sale, Settings settings) async {
     final pdf = pw.Document();
     
-    final regularFont = pw.Font.helvetica(); // Use standard Helvetica
-    final boldFont = pw.Font.helveticaBold(); // Use standard Helvetica Bold
+    final regularFont = pw.Font.helvetica();
+    final boldFont = pw.Font.helveticaBold();
     
-    // Format pour la monnaie
-    final currencyFormat = NumberFormat.currency(
-      symbol: settings.currency,
-      decimalDigits: 0,
-    );
+    final CurrencyType currency = settings.currency;
     
-    // Vérifier si un logo d'entreprise existe
     pw.Widget? logoWidget;
     if (settings.companyLogo.isNotEmpty) {
       try {
@@ -430,16 +405,13 @@ class InvoiceService {
           }
         }
       } catch (e) {
-        // Si le logo ne peut pas être chargé, on n'affiche rien
         print('Erreur lors du chargement du logo: $e');
       }
     }
     
-    // Date formatée
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
     final formattedDate = dateFormat.format(sale.date);
     
-    // Calcul des totaux
     final subtotal = sale.items.fold<double>(
       0, (sum, item) => sum + (item.quantity * item.unitPrice)
     );
@@ -450,14 +422,12 @@ class InvoiceService {
     }
     
     final total = subtotal + taxAmount;
-      // Largeur standard pour tickets thermiques: 80mm
     final ticketWidth = PdfPageFormat(
       80 * PdfPageFormat.mm,
-      500 * PdfPageFormat.mm, // hauteur définie, sera automatiquement ajustée
+      500 * PdfPageFormat.mm,
       marginAll: 5 * PdfPageFormat.mm,
     );
     
-    // Création du PDF format ticket
     pdf.addPage(
       pw.Page(
         pageFormat: ticketWidth,
@@ -465,13 +435,11 @@ class InvoiceService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              // Logo et nom de l'entreprise
               if (logoWidget != null) ...[
                 pw.Center(child: logoWidget),
                 pw.SizedBox(height: 5),
               ],
               
-              // Nom et info de l'entreprise
               pw.Text(
                 settings.companyName,
                 style: pw.TextStyle(
@@ -541,10 +509,9 @@ class InvoiceService {
               ],
 
               pw.SizedBox(height: 5),
-              pw.Text('------------------------------------------------------', style: pw.TextStyle(fontSize: 8)), // Separator
+              pw.Text('------------------------------------------------------', style: pw.TextStyle(fontSize: 8)),
               pw.SizedBox(height: 5),
               
-              // Numéro de ticket et date
               pw.Text(
                 'TICKET DE CAISSE',
                 style: pw.TextStyle(
@@ -563,7 +530,6 @@ class InvoiceService {
                 style: pw.TextStyle(font: regularFont, fontSize: 8),
               ),
               
-              // Client
               if (sale.customerName.isNotEmpty) ...[
                 pw.SizedBox(height: 2),
                 pw.Text(
@@ -574,10 +540,8 @@ class InvoiceService {
               
               pw.SizedBox(height: 10),
               
-              // Ligne de séparation
               pw.Divider(thickness: 1),
               
-              // En-tête des articles
               pw.Row(
                 children: [
                   pw.Expanded(
@@ -616,7 +580,6 @@ class InvoiceService {
               
               pw.Divider(thickness: 1),
               
-              // Liste des articles
               ...sale.items.map((item) {
                 final itemTotal = item.quantity * item.unitPrice;
                 return pw.Column(
@@ -641,7 +604,7 @@ class InvoiceService {
                         pw.Expanded(
                           flex: 2,
                           child: pw.Text(
-                            currencyFormat.format(item.unitPrice),
+                            formatCurrency(item.unitPrice, currency),
                             style: pw.TextStyle(font: regularFont, fontSize: 8),
                             textAlign: pw.TextAlign.right,
                           ),
@@ -649,7 +612,7 @@ class InvoiceService {
                         pw.Expanded(
                           flex: 2,
                           child: pw.Text(
-                            currencyFormat.format(itemTotal),
+                            formatCurrency(itemTotal, currency),
                             style: pw.TextStyle(font: regularFont, fontSize: 8),
                             textAlign: pw.TextAlign.right,
                           ),
@@ -663,7 +626,6 @@ class InvoiceService {
               
               pw.Divider(thickness: 1),
               
-              // Totaux
               pw.SizedBox(height: 5),
               pw.Row(
                 children: [
@@ -678,7 +640,7 @@ class InvoiceService {
                   pw.Expanded(
                     flex: 2,
                     child: pw.Text(
-                      currencyFormat.format(subtotal),
+                      formatCurrency(subtotal, currency),
                       style: pw.TextStyle(font: regularFont, fontSize: 8),
                       textAlign: pw.TextAlign.right,
                     ),
@@ -701,7 +663,7 @@ class InvoiceService {
                     pw.Expanded(
                       flex: 2,
                       child: pw.Text(
-                        currencyFormat.format(taxAmount),
+                        formatCurrency(taxAmount, currency),
                         style: pw.TextStyle(font: regularFont, fontSize: 8),
                         textAlign: pw.TextAlign.right,
                       ),
@@ -712,7 +674,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 5),
               
-              // Total à payer
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(vertical: 4),
                 decoration: const pw.BoxDecoration(
@@ -737,7 +698,7 @@ class InvoiceService {
                     pw.Expanded(
                       flex: 2,
                       child: pw.Text(
-                        currencyFormat.format(total),
+                        formatCurrency(total, currency),
                         style: pw.TextStyle(
                           font: boldFont,
                           fontSize: 10,
@@ -751,7 +712,6 @@ class InvoiceService {
               
               pw.SizedBox(height: 10),
               
-              // Pied de page personnalisé pour le ticket
               pw.Center(
                 child: pw.Column(
                   children: [
@@ -775,7 +735,6 @@ class InvoiceService {
       ),
     );
     
-    // Enregistrer le PDF
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/receipt_${sale.id}.pdf');
     await file.writeAsBytes(await pdf.save());
@@ -825,16 +784,14 @@ class InvoiceService {
     required String companyPhone,
     required String companyEmail,
     required String footerText,
-    required BuildContext context,
   }) async {
-    // Créer un objet Settings avec les informations fournies
     final settings = Settings(
       companyName: companyName,
       companyAddress: companyAddress,
       companyPhone: companyPhone,
       companyEmail: companyEmail,
       companyLogo: '',
-      currency: 'FC',
+      currency: CurrencyType.cdf,
       dateFormat: 'dd/MM/yyyy',
       themeMode: AppThemeMode.light,
       language: 'fr',
@@ -847,10 +804,8 @@ class InvoiceService {
       invoiceNumberFormat: 'FAC-{YEAR}-{MONTH}-{SEQ}'
     );
     
-    // Générer le fichier PDF
     final pdfPath = await generateInvoicePdf(sale, settings);
     
-    // Afficher le PDF
     await previewDocument(pdfPath);
   }
 }

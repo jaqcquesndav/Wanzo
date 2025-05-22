@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../features/auth/services/auth0_service.dart';
+import '../../features/auth/services/offline_auth_service.dart';
 import '../utils/connectivity_service.dart';
 import 'database_service.dart';
 
@@ -14,18 +16,26 @@ class ApiService {
   /// Instance unique du service (singleton)
   factory ApiService() => _instance;
 
-  ApiService._internal();
+  final Auth0Service _auth0Service;
+  final ConnectivityService _connectivityService;
+  final DatabaseService _databaseService;
+
+  ApiService._internal()
+      : _connectivityService = ConnectivityService(),
+        _databaseService = DatabaseService(),
+        _auth0Service = Auth0Service(
+          offlineAuthService: OfflineAuthService(
+            secureStorage: const FlutterSecureStorage(),
+            databaseService: DatabaseService(),
+            connectivityService: ConnectivityService(),
+          ),
+        );
 
   // Configuration de l'API
   static const String _apiBaseUrl = 'https://api.wanzo.app'; // À remplacer par l'URL de votre API
   static String get apiBaseUrl => _apiBaseUrl;
   static const Duration _timeout = Duration(seconds: 30);
   static const Duration _cacheExpiration = Duration(hours: 24);
-
-  // Services
-  final Auth0Service _auth0Service = Auth0Service();
-  final ConnectivityService _connectivityService = ConnectivityService();
-  final DatabaseService _databaseService = DatabaseService();
 
   // Timer pour la synchronisation périodique
   Timer? _syncTimer;
@@ -163,9 +173,22 @@ class ApiService {
 
   /// Construit l'URI pour la requête
   Uri _buildUri(String endpoint, [Map<String, dynamic>? queryParams]) {
-    final url = '$_apiBaseUrl/$endpoint';
+    String tempBaseUrl = _apiBaseUrl;
+    // Remove all trailing slashes from base URL
+    while (tempBaseUrl.endsWith('/')) {
+      tempBaseUrl = tempBaseUrl.substring(0, tempBaseUrl.length - 1);
+    }
 
-    if (queryParams != null) {
+    String tempEndpoint = endpoint;
+    // Remove all leading slashes from endpoint
+    while (tempEndpoint.startsWith('/')) {
+      tempEndpoint = tempEndpoint.substring(1);
+    }
+
+    // Ensures a single slash between base and endpoint
+    final url = '$tempBaseUrl/$tempEndpoint'; 
+
+    if (queryParams != null && queryParams.isNotEmpty) {
       return Uri.parse(url).replace(
         queryParameters: queryParams.map((key, value) => MapEntry(key, value.toString())),
       );
@@ -183,7 +206,7 @@ class ApiService {
   }) async {
     try {
       if (!_connectivityService.isConnected) {
-        debugPrint('Mode hors ligne: tentative de récupération des données du cache');
+        debugPrint('Mode hors ligne: tentative de récupération des données du cache pour $uri');
         if (useOfflineCache) {
           final cachedData = await _getCachedResponse(uri.toString(), method);
           if (cachedData != null) {
@@ -191,18 +214,29 @@ class ApiService {
           }
         }
 
-        if (method != 'GET' && body != null) {
-          final endpoint = uri.path.replaceFirst(_apiBaseUrl, '');
+        if (method != 'GET') {
+          String endpointPathToSave = uri.path; 
+          // If uri.path somehow contains the full base URL (e.g. if endpoint was an absolute URL string), remove it.
+          // This makes it robust even if _buildUri was passed an absolute path for `endpoint`.
+          if (endpointPathToSave.startsWith(_apiBaseUrl)) {
+            endpointPathToSave = endpointPathToSave.substring(_apiBaseUrl.length);
+          }
+          
+          // Remove all leading slashes to ensure a clean relative path like "feature/action"
+          while (endpointPathToSave.startsWith('/')) {
+            endpointPathToSave = endpointPathToSave.substring(1);
+          }
+
           await _databaseService.savePendingOperation(
-            endpoint: endpoint,
+            endpoint: endpointPathToSave, // Use the cleaned relative path
             method: method,
             body: body,
           );
-          debugPrint('Opération enregistrée pour synchronisation ultérieure: $method $endpoint');
+          debugPrint('Opération enregistrée pour synchronisation ultérieure: $method $endpointPathToSave');
           return {'success': true, 'message': 'Opération enregistrée pour synchronisation ultérieure'};
         }
 
-        throw const SocketException('Aucune connexion Internet disponible');
+        throw SocketException('Aucune connexion Internet disponible et aucune donnée en cache pour $uri');
       }
 
       final token = await _auth0Service.getAccessToken();
@@ -283,15 +317,21 @@ class ApiService {
       }
 
       if (!_canUseCache(method) && body != null) {
-        final endpoint = uri.toString().replaceFirst(_apiBaseUrl, '');
-        await _storeForSync(endpoint, method, body);
-        debugPrint('Opération stockée pour synchronisation ultérieure: $method ${uri.toString()}');
+        String pathOnly = uri.path;
+        if (pathOnly.startsWith(_apiBaseUrl)) {
+            pathOnly = pathOnly.substring(_apiBaseUrl.length);
+        }
+        if (pathOnly.startsWith('/')) {
+          pathOnly = pathOnly.substring(1);
+        }
+        await _storeForSync(pathOnly, method, body);
+        debugPrint('Opération stockée pour synchronisation ultérieure: $method $pathOnly');
         return {'success': true, 'message': 'Opération stockée pour synchronisation ultérieure'};
       }
 
       throw Exception('Problème de connexion réseau. Veuillez vérifier votre connexion Internet.');
     } on TimeoutException catch (e) {
-      debugPrint('Délai d\'attente dépassé: $e');
+      debugPrint('Délai d\'attente dépassé pour $uri: $e');
 
       if (_canUseCache(method)) {
         final cachedResponse = await _getCachedResponse(uri.toString(), method);
@@ -303,7 +343,7 @@ class ApiService {
 
       throw Exception('La requête a pris trop de temps. Veuillez réessayer.');
     } catch (e) {
-      debugPrint('Erreur lors de la requête API: $e');
+      debugPrint('Erreur lors de la requête API pour $uri: $e');
       throw Exception('Une erreur s\'est produite: $e');
     }
   }
