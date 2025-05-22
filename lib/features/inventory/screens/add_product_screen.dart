@@ -106,7 +106,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         String uniqueSavedImagePath = savedImagePath;
         int counter = 1;
         while (await File(uniqueSavedImagePath).exists()) {
-          String newFileName = path.basenameWithoutExtension(savedImagePath) + '_${counter}' + path.extension(savedImagePath);
+          String newFileName = '${path.basenameWithoutExtension(savedImagePath)}_$counter${path.extension(savedImagePath)}';
           uniqueSavedImagePath = path.join(appDir.path, newFileName);
           counter++;
         }

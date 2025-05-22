@@ -1,6 +1,5 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\core\services\conflict_resolution_service.dart
 
-import 'package:flutter/material.dart';
 import '../utils/logger.dart';
 
 /// Stratégies de résolution des conflits

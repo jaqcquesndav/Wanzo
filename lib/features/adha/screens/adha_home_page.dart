@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import '../bloc/adha_bloc.dart';
 import '../bloc/adha_event.dart';
 import 'adha_screen.dart';

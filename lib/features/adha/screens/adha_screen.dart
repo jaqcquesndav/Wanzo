@@ -216,7 +216,7 @@ class _AdhaScreenState extends State<AdhaScreen> {
                   decoration: InputDecoration(
                     hintText: isVoiceActive
                         ? "Parlez maintenant..."
-                        : (isConversationActive && !(adhaState is AdhaConversationActive && adhaState.conversation.messages.isEmpty))
+                        : (isConversationActive && !(adhaState.conversation.messages.isEmpty))
                             ? "Écrivez votre message..."
                             : "Commencer une nouvelle conversation...",
                     border: OutlineInputBorder(
@@ -224,7 +224,7 @@ class _AdhaScreenState extends State<AdhaScreen> {
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -297,8 +297,8 @@ class _AdhaScreenState extends State<AdhaScreen> {
                     : Colors.grey,
                 elevation: 2,
                 mini: true,
-                child: const Icon(Icons.send, color: Colors.white),
                 heroTag: 'sendMessageFab',
+                child: const Icon(Icons.send, color: Colors.white),
               ),
             ],
           ),

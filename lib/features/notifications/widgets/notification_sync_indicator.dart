@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/sync_status_bloc.dart';
 import 'offline_sync_badge.dart';
-import '../../../constants/constants.dart';
 
 /// Widget affichant l'état de synchronisation des notifications
 class NotificationSyncIndicator extends StatelessWidget {

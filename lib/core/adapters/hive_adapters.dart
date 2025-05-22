@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
 import '../../features/auth/models/user.dart';
 import '../../features/notifications/models/notification_model.dart';
-import '../../features/adha/models/adha_message.dart'; // Import Adha models
+// Import Adha models
 import '../../features/adha/models/adha_adapters.dart'; // Import Adha adapters
 import '../../features/sales/models/sale.dart'; // Corrected: Import main model file
 import '../../features/financing/models/financing_request.dart'; // Corrected: Import main model file

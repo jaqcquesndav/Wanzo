@@ -83,8 +83,8 @@ class _ContactsScreenState extends State<ContactsScreen>
             context.push('/suppliers/add');
           }
         },
-        child: const Icon(Icons.add),
         tooltip: _tabController.index == 0 ? 'Ajouter un client' : 'Ajouter un fournisseur',
+        child: const Icon(Icons.add),
       ),
     );
   }

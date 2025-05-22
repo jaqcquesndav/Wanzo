@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../lib/features/sales/models/sale.dart';
-import '../lib/features/sales/repositories/sales_repository.dart';
+import 'package:wanzo/features/sales/models/sale.dart';
+import 'package:wanzo/features/sales/repositories/sales_repository.dart';
 
 // Events
 abstract class SalesEvent extends Equatable {

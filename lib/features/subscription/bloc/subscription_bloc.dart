@@ -93,7 +93,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           isUploadingProof: false,
           uploadedProofName: fileName,
         ));
-        emit(PaymentProofUploadSuccess(message: 'Preuve (${fileName}) téléchargée. URL: $proofUrl'));
+        emit(PaymentProofUploadSuccess(message: 'Preuve ($fileName) téléchargée. URL: $proofUrl'));
       } catch (e) {
         emit(currentState.copyWith(isUploadingProof: false));
         emit(PaymentProofUploadFailure(error: 'Échec du téléchargement de la preuve: ${e.toString()}'));

@@ -1,7 +1,6 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\features\notifications\widgets\offline_sync_badge.dart
 
 import 'package:flutter/material.dart';
-import '../../../constants/constants.dart';
 
 /// Widget affichant un badge pour les notifications en attente de synchronisation
 class OfflineSyncBadge extends StatelessWidget {

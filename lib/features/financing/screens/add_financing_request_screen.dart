@@ -7,7 +7,6 @@ import '../../../core/shared_widgets/wanzo_scaffold.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../../settings/bloc/settings_state.dart';
 import '../../settings/models/settings.dart';
-import '../../../core/utils/currency_formatter.dart';
 import '../bloc/financing_bloc.dart';
 import '../models/financing_request.dart';
 
@@ -25,7 +24,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
   final _reasonController = TextEditingController();
   FinancingType _selectedFinancingType = FinancingType.cashCredit;
   FinancialInstitution _selectedInstitution = FinancialInstitution.bonneMoisson;
-  int _creditScore = 75;
+  final int _creditScore = 75;
 
   void _showCreditScoreInfo() {
     showDialog(

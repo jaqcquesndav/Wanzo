@@ -217,7 +217,7 @@ class SubscriptionRepository {
     SubscriptionTier(name: 'Premium', price: '15,000 FCFA/mois', users: 'Utilisateurs Illimités', features: ['Tout de Starter', 'Multi-boutiques', 'Support Prioritaire', 'Analyses Avancées'], adhaTokens: '2000', type: SubscriptionTierType.premium),
   ];
 
-  SubscriptionTier _currentTier_fallback = SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium, isCurrent: true);
+  final SubscriptionTier _currentTier_fallback = SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium, isCurrent: true);
 
   final List<Invoice> _invoices_fallback = [];
   final List<PaymentMethod> _paymentMethods_fallback = [];

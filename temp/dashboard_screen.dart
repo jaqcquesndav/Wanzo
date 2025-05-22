@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // ignore: avoid_relative_lib_imports
 import '../lib/constants/constants.dart';
-import '../lib/core/shared_widgets/wanzo_scaffold.dart';
+import 'package:wanzo/core/shared_widgets/wanzo_scaffold.dart';
 
 /// Écran principal du tableau de bord
 class DashboardScreen extends StatefulWidget {

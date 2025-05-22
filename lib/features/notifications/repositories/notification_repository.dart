@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hive/hive.dart';
-import 'package:sqflite/sqflite.dart';
 import '../models/notification_model.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/database_service.dart';

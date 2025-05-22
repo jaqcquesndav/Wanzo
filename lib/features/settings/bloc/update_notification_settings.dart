@@ -1,4 +1,3 @@
-import 'package:equatable/equatable.dart';
 import './settings_event.dart'; // Import the base class
 
 /// Événement pour mettre à jour les paramètres de notification

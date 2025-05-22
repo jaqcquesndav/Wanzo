@@ -93,7 +93,7 @@ class Logger {
       fullMessage += '\nError: $error';
     }
     
-    if (_enableColoredLogs && messageColor != null) {
+    if (_enableColoredLogs) {
       fullMessage = '$messageColor$fullMessage\x1B[0m'; // Reset color
     }
     

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wanzo/constants/constants.dart';
-import 'package:wanzo/features/auth/bloc/auth_bloc.dart';
 import 'package:wanzo/features/auth/repositories/auth_repository.dart'; // Import AuthRepository
 
 class ForgotPasswordScreen extends StatefulWidget {

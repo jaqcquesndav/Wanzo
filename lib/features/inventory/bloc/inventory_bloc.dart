@@ -276,7 +276,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       final String? originalNotes = originalTransaction.notes;
       String reversalJournalDescription;
       if (originalNotes != null && originalNotes.isNotEmpty) {
-        reversalJournalDescription = "Annulation: ${originalNotes}";
+        reversalJournalDescription = "Annulation: $originalNotes";
       } else {
         reversalJournalDescription = "Annulation: Mouvement de stock: ${product.name}";
       }

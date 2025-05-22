@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -19,11 +18,9 @@ import '../../features/sales/screens/sale_details_screen.dart';
 import '../../features/sales/screens/sales_screen.dart';
 import '../../features/adha/screens/adha_screen.dart'; // Updated import
 import '../../features/customer/models/customer.dart';
-import '../../features/customer/screens/customers_screen.dart';
 import '../../features/customer/screens/add_customer_screen.dart';
 import '../../features/customer/screens/customer_details_screen.dart';
 import '../../features/supplier/models/supplier.dart';
-import '../../features/supplier/screens/suppliers_screen.dart';
 import '../../features/supplier/screens/add_supplier_screen.dart';
 import '../../features/supplier/screens/supplier_details_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';

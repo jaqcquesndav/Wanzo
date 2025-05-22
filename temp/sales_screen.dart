@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 // ignore: avoid_relative_lib_imports
 import '../lib/features/sales/models/sale.dart';
-import '../lib/features/sales/bloc/sales_bloc.dart';
-import '../lib/constants/constants.dart';
-import '../lib/core/shared_widgets/wanzo_scaffold.dart';
+import 'package:wanzo/features/sales/bloc/sales_bloc.dart';
+import 'package:wanzo/constants/constants.dart';
+import 'package:wanzo/core/shared_widgets/wanzo_scaffold.dart';
 
 /// Écran principal de gestion des ventes
 class SalesScreen extends StatefulWidget {

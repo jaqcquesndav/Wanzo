@@ -97,7 +97,7 @@ class Auth0Service {
       debugPrint("Auth0Service: Attempting standard Auth0 login. Clearing demo user flag.");
       await _secureStorage.delete(key: _demoUserKey); // Clear demo user flag if any
 
-      final TokenResponse? result = await _appAuth.authorizeAndExchangeCode(
+      final TokenResponse result = await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           _auth0ClientId,
           _auth0RedirectUri,
@@ -109,11 +109,11 @@ class Auth0Service {
         ),
       );
 
-      if (result?.accessToken == null || result?.idToken == null) {
+      if (result.accessToken == null || result.idToken == null) {
         throw Exception('Login failed: No token received or ID token missing.');
       }
 
-      await _secureStorage.write(key: _accessTokenKey, value: result!.accessToken);
+      await _secureStorage.write(key: _accessTokenKey, value: result.accessToken);
       await _secureStorage.write(key: _idTokenKey, value: result.idToken);
       if (result.refreshToken != null) {
         await _secureStorage.write(key: _refreshTokenKey, value: result.refreshToken);
@@ -211,7 +211,7 @@ class Auth0Service {
         return null;
       }
 
-      final TokenResponse? result = await _appAuth.token(
+      final TokenResponse result = await _appAuth.token(
         TokenRequest(
           _auth0ClientId,
           _auth0RedirectUri,
@@ -222,8 +222,8 @@ class Auth0Service {
         ),
       );
 
-      if (result?.accessToken != null) {
-        await _secureStorage.write(key: _accessTokenKey, value: result!.accessToken);
+      if (result.accessToken != null) {
+        await _secureStorage.write(key: _accessTokenKey, value: result.accessToken);
         if (result.idToken != null) {
           await _secureStorage.write(key: _idTokenKey, value: result.idToken);
         }

@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repositories/settings_repository.dart';
 import 'settings_event.dart';
 import 'settings_state.dart';
-import '../models/settings.dart';
 
 /// BLoC pour gérer les paramètres de l'application
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {

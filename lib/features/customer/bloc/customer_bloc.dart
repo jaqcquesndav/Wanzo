@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repositories/customer_repository.dart';
 import 'customer_event.dart';
 import 'customer_state.dart';
-import '../models/customer.dart';
 
 /// BLoC pour gérer les opérations sur les clients
 class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
