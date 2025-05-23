@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 import '../../features/auth/models/user.dart';
 import '../../features/notifications/models/notification_model.dart';
 // Import Adha models
-import '../../features/adha/models/adha_adapters.dart'; // Import Adha adapters
+import '../../features/adha/models/adha_adapters.dart'; // Uncommented import
 import '../../features/sales/models/sale.dart'; // Corrected: Import main model file
 import '../../features/financing/models/financing_request.dart'; // Corrected: Import main model file
 import '../../features/customer/models/customer.dart'; // Added import for Customer model

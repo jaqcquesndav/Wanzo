@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 
 part 'stock_transaction.g.dart';
 
-@HiveType(typeId: 23) // Ensure this typeId is unique
+@HiveType(typeId: 32) // Ensure this typeId is unique
 enum StockTransactionType {
   @HiveField(0)
   purchase, // Entrée de stock suite à un achat
@@ -33,7 +33,7 @@ enum StockTransactionType {
   initialStock, // Stock initial lors de la création du produit
 }
 
-@HiveType(typeId: 24) // Ensure this typeId is unique
+@HiveType(typeId: 33) // Ensure this typeId is unique
 class StockTransaction extends Equatable {
   @HiveField(0)
   final String id;

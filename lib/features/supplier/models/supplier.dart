@@ -5,7 +5,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'supplier.g.dart';
 
 /// Modèle de données pour un fournisseur
-@HiveType(typeId: 24)
+@HiveType(typeId: 38)
 @JsonSerializable(explicitToJson: true)
 class Supplier extends Equatable {
   /// Identifiant unique du fournisseur
@@ -131,7 +131,7 @@ class Supplier extends Equatable {
 }
 
 /// Catégories de fournisseurs
-@HiveType(typeId: 25)
+@HiveType(typeId: 39)
 @JsonEnum()
 enum SupplierCategory {
   /// Fournisseur principal ou stratégique

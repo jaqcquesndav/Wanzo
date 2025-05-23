@@ -15,8 +15,8 @@ class ConnectivityStatusBanner extends StatefulWidget {
     super.key,
     this.showAlways = false,
     this.height = 25.0,
-    this.onlineColor = Colors.green,
-    this.offlineColor = Colors.red,
+    this.onlineColor = Colors.green, // Will be replaced by theme color
+    this.offlineColor = Colors.red, // Will be replaced by theme color
   });
 
   @override
@@ -57,15 +57,21 @@ class _ConnectivityStatusBannerState extends State<ConnectivityStatusBanner> {
       return const SizedBox.shrink();
     }
 
+    final theme = Theme.of(context);
+    final currentOnlineColor = _isConnected ? theme.colorScheme.secondary : theme.colorScheme.error;
+    // Use widget.onlineColor and widget.offlineColor if they are not the default ones.
+    final onlineColor = widget.onlineColor == Colors.green ? currentOnlineColor : widget.onlineColor;
+    final offlineColor = widget.offlineColor == Colors.red ? theme.colorScheme.error : widget.offlineColor;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: widget.height,
-      color: _isConnected ? widget.onlineColor : widget.offlineColor,
+      color: _isConnected ? onlineColor : offlineColor,
       child: Center(
         child: Text(
           _isConnected ? 'En ligne' : 'Hors ligne',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: _isConnected ? theme.colorScheme.onSecondary : theme.colorScheme.onError,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),

@@ -68,12 +68,15 @@ class AuthRepository {
   Future<User> loginWithDemoAccount() async {
     try {
       debugPrint('AuthRepository: Tentative de connexion avec le compte de démonstration via Auth0Service');
+      // Demo user active flag should be set by AuthBloc before calling this
       final User user = await _auth0Service.loginWithDemoAccount();
       await _saveUserData(user);
       _currentUser = user;
       return user;
     } catch (e) {
       debugPrint('AuthRepository: Erreur lors de la connexion avec le compte de démonstration: $e');
+      // Ensure demo user key is cleared on failure by Auth0Service
+      await _auth0Service.setDemoUserActive(false);
       throw Exception('Échec de la connexion de démonstration: $e');
     }
   }
@@ -81,15 +84,16 @@ class AuthRepository {
   /// Déconnecte l'utilisateur actuel
   Future<void> logout() async {
     try {
-      await _auth0Service.logout(); // Auth0Service handles clearing its own tokens
+      final bool wasDemo = await _auth0Service.isDemoUserActive();
+      await _auth0Service.logout(); // Auth0Service handles clearing its own tokens including demo key
       
       final userBox = Hive.box<User>(_userBoxName);
       await userBox.clear();
       
-      // SharedPreferences token clearing might be redundant if Auth0Service is the source of truth
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
       debugPrint('Données utilisateur local et token SharedPreferences supprimés.');
+      // No need to explicitly clear demo key here, logout in Auth0Service should handle it.
     } catch (e) {
       debugPrint('Erreur lors de la déconnexion: $e');
       throw Exception('Échec de la déconnexion: $e');
@@ -238,5 +242,10 @@ class AuthRepository {
       }
     }
     return null;
+  }
+
+  /// Sets the demo user active state.
+  Future<void> setDemoUserActive(bool isActive) async {
+    await _auth0Service.setDemoUserActive(isActive);
   }
 }

@@ -26,13 +26,16 @@ class ConnectivityService {
     _checkConnectivity();
     
     // Écouter les changements de connectivité
-    _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> result) {
+      _updateConnectionStatus(result);
+    });
   }
 
   /// Vérifie l'état actuel de la connexion
-  Future<void> _checkConnectivity() async {    try {
+  Future<void> _checkConnectivity() async {
+    try {
       final result = await _connectivity.checkConnectivity();
-      _updateConnectionStatus(result);
+      _updateConnectionStatus(result); // Pass the list directly
     } catch (e) {
       debugPrint('Erreur lors de la vérification de la connectivité: $e');
       _isConnected = false;
@@ -41,9 +44,10 @@ class ConnectivityService {
   }
 
   /// Met à jour l'état de la connexion
-  void _updateConnectionStatus(ConnectivityResult result) {
+  void _updateConnectionStatus(List<ConnectivityResult> result) { // Modified to accept List<ConnectivityResult>
     final wasConnected = _isConnected;
-    _isConnected = result != ConnectivityResult.none;
+    // Check if 'none' is present in the list. If not, we are connected.
+    _isConnected = !result.contains(ConnectivityResult.none); 
       // Notifier les écouteurs si l'état a changé
     if (wasConnected != _isConnected) {
       _connectionStatus.value = _isConnected;
@@ -51,6 +55,7 @@ class ConnectivityService {
       debugPrint('État de la connectivité mis à jour: ${_isConnected ? 'Connecté' : 'Déconnecté'}');
     }
   }
+
   /// Libère les ressources
   void dispose() {
     // No need to dispose ValueNotifier as it will be garbage collected

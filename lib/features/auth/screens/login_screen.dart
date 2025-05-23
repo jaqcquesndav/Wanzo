@@ -196,29 +196,48 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Checkbox(
-                                          value: _rememberMe,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _rememberMe = value ?? false;
-                                            });
-                                          },
-                                          activeColor: WanzoColors.primary,
-                                        ),
-                                        const Text('Se souvenir de moi'),
-                                      ],
+                                    Expanded( // Wrap with Expanded
+                                      child: Row(
+                                        children: [
+                                          Checkbox(
+                                            value: _rememberMe,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _rememberMe = value!;
+                                              });
+                                            },
+                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            visualDensity: VisualDensity.compact,
+                                          ),
+                                          Flexible( // Use Flexible for text to allow wrapping if needed
+                                            child: Text(
+                                              'Se souvenir de moi',
+                                              style: TextStyle(fontSize: WanzoTypography.fontSizeSm),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pushNamed(ForgotPasswordScreen.routeName);
-                                      },
-                                      child: const Text('Mot de passe oublié?'),
+                                    Expanded( // Wrap with Expanded
+                                      child: TextButton(
+                                        onPressed: () {
+                                          // Navigate to ForgotPasswordScreen using GoRouter
+                                          context.push(ForgotPasswordScreen.routeName);
+                                        },
+                                        child: Text(
+                                          'Mot de passe oublié ?',
+                                          textAlign: TextAlign.end, // Align text to the end
+                                          style: TextStyle(
+                                            fontSize: WanzoTypography.fontSizeSm,
+                                            color: WanzoColors.primary,
+                                            fontWeight: WanzoTypography.fontWeightMedium,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: WanzoSpacing.md),
+                                const SizedBox(height: WanzoSpacing.lg),
                                 
                                 // Bouton de connexion
                                 SizedBox(

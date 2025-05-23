@@ -22,7 +22,7 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       companyPhone: fields[2] as String,
       companyEmail: fields[3] as String,
       companyLogo: fields[4] as String,
-      currency: fields[5] as String,
+      currency: fields[5] as CurrencyType,
       dateFormat: fields[6] as String,
       themeMode: fields[7] as AppThemeMode,
       language: fields[8] as String,
@@ -118,6 +118,50 @@ class SettingsAdapter extends TypeAdapter<Settings> {
           typeId == other.typeId;
 }
 
+class CurrencyTypeAdapter extends TypeAdapter<CurrencyType> {
+  @override
+  final int typeId = 30;
+
+  @override
+  CurrencyType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return CurrencyType.fc;
+      case 1:
+        return CurrencyType.cdf;
+      case 2:
+        return CurrencyType.usd;
+      default:
+        return CurrencyType.fc;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, CurrencyType obj) {
+    switch (obj) {
+      case CurrencyType.fc:
+        writer.writeByte(0);
+        break;
+      case CurrencyType.cdf:
+        writer.writeByte(1);
+        break;
+      case CurrencyType.usd:
+        writer.writeByte(2);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CurrencyTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
 class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
   @override
   final int typeId = 27;
@@ -172,7 +216,8 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       companyPhone: json['companyPhone'] as String? ?? '',
       companyEmail: json['companyEmail'] as String? ?? '',
       companyLogo: json['companyLogo'] as String? ?? '',
-      currency: json['currency'] as String? ?? 'FC',
+      currency: $enumDecodeNullable(_$CurrencyTypeEnumMap, json['currency']) ??
+          CurrencyType.fc,
       dateFormat: json['dateFormat'] as String? ?? 'DD/MM/YYYY',
       themeMode:
           $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
@@ -212,7 +257,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'companyPhone': instance.companyPhone,
       'companyEmail': instance.companyEmail,
       'companyLogo': instance.companyLogo,
-      'currency': instance.currency,
+      'currency': _$CurrencyTypeEnumMap[instance.currency]!,
       'dateFormat': instance.dateFormat,
       'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
       'language': instance.language,
@@ -235,6 +280,12 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'emailNotificationsEnabled': instance.emailNotificationsEnabled,
       'soundNotificationsEnabled': instance.soundNotificationsEnabled,
     };
+
+const _$CurrencyTypeEnumMap = {
+  CurrencyType.fc: 'fc',
+  CurrencyType.cdf: 'cdf',
+  CurrencyType.usd: 'usd',
+};
 
 const _$AppThemeModeEnumMap = {
   AppThemeMode.light: 'light',

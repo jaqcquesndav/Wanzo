@@ -85,9 +85,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
+      // Ensure demo user key is set before repository call
+      await _authRepository.setDemoUserActive(true); 
       final user = await _authRepository.loginWithDemoAccount();
       emit(AuthAuthenticated(user));
     } catch (e) {
+      // Clear demo user key on failure
+      await _authRepository.setDemoUserActive(false);
       emit(AuthFailure(e.toString()));
     }
   }

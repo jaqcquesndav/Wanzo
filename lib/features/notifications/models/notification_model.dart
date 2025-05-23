@@ -48,7 +48,7 @@ class NotificationModel extends Equatable {
   
   /// Titre de la notification
   @HiveField(1)
-  final String title;
+  final String? title; // Made title nullable
   
   /// Message de la notification
   @HiveField(2)
@@ -77,7 +77,7 @@ class NotificationModel extends Equatable {
   /// Constructeur
   const NotificationModel({
     required this.id,
-    required this.title,
+    this.title, // Updated constructor
     required this.message,
     required this.type,
     required this.timestamp,
@@ -86,9 +86,11 @@ class NotificationModel extends Equatable {
     this.additionalData,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) => _$NotificationModelFromJson(json);
+  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
+      _$NotificationModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
-  
+
   /// Crée une nouvelle notification avec un ID généré automatiquement
   factory NotificationModel.create({
     required String title,
@@ -171,13 +173,13 @@ class NotificationModel extends Equatable {
   
   @override
   List<Object?> get props => [
-    id,
-    title,
-    message,
-    type,
-    timestamp,
-    isRead,
-    actionRoute,
-    additionalData,
-  ];
+        id,
+        title, // Added to props
+        message,
+        type,
+        timestamp,
+        isRead,
+        actionRoute,
+        additionalData,
+      ];
 }

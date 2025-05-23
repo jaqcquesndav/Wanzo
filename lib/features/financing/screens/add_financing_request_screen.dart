@@ -9,6 +9,7 @@ import '../../settings/bloc/settings_state.dart';
 import '../../settings/models/settings.dart';
 import '../bloc/financing_bloc.dart';
 import '../models/financing_request.dart';
+import '../../../core/utils/currency_formatter.dart' as currencyUtil;
 
 class AddFinancingRequestScreen extends StatefulWidget {
   const AddFinancingRequestScreen({super.key});
@@ -89,14 +90,14 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
         CurrencyType currentCurrencyType = CurrencyType.usd;
-        String currencySymbol = getCurrencySymbol(currentCurrencyType);
+        String currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
 
         if (settingsState is SettingsLoaded) {
           currentCurrencyType = settingsState.settings.currency;
-          currencySymbol = getCurrencySymbol(currentCurrencyType);
+          currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
         } else if (settingsState is SettingsUpdated) {
           currentCurrencyType = settingsState.settings.currency;
-          currencySymbol = getCurrencySymbol(currentCurrencyType);
+          currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
         }
 
         return WanzoScaffold(
@@ -124,17 +125,17 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
                 child: ListView(
                   children: <Widget>[
                     Card(
-                      color: WanzoColors.primary.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withAlpha((255 * 0.1).round()),
                       elevation: 0,
                       child: ListTile(
-                        leading: Icon(Icons.shield_outlined, color: WanzoColors.primary, size: 30),
+                        leading: Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.primary, size: 30),
                         title: Text(
                           'Votre Cote de Crédit: $_creditScore / 100',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, color: WanzoColors.primary),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(Icons.info_outline, color: WanzoColors.primary),
+                          icon: Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
                           onPressed: _showCreditScoreInfo,
                         ),
                       ),
@@ -208,17 +209,17 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
                     ElevatedButton(
                       onPressed: () => _submitRequest(currentCurrencyType),
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: WanzoColors.primary),
+                          backgroundColor: Theme.of(context).colorScheme.primary),
                       child: BlocBuilder<FinancingBloc, FinancingState>(
                         builder: (context, financingBlocState) {
                           if (financingBlocState is FinancingLoading) {
-                            return const SizedBox(
+                            return SizedBox(
                               width: 20, height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary)
                             );
                           }
-                          return const Text('Soumettre la Demande',
-                              style: TextStyle(color: Colors.white));
+                          return Text('Soumettre la Demande',
+                              style: TextStyle(color: Theme.of(context).colorScheme.onPrimary));
                         },
                       ),
                     ),

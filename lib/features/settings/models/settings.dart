@@ -4,7 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'settings.g.dart';
 
-@HiveType(typeId: 28) // New unique typeId for CurrencyType
+@HiveType(typeId: 30) // Changed typeId from 28 to 30
 @JsonEnum()
 enum CurrencyType {
   @HiveField(0)

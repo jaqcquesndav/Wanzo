@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'customer.g.dart';
 
 /// Modèle de données pour un client
-@HiveType(typeId: 3)
+@HiveType(typeId: 35)
 class Customer extends Equatable {
   /// Identifiant unique du client
   @HiveField(0)
@@ -102,7 +102,7 @@ class Customer extends Equatable {
 }
 
 /// Catégories de clients
-@HiveType(typeId: 4)
+@HiveType(typeId: 36)
 enum CustomerCategory {
   /// Client VIP ou premium
   @HiveField(0)

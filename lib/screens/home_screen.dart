@@ -17,8 +17,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Wanzo'),
-        backgroundColor: WanzoColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
       ),
       body: Center(
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Text('Fonctionnalité à venir !'),
-                        backgroundColor: WanzoColors.info,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Or another appropriate theme color for info
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(WanzoBorderRadius.md),

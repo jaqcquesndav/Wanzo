@@ -4,7 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'payment_method.g.dart';
 
 /// Méthodes de paiement disponibles
-@HiveType(typeId: 23)
+@HiveType(typeId: 37)
 @JsonEnum()
 enum PaymentMethod {
   @HiveField(0)

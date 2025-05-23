@@ -6,7 +6,7 @@ part 'business_sector.g.dart';
 
 /// Modèle représentant un secteur d'activité pour une entreprise
 @JsonSerializable()
-@HiveType(typeId: 4) // Added HiveType
+@HiveType(typeId: 40) // Added HiveType
 class BusinessSector extends Equatable {
   /// Identifiant unique du secteur
   @HiveField(0) // Added HiveField

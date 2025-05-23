@@ -38,6 +38,17 @@ class Auth0Service {
     return await _secureStorage.read(key: _demoUserKey) == 'true';
   }
 
+  /// Sets the demo user mode active status
+  Future<void> setDemoUserActive(bool isActive) async {
+    if (isActive) {
+      await _secureStorage.write(key: _demoUserKey, value: 'true');
+      debugPrint("Auth0Service: Demo user mode explicitly ACTIVATED.");
+    } else {
+      await _secureStorage.delete(key: _demoUserKey);
+      debugPrint("Auth0Service: Demo user mode explicitly DEACTIVATED.");
+    }
+  }
+
   /// Vérifie si l'utilisateur est authentifié (Auth0 ou Démo)
   Future<bool> isAuthenticated() async {
     final isDemoUser = await _secureStorage.read(key: _demoUserKey);
@@ -63,6 +74,9 @@ class Auth0Service {
   /// Effectue la connexion avec un compte de démonstration
   Future<User> loginWithDemoAccount() async {
     debugPrint('Auth0Service: Connexion avec le compte de démonstration');
+    // Ensure demo mode is active
+    await setDemoUserActive(true);
+
     final demoUser = User(
       id: 'demo-user-id',
       name: 'Utilisateur Démo Wanzo',
@@ -149,7 +163,9 @@ class Auth0Service {
       await _secureStorage.delete(key: _refreshTokenKey);
       await _secureStorage.delete(key: _idTokenKey);
       await _secureStorage.delete(key: _expiresAtKey);
-      await _secureStorage.delete(key: _demoUserKey);
+      // Explicitly delete demo user key on any logout
+      await _secureStorage.delete(key: _demoUserKey); 
+      debugPrint("Auth0Service: Demo user key deleted on logout.");
 
       if (!wasDemoUser) {
         final keepOfflineData = await offlineAuthService.isOfflineLoginEnabled();

@@ -18,7 +18,7 @@ class NotificationModelAdapter extends TypeAdapter<NotificationModel> {
     };
     return NotificationModel(
       id: fields[0] as String,
-      title: fields[1] as String,
+      title: fields[1] as String?,
       message: fields[2] as String,
       type: fields[3] as NotificationType,
       timestamp: fields[4] as DateTime,
@@ -132,7 +132,7 @@ class NotificationTypeAdapter extends TypeAdapter<NotificationType> {
 NotificationModel _$NotificationModelFromJson(Map<String, dynamic> json) =>
     NotificationModel(
       id: json['id'] as String,
-      title: json['title'] as String,
+      title: json['title'] as String?,
       message: json['message'] as String,
       type: $enumDecode(_$NotificationTypeEnumMap, json['type']),
       timestamp: DateTime.parse(json['timestamp'] as String),
@@ -144,7 +144,7 @@ NotificationModel _$NotificationModelFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$NotificationModelToJson(NotificationModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'title': instance.title,
+      if (instance.title case final value?) 'title': value,
       'message': instance.message,
       'type': _$NotificationTypeEnumMap[instance.type]!,
       'timestamp': instance.timestamp.toIso8601String(),

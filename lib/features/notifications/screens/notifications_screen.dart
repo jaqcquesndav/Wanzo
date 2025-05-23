@@ -177,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: ListTile(
           leading: _getNotificationIcon(notification.type),
           title: Text(
-            notification.title,
+            notification.title ?? 'Notification sans titre', // Provide a default value for null titles
             style: TextStyle(
               fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
             ),

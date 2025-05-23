@@ -8,7 +8,7 @@ part of 'customer.dart';
 
 class CustomerAdapter extends TypeAdapter<Customer> {
   @override
-  final int typeId = 3;
+  final int typeId = 35;
 
   @override
   Customer read(BinaryReader reader) {
@@ -69,7 +69,7 @@ class CustomerAdapter extends TypeAdapter<Customer> {
 
 class CustomerCategoryAdapter extends TypeAdapter<CustomerCategory> {
   @override
-  final int typeId = 4;
+  final int typeId = 36;
 
   @override
   CustomerCategory read(BinaryReader reader) {

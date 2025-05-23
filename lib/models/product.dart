@@ -5,7 +5,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'product.g.dart';
 
 @JsonSerializable()
-@HiveType(typeId: 3) // Unique typeId for Product
+@HiveType(typeId: 34) // Unique typeId for Product
 class Product extends Equatable {
   @HiveField(0)
   final String id;

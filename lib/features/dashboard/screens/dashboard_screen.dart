@@ -1,4 +1,3 @@
-import 'dart:io'; // Import for File
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,9 +5,8 @@ import 'package:intl/intl.dart'; // Pour le formatage des dates
 import 'package:fl_chart/fl_chart.dart'; // Added import for charts
 import '../../../constants/constants.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
-import '../../inventory/models/product.dart'; // Import Product model
-import '../../inventory/repositories/inventory_repository.dart'; // Import InventoryRepository
 import '../../sales/bloc/sales_bloc.dart'; // Import SalesBloc
+import '../../sales/models/sale.dart'; // Import Sale model
 import '../bloc/operation_journal_bloc.dart';
 import '../models/operation_journal_entry.dart';
 import 'package:wanzo/features/dashboard/services/journal_service.dart';
@@ -29,7 +27,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late OperationJournalBloc _operationJournalBloc;
   late SalesBloc _salesBloc;
-  late InventoryRepository _inventoryRepository;
   late SettingsBloc _settingsBloc; // Added SettingsBloc
   late JournalService _journalService; // Added JournalService
   Widget? _expandedViewWidget; // To hold the expanded card's content
@@ -39,7 +36,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _operationJournalBloc = BlocProvider.of<OperationJournalBloc>(context);
     _salesBloc = BlocProvider.of<SalesBloc>(context);
-    _inventoryRepository = RepositoryProvider.of<InventoryRepository>(context);
     _settingsBloc = BlocProvider.of<SettingsBloc>(context); // Initialize SettingsBloc
     _settingsBloc.add(LoadSettings()); // Load settings
     _journalService = JournalService(); // Initialize JournalService
@@ -95,6 +91,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<Widget> actions = [];
     if (isJournal) {
       actions.addAll([
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.filter_list),
+          tooltip: 'Filtrer par période',
+          onSelected: (value) {
+            DateTime now = DateTime.now();
+            DateTime startDate;
+            DateTime endDate = now;
+
+            if (value == 'today') {
+              startDate = DateTime(now.year, now.month, now.day);
+              endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+            } else if (value == 'this_month') {
+              startDate = DateTime(now.year, now.month, 1);
+              endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+            } else if (value == 'this_year') {
+              startDate = DateTime(now.year, 1, 1);
+              endDate = DateTime(now.year, 12, 31, 23, 59, 59);
+            } else if (value == 'custom') {
+              _selectDateRange(context);
+              return; 
+            } else {
+              // Default to current month if something unexpected happens
+              startDate = DateTime(now.year, now.month, 1);
+              endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+            }
+            _operationJournalBloc.add(FilterPeriodChanged(newStartDate: startDate, newEndDate: endDate));
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            const PopupMenuItem<String>(
+              value: 'today',
+              child: Text("Aujourd'hui"), // Corrected escaping for apostrophe
+            ),
+            const PopupMenuItem<String>(
+              value: 'this_month',
+              child: Text('Ce mois-ci'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'this_year',
+              child: Text('Cette année'),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'custom',
+              child: Text('Personnalisé...'),
+            ),
+          ],
+        ),
         IconButton(
           icon: const Icon(Icons.picture_as_pdf),
           tooltip: 'Exporter en PDF',
@@ -128,6 +171,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _selectDateRange(BuildContext context) async {
+    final currentState = _operationJournalBloc.state;
+    DateTime initialStart;
+    DateTime initialEnd;
+
+    if (currentState is OperationJournalLoaded) {
+      initialStart = currentState.startDate;
+      initialEnd = currentState.endDate;
+    } else {
+      // Default to last 30 days if state is not loaded
+      initialStart = DateTime.now().subtract(const Duration(days: 30));
+      initialEnd = DateTime.now();
+    }
+
+    final initialDateRange = DateTimeRange(
+      start: initialStart,
+      end: initialEnd,
+    );
+
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: initialDateRange,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)), // Allow selecting future dates up to a year
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            // Customize colors if needed
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      // Ensure endDate includes the whole day
+      final endDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59);
+      _operationJournalBloc.add(FilterPeriodChanged(newStartDate: picked.start, newEndDate: endDate));
+    }
+  }
+
   void _exportOperationsJournalToPdf() async {
     final journalState = _operationJournalBloc.state;
     final settingsState = _settingsBloc.state;
@@ -144,12 +227,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subject: 'Journal des Opérations Wanzo du ${DateFormat('dd/MM/yyyy', 'fr_FR').format(journalState.startDate)} au ${DateFormat('dd/MM/yyyy', 'fr_FR').format(journalState.endDate)}',
         );
 
+        if (!mounted) return; // Add this check
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Journal exporté et prêt pour le partage.')),
         );
 
       } catch (e) {
-        print("Error exporting/sharing journal PDF: $e");
+        // print("Error exporting/sharing journal PDF: $e"); // Replaced with logger or removed
+        if (!mounted) return; // Add this check
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors de l\'exportation du PDF: $e')),
         );
@@ -162,6 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (settingsState is! SettingsLoaded) {
         message += 'Paramètres non chargés.';
       }
+      if (!mounted) return; // Add this check
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message.trim())),
       );
@@ -181,11 +267,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           settings: settingsState.settings,
           openingBalance: journalState.openingBalance, // Pass openingBalance
         );
+        if (!mounted) return; // Add this check
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impression du journal lancée.')),
         );
       } catch (e) {
-        print("Error printing journal: $e");
+        // print("Error printing journal: $e"); // Replaced with logger or removed
+        if (!mounted) return; // Add this check
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors de l\'impression: $e')),
         );
@@ -198,6 +286,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (settingsState is! SettingsLoaded) {
         message += 'Paramètres non chargés.';
       }
+      if (!mounted) return; // Add this check
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message.trim())),
       );
@@ -228,8 +317,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // Afficher un menu d'actions rapides
           _showQuickActionsMenu(context);
         },
-        backgroundColor: WanzoColors.primary,
-        child: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).colorScheme.primary, // Use theme color
+        child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary), // Use theme color for FAB icon
       ),
     );
   }
@@ -248,11 +337,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Actions rapides',
                   style: TextStyle(
                     fontSize: WanzoTypography.fontSizeLg,
                     fontWeight: WanzoTypography.fontWeightBold,
+                    color: Theme.of(context).colorScheme.onSurface, // Use theme color
                   ),
                 ),
                 const SizedBox(height: WanzoSpacing.md),
@@ -263,7 +353,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.shopping_cart_checkout,
                       label: 'Facturation', // Changed from 'Nouvelle vente'
-                      color: WanzoColors.primary,
+                      color: Theme.of(context).colorScheme.primary, // Use theme color
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/sales/add');
@@ -273,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.attach_money,
                       label: 'Dépense',
-                      color: WanzoColors.warning,
+                      color: Theme.of(context).colorScheme.error, // Use theme color for warning/error
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/expenses/add');
@@ -283,7 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.add_shopping_cart,
                       label: 'Nouveau produit',
-                      color: WanzoColors.success,
+                      color: Theme.of(context).colorScheme.secondary, // Use theme color for success/secondary
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/inventory/add');
@@ -299,7 +389,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.person_add,
                       label: 'Nouveau client',
-                      color: WanzoColors.info,
+                      color: Theme.of(context).colorScheme.tertiary, // Use theme color for info/tertiary
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/customers/add');
@@ -309,7 +399,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.business,
                       label: 'Nouveau fournisseur',
-                      color: Colors.purple,
+                      color: Theme.of(context).colorScheme.tertiaryContainer, // Use theme color
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/suppliers/add');
@@ -319,7 +409,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       context,
                       icon: Icons.account_balance,
                       label: 'Financement',
-                      color: Colors.orange,
+                      color: Theme.of(context).colorScheme.secondaryContainer, // Use theme color
                       onTap: () {
                         Navigator.pop(context);
                         context.push('/financing/add');
@@ -355,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.all(WanzoSpacing.md),
               decoration: BoxDecoration(
-                color: color.withAlpha(26), // Fixed: Changed from withOpacity(0.1)
+                color: color.withAlpha(50), // Adjusted opacity for better visibility with theme colors
                 borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
               ),
               child: Icon(
@@ -369,7 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: color,
+                color: color, // Color is now passed from theme
                 fontWeight: WanzoTypography.fontWeightMedium,
               ),
             ),
@@ -394,11 +484,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 'assets/images/logo_with_text.png',
                 height: 60,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Text('Wanzo',
+                  return Text('Wanzo',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: WanzoColors.primary
+                      color: Theme.of(context).colorScheme.primary, // Use theme color
                     ),
                   );
                 },
@@ -445,14 +535,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           value: 150000,
           currencyType: currencyType,
           icon: Icons.insert_chart,
-          color: WanzoColors.primary,
+          color: Theme.of(context).colorScheme.primary, // Use theme color
           increase: '+8% vs hier',
         ),
         _buildStatCard(
           title: 'Clients servis',
           value: 24,
           icon: Icons.people,
-          color: WanzoColors.info,
+          color: Theme.of(context).colorScheme.tertiary, // Use theme color for info/tertiary
           increase: '+3 vs hier',
           isMonetary: false,
         ),
@@ -461,13 +551,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           value: 450000,
           currencyType: currencyType,
           icon: Icons.account_balance_wallet,
-          color: WanzoColors.success,
+          color: Theme.of(context).colorScheme.secondary, // Use theme color for success/secondary
         ),
         _buildStatCard(
           title: 'Transactions',
           value: 0,
           icon: Icons.receipt_long,
-          color: Colors.teal,
+          color: Theme.of(context).colorScheme.surfaceTint, // Use a less prominent theme color or define a new one
           isMonetary: false,
         ),
       ],
@@ -488,7 +578,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (isMonetary) {
       if (currencyType == null) {
         displayValue = 'N/A';
-        print("Warning: currencyType is null for monetary StatCard '$title'");
+        // print("Warning: currencyType is null for monetary StatCard '$title'"); // Replaced with logger or removed
       } else {
         displayValue = formatCurrency(value, currencyType);
       }
@@ -509,11 +599,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: WanzoTypography.fontSizeSm,
-                    color: Colors.grey,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: WanzoTypography.fontSizeSm,
+                      color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
@@ -526,9 +619,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const Spacer(),
             Text(
               displayValue,
-              style: const TextStyle(
-                fontSize: WanzoTypography.fontSizeLg,
+              style: TextStyle(
+                fontSize: WanzoTypography.fontSizeXl,
                 fontWeight: WanzoTypography.fontWeightBold,
+                color: color,
               ),
             ),
             if (increase != null)
@@ -536,7 +630,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 increase,
                 style: TextStyle(
                   fontSize: WanzoTypography.fontSizeXs,
-                  color: increase.contains('+') ? WanzoColors.success : WanzoColors.error,
+                  color: increase.contains('+') ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error,
                   fontWeight: WanzoTypography.fontWeightMedium,
                 ),
               ),
@@ -548,57 +642,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Construit un graphique des ventes récentes
   Widget _buildSalesChart(BuildContext context, CurrencyType currencyType) {
-    // Mock data for the last 7 days
-    final List<FlSpot> spots = [
-      const FlSpot(0, 3), // Day 1
-      const FlSpot(1, 5), // Day 2
-      const FlSpot(2, 4), // Day 3
-      const FlSpot(3, 7), // Day 4
-      const FlSpot(4, 6), // Day 5
-      const FlSpot(5, 8), // Day 6
-      const FlSpot(6, 7), // Day 7
-    ];
-
-    if (spots.isEmpty) {
-      return Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(WanzoSpacing.md),
-          child: SizedBox(
-            height: 200, // Consistent height with the chart
-            child: Center(
-              child: Text(
-                'Aucune donnée de vente disponible pour le graphique.',
-                style: TextStyle(
-                  fontSize: WanzoTypography.fontSizeMd,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Find min and max Y values for chart scaling
-    double minY = spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
-    double maxY = spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
-    // Add some padding to min/max Y if they are too close or same
-    if (maxY == minY) {
-        minY -= 1;
-        maxY += 1;
-    } else {
-        final diff = maxY - minY;
-        minY -= diff * 0.1; // 10% padding below
-        maxY += diff * 0.1; // 10% padding above
-    }
-    if (minY < 0) minY = 0; // Ensure minY is not negative if data is non-negative
-
-
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -609,94 +652,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Aperçu des ventes (7 derniers jours)',
               style: TextStyle(
                 fontSize: WanzoTypography.fontSizeLg,
                 fontWeight: WanzoTypography.fontWeightBold,
+                color: Theme.of(context).colorScheme.onSurface, // Use theme color
               ),
             ),
-            const SizedBox(height: WanzoSpacing.lg), // Increased spacing
+            const SizedBox(height: WanzoSpacing.lg),
             SizedBox(
               height: 200,
-              child: LineChart(
-                LineChartData(
-                  minY: minY,
-                  maxY: maxY,
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: true,
-                    getDrawingHorizontalLine: (value) {
-                      return const FlLine(
-                        color: Colors.grey,
-                        strokeWidth: 0.2,
-                      );
-                    },
-                    getDrawingVerticalLine: (value) {
-                      return const FlLine(
-                        color: Colors.grey,
-                        strokeWidth: 0.2,
-                      );
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        interval: 1,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          final days = ['J-6', 'J-5', 'J-4', 'J-3', 'J-2', 'Hier', 'Auj.'];
-                          if (value.toInt() >= 0 && value.toInt() < days.length) {
-                             return SideTitleWidget(
-                               meta: meta, // Added based on error messages
-                               space: 8.0,
-                               child: Text(days[value.toInt()], style: const TextStyle(color: Colors.black54, fontSize: 10)),
-                              );
-                          }
-                          return Container();
-                        },
+              child: BlocBuilder<SalesBloc, SalesState>(
+                builder: (context, state) {
+                  if (state is SalesLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is SalesLoaded) {
+                    if (state.sales.isEmpty) {
+                      return const Center(child: Text('Aucune vente enregistrée récemment.'));
+                    }
+                    // Préparer les données pour le graphique
+                    final salesData = _prepareSalesChartData(state.sales, currencyType);
+                    return LineChart(
+                      LineChartData(
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: true,
+                          getDrawingHorizontalLine: (value) {
+                            return FlLine(
+                              color: Theme.of(context).dividerColor.withAlpha((0.5 * 255).round()),
+                              strokeWidth: 1,
+                            );
+                          },
+                          getDrawingVerticalLine: (value) {
+                            return FlLine(
+                              color: Theme.of(context).dividerColor.withAlpha((0.5 * 255).round()),
+                              strokeWidth: 1,
+                            );
+                          },
+                        ),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 50,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  formatCurrency(value, currencyType),
+                                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round())),
+                                );
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              interval: 1,
+                              getTitlesWidget: (value, meta) {
+                                // Afficher les jours de la semaine
+                                final day = DateTime.now().subtract(Duration(days: 6 - value.toInt()));
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    DateFormat('E', 'fr_FR').format(day),
+                                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round())),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
+                        ),
+                        minX: 0,
+                        maxX: 6,
+                        minY: 0,
+                        maxY: salesData.isNotEmpty ? salesData.map((d) => d.y).reduce((a, b) => a > b ? a : b) * 1.2 : 100, // Ajuster le max Y, handle empty data
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: salesData,
+                            isCurved: true,
+                            color: Theme.of(context).colorScheme.primary,
+                            barWidth: 3,
+                            isStrokeCapRound: true,
+                            dotData: const FlDotData(show: false),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: Theme.of(context).colorScheme.primary.withAlpha((0.2 * 255).round()),
+                            ),
+                          ),
+                        ],
+                        lineTouchData: LineTouchData(
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipItems: (touchedSpots) {
+                              return touchedSpots.map((spot) {
+                                final date = DateTime.now().subtract(Duration(days: 6 - spot.x.toInt()));
+                                return LineTooltipItem(
+                                  '${DateFormat('dd/MM', 'fr_FR').format(date)}\\n${formatCurrency(spot.y, currencyType)}',
+                                  TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
+                                );
+                              }).toList();
+                            },
+                            tooltipBorder: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                            getTooltipColor: (touchedSpot) => Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 50, // Adjusted for potentially longer currency strings
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                           // Show only a few labels to avoid clutter
-                           if (value == meta.min || value == meta.max || value == (meta.min + meta.max) / 2) {
-                            // Assuming chart Y values are raw numbers, format them
-                            return Text(formatCurrency(value, currencyType), style: const TextStyle(color: Colors.black54, fontSize: 10), textAlign: TextAlign.left);
-                           }
-                           return Container();
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: spots,
-                      isCurved: true,
-                      color: WanzoColors.primary,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(
-                        show: false,
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: WanzoColors.primary.withOpacity(0.2),
-                      ),
-                    ),
-                  ],
-                ),
+                    );
+                  } else if (state is SalesError) {
+                    return Center(child: Text('Erreur: ${state.message}'));
+                  }
+                  return const Center(child: Text('Chargement des ventes...'));
+                },
               ),
             ),
           ],
@@ -705,261 +777,126 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Construit la liste des ventes récentes et le journal des opérations
+  List<FlSpot> _prepareSalesChartData(List<Sale> sales, CurrencyType currencyType) {
+    final Map<int, double> dailySales = {};
+    final now = DateTime.now();
+
+    for (int i = 0; i < 7; i++) {
+      dailySales[i] = 0.0; // Initialiser les 7 derniers jours à 0
+    }
+
+    for (final sale in sales) {
+      final saleDate = sale.date;
+      final difference = now.difference(saleDate).inDays;
+      if (difference >= 0 && difference < 7) {
+        final dayIndex = 6 - difference; // 0 = 6 jours avant, 6 = aujourd'hui
+        dailySales[dayIndex] = (dailySales[dayIndex] ?? 0) + sale.totalAmount;
+      }
+    }
+    return dailySales.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
+  }
+
+  /// Construit la section des dernières ventes et du journal des opérations
   Widget _buildRecentSalesAndJournal(
     BuildContext context,
     CurrencyType currencyType,
-    {
-    required VoidCallback onExpandRecentSales,
-    required VoidCallback onExpandOperationsJournal,
-  }) {
-    return DefaultTabController(
-      length: 2,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(WanzoSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // Make column take minimum necessary space
-            children: [
-              const TabBar(
-                labelColor: WanzoColors.primary,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: WanzoColors.primary,
-                tabs: [
-                  Tab(text: 'Dernières Ventes'),
-                  Tab(text: 'Journal des Opérations'),
-                ],
-              ),
-              const SizedBox(height: WanzoSpacing.md),
-              SizedBox(
-                height: 320, // Reduced height from 350 to 320
-                child: TabBarView(
-                  children: [
-                    _buildRecentSalesList(context, currencyType,
-                        isExpanded: false, onExpand: onExpandRecentSales),
-                    _buildOperationsJournal(context, currencyType,
-                        isExpanded: false, onExpand: onExpandOperationsJournal),
-                  ],
-                ),
-              ),
-            ],
-          ),
+  {required VoidCallback onExpandRecentSales, required VoidCallback onExpandOperationsJournal}
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(WanzoSpacing.md),
+        child: Column(
+          children: [
+            _buildSectionHeader(
+              context,
+              title: 'Dernières Ventes',
+              onViewAll: onExpandRecentSales, // Utiliser le callback pour l'expansion
+            ),
+            _buildRecentSalesList(context, currencyType),
+            const SizedBox(height: WanzoSpacing.md),
+            const Divider(),
+            const SizedBox(height: WanzoSpacing.md),
+            _buildSectionHeader(
+              context,
+              title: 'Journal des Opérations',
+              onViewAll: onExpandOperationsJournal, // Utiliser le callback pour l'expansion
+            ),
+            _buildOperationsJournal(context, currencyType),
+          ],
         ),
       ),
+    ); // Ensure Card is properly closed
+  }
+
+  /// Construit l'en-tête d'une section
+  Widget _buildSectionHeader(BuildContext context, {required String title, VoidCallback? onViewAll}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: WanzoTypography.fontSizeLg,
+            fontWeight: WanzoTypography.fontWeightBold,
+            color: Theme.of(context).colorScheme.onSurface, // Use theme color
+          ),
+        ),
+        if (onViewAll != null)
+          TextButton(
+            onPressed: onViewAll,
+            child: Text(
+              'Voir tout',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary), // Use theme color
+            ),
+          ),
+      ],
     );
   }
 
-  /// Construit la liste des ventes récentes pour l'onglet
-  Widget _buildRecentSalesList(BuildContext context, CurrencyType currencyType, {bool isExpanded = false, VoidCallback? onExpand}) {
+  /// Construit la liste des dernières ventes
+  Widget _buildRecentSalesList(BuildContext context, CurrencyType currencyType, {bool isExpanded = false}) {
     return BlocBuilder<SalesBloc, SalesState>(
       builder: (context, state) {
         if (state is SalesLoading) {
           return const Center(child: CircularProgressIndicator());
-        }
-        if (state is SalesError) {
-          print("SalesError in _buildRecentSalesList: ${state.message}");
-          return Column( // Ensure expand button can be placed if needed
-            children: [
-              if (!isExpanded && onExpand != null)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.fullscreen),
-                    tooltip: 'Agrandir',
-                    onPressed: onExpand,
-                  ),
-                ),
-              Expanded(child: Center(child: Text('Erreur: ${state.message}'))),
-            ],
-          );
-        }
-        if (state is SalesLoaded) {
+        } else if (state is SalesLoaded) {
           if (state.sales.isEmpty) {
-            print("_buildRecentSalesList: No sales data in SalesLoaded state.");
-            return Column(
-              children: [
-                if (!isExpanded && onExpand != null)
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.fullscreen),
-                      tooltip: 'Agrandir',
-                      onPressed: onExpand,
-                    ),
-                  ),
-                const Expanded(child: Center(child: Text('Aucune vente récente.'))),
-              ],
-            );
+            return const Center(child: Text('Aucune vente récente.'));
           }
-          final sortedSales = List.from(state.sales);
-          sortedSales.sort((a, b) => b.date.compareTo(a.date));
-          final recentSales = sortedSales.take(5).toList();
-
-          if (recentSales.isEmpty) {
-            print("_buildRecentSalesList: recentSales list is empty after sorting and taking 5.");
-            return Column(
-              children: [
-                if (!isExpanded && onExpand != null)
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.fullscreen),
-                      tooltip: 'Agrandir',
-                      onPressed: onExpand,
-                    ),
-                  ),
-                const Expanded(child: Center(child: Text('Aucune vente récente à afficher.'))),
-              ],
-            );
-          }
-
-          print("_buildRecentSalesList: Displaying ${recentSales.length} recent sales.");
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isExpanded && onExpand != null)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.fullscreen),
-                    tooltip: 'Agrandir',
-                    onPressed: onExpand,
+          // Afficher seulement les 5 dernières ventes ou toutes si isExpanded est vrai
+          final salesToShow = isExpanded ? state.sales : state.sales.take(5).toList();
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: salesToShow.length,
+            itemBuilder: (context, index) {
+              final sale = salesToShow[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).colorScheme.primary.withAlpha((0.1 * 255).round()), // Use theme color
+                  child: Icon(Icons.receipt, color: Theme.of(context).colorScheme.primary), // Use theme color
+                ),
+                title: Text('Vente #${sale.id.substring(0, 5)}...'),
+                subtitle: Text(
+                    '${sale.customerName.isNotEmpty ? sale.customerName : 'Client Comptant'} - ${DateFormat('dd/MM/yyyy').format(sale.date)}'),
+                trailing: Text(
+                  formatCurrency(sale.totalAmount, currencyType),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary, // Use theme color
                   ),
                 ),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: recentSales.length,
-                  separatorBuilder: (context, index) => const Divider(),
-                  itemBuilder: (context, index) {
-                    if (index >= recentSales.length) { // Defensive check
-                      print("Error: Index out of bounds in _buildRecentSalesList itemBuilder. Index: $index, Length: ${recentSales.length}");
-                      return const ListTile(title: Text("Erreur d'affichage"));
-                    }
-                    final sale = recentSales[index];
-
-                    if (sale.items == null) {
-                      print("Error: sale.items is null for sale ID: ${sale.id}");
-                      return ListTile(
-                        title: Text('Erreur de données pour la vente ${sale.id}'),
-                        subtitle: const Text('Les articles de la vente sont indisponibles.'),
-                      );
-                    }
-
-                    final firstItem = sale.items.isNotEmpty ? sale.items.first : null;
-                    Product? product;
-                    if (firstItem != null) {
-                      try {
-                        product = _inventoryRepository.getProductById(firstItem.productId);
-                      } catch (e) {
-                        print("Error fetching product ${firstItem.productId}: $e");
-                        product = null;
-                      }
-                    }
-
-                    Widget leadingWidget;
-                    if (product != null) {
-                      final p = product; // Create a non-nullable local variable
-                      if (p.imagePath != null && p.imagePath!.isNotEmpty) {
-                        leadingWidget = ClipRRect(
-                          borderRadius: BorderRadius.circular(WanzoBorderRadius.sm),
-                          child: Image.file(
-                            File(p.imagePath!),
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              String initials = (p.name.isNotEmpty) ? p.name[0].toUpperCase() : "P";
-                              return CircleAvatar(
-                                radius: 25,
-                                backgroundColor: Colors.grey[300],
-                                child: Text(initials, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                              );
-                            },
-                          ),
-                        );
-                      } else if (p.name.isNotEmpty) {
-                        String initials = p.name[0].toUpperCase();
-                        leadingWidget = CircleAvatar(
-                          radius: 25,
-                          backgroundColor: Colors.grey[300],
-                          child: Text(initials, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-                        );
-                      } else {
-                        leadingWidget = Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(WanzoBorderRadius.sm),
-                          ),
-                          child: const Icon(Icons.shopping_bag, size: 30, color: Colors.grey),
-                        );
-                      }
-                    } else {
-                      leadingWidget = Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(WanzoBorderRadius.sm),
-                        ),
-                        child: const Icon(Icons.shopping_bag, size: 30, color: Colors.grey),
-                      );
-                    }
-
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: leadingWidget,
-                      title: Text(
-                        firstItem?.productName ?? 'Vente multiple',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${formatCurrency(sale.totalAmount, currencyType)} - ${sale.customerName}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Payé via: ${sale.paymentMethod}',
-                            style: TextStyle(fontSize: WanzoTypography.fontSizeXs, color: Colors.grey[700]),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            DateFormat('dd/MM/yy HH:mm', 'fr_FR').format(sale.date),
-                            style: TextStyle(fontSize: WanzoTypography.fontSizeXs, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        // TODO: Ouvrir le détail de la vente
-                        // context.push('/sales/details/${sale.id}');
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: WanzoSpacing.sm),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    context.push('/sales');
-                  },
-                  child: const Text('Voir toutes les ventes'),
-                ),
-              ),
-            ],
+                onTap: () => context.push('/sales/${sale.id}'),
+              );
+            },
+            separatorBuilder: (context, index) => const Divider(height: 1),
           );
+        } else if (state is SalesError) {
+          return Center(child: Text('Erreur: ${state.message}'));
         }
         return const Center(child: Text('Chargement des ventes...'));
       },
@@ -967,248 +904,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Construit le journal des opérations
-  Widget _buildOperationsJournal(BuildContext context, CurrencyType currencyType, {bool isExpanded = false, VoidCallback? onExpand}) {
-    return BlocProvider.value(
-      value: _operationJournalBloc,
-      child: BlocBuilder<OperationJournalBloc, OperationJournalState>(
-        builder: (context, state) {
-          if (state is OperationJournalLoading) { // Simplified loading check
-            return const Center(child: CircularProgressIndicator());
+  Widget _buildOperationsJournal(BuildContext context, CurrencyType currencyType, {bool isExpanded = false}) {
+    return BlocBuilder<OperationJournalBloc, OperationJournalState>(
+      builder: (context, state) {
+        if (state is OperationJournalLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is OperationJournalLoaded) {
+          if (state.groupedOperations.isEmpty) {
+            return const Center(child: Text('Aucune opération récente.'));
           }
-          if (state is OperationJournalError) {
-            return Column( // Ensure expand button can be placed
-              children: [
-                 Row(
-                  children: [
-                    // Potentially add a disabled filter or a placeholder
-                    const Spacer(), // Pushes button to the right
-                    if (!isExpanded && onExpand != null)
-                      IconButton(
-                        icon: const Icon(Icons.fullscreen),
-                        tooltip: 'Agrandir',
-                        onPressed: onExpand,
-                      ),
-                  ],
+
+          // Aplatir les opérations groupées pour l'affichage
+          final allOperations = state.groupedOperations.entries
+              .expand((entry) => entry.value)
+              .toList();
+          allOperations.sort((a, b) => b.date.compareTo(a.date)); // Trier par date décroissante
+
+          final operationsToShow = isExpanded ? allOperations : allOperations.take(5).toList();
+
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: operationsToShow.length,
+            itemBuilder: (context, index) {
+              final operation = operationsToShow[index];
+              final isCredit = operation.type == OperationType.cashIn || 
+                               operation.type == OperationType.saleCash || 
+                               operation.type == OperationType.saleCredit || 
+                               operation.type == OperationType.saleInstallment || 
+                               operation.type == OperationType.customerPayment || 
+                               operation.type == OperationType.financingApproved;
+              final icon = isCredit ? Icons.arrow_downward : Icons.arrow_upward;
+              final color = isCredit ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error; // Use theme color for success (credit)
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: color.withAlpha((0.1 * 255).round()),
+                  child: Icon(icon, color: color),
                 ),
-                Expanded(child: Center(child: Text('Erreur: ${state.message}', textAlign: TextAlign.center))),
-              ],
-            );
-          }
-          if (state is OperationJournalLoaded) {
-            if (state.groupedOperations.isEmpty) {
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: _buildPeriodFilter(state.startDate, state.endDate)),
-                      if (!isExpanded && onExpand != null)
-                        IconButton(
-                          icon: const Icon(Icons.fullscreen),
-                          tooltip: 'Agrandir',
-                          onPressed: onExpand,
-                        ),
-                    ],
+                title: Text(operation.description),
+                subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(operation.date)),
+                trailing: Text(
+                  '${isCredit ? '+' : '-'}${formatCurrency(operation.amount, currencyType)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
-                  const Expanded(
-                    child: Center(
-                      child: Text('Aucune opération pour cette période.'),
-                    ),
-                  ),
-                ],
+                ),
               );
-            }
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildPeriodFilter(state.startDate, state.endDate)),
-                    if (!isExpanded && onExpand != null)
-                      IconButton(
-                        icon: const Icon(Icons.fullscreen),
-                        tooltip: 'Agrandir',
-                        onPressed: onExpand,
-                      ),
-                  ],
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.groupedOperations.keys.length,
-                    itemBuilder: (context, index) {
-                      final dateKey = state.groupedOperations.keys.elementAt(index);
-                      final operationsOnDate = state.groupedOperations[dateKey]!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm, horizontal: WanzoSpacing.xs),
-                            child: Text(
-                              DateFormat('EEEE, d MMMM yyyy', 'fr_FR').format(dateKey),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: WanzoTypography.fontSizeMd,
-                                color: WanzoColors.primary,
-                              ),
-                            ),
-                          ),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                                  child: DataTable(
-                                    columnSpacing: 10,
-                                    horizontalMargin: 0,
-                                    headingRowHeight: 30,
-                                    dataRowMinHeight: 30,
-                                    dataRowMaxHeight: 60,
-                                    columns: const [
-                                      DataColumn(label: Text('Heure')),
-                                      DataColumn(label: Text('Description')),
-                                      DataColumn(label: Text('Type')),
-                                      DataColumn(label: Text('Montant', textAlign: TextAlign.end)),
-                                    ],
-                                    rows: operationsOnDate.map((op) {
-                                      return DataRow(
-                                        cells: [
-                                          DataCell(Text(DateFormat('HH:mm').format(op.date))),
-                                          DataCell(Text(op.description, overflow: TextOverflow.ellipsis, maxLines: 2)),
-                                          DataCell(Text(op.type.displayName)),
-                                          DataCell(Text(
-                                            formatCurrency(op.amount, currencyType),
-                                            textAlign: TextAlign.end,
-                                            style: TextStyle(color: op.amount < 0 ? WanzoColors.error : WanzoColors.success),
-                                          )),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              );
-                            }
-                          ),
-                          const Divider(),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-          return const Center(child: Text('Initialisation...'));
-        },
-      ),
+            },
+            separatorBuilder: (context, index) => const Divider(height: 1),
+          );
+        } else if (state is OperationJournalError) {
+          return Center(child: Text('Erreur: ${state.message}'));
+        }
+        return const Center(child: Text('Chargement du journal...'));
+      },
     );
   }
-
-  Widget _buildPeriodFilter(DateTime currentStart, DateTime currentEnd) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextButton.icon(
-                icon: const Icon(Icons.date_range, size: 18),
-                label: Text('Du: ${DateFormat('dd/MM/yy').format(currentStart)}', style: const TextStyle(fontSize: WanzoTypography.fontSizeXs)),
-                onPressed: () async {
-                  final newDate = await showDatePicker(
-                    context: context,
-                    initialDate: currentStart,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    locale: const Locale('fr', 'FR'),
-                  );
-                  if (newDate != null) {
-                    _operationJournalBloc.add(FilterPeriodChanged(newStartDate: newDate));
-                  }
-                },
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.date_range, size: 18),
-                label: Text('Au: ${DateFormat('dd/MM/yy').format(currentEnd)}', style: const TextStyle(fontSize: WanzoTypography.fontSizeXs)),
-                onPressed: () async {
-                  final newDate = await showDatePicker(
-                    context: context,
-                    initialDate: currentEnd,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    locale: const Locale('fr', 'FR'),
-                  );
-                  if (newDate != null) {
-                    final endOfDay = DateTime(newDate.year, newDate.month, newDate.day, 23, 59, 59);
-                    _operationJournalBloc.add(FilterPeriodChanged(newEndDate: endOfDay));
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: WanzoSpacing.xs),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.xs / 2),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.sm)),
-                    child: const Text('Aujourd\'hui', style: TextStyle(fontSize: WanzoTypography.fontSizeXs)),
-                    onPressed: () {
-                      final now = DateTime.now();
-                      _operationJournalBloc.add(FilterPeriodChanged(
-                        newStartDate: DateTime(now.year, now.month, now.day),
-                        newEndDate: DateTime(now.year, now.month, now.day, 23, 59, 59),
-                      ));
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.xs / 2),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.sm)),
-                    child: const Text('Ce mois-ci', style: TextStyle(fontSize: WanzoTypography.fontSizeXs)),
-                    onPressed: () {
-                      final now = DateTime.now();
-                      _operationJournalBloc.add(FilterPeriodChanged(
-                        newStartDate: DateTime(now.year, now.month, 1),
-                        newEndDate: DateTime(now.year, now.month + 1, 0, 23, 59, 59),
-                      ));
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.xs / 2),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.sm)),
-                    child: const Text('Cette année', style: TextStyle(fontSize: WanzoTypography.fontSizeXs)),
-                    onPressed: () {
-                      final now = DateTime.now();
-                      _operationJournalBloc.add(FilterPeriodChanged(
-                        newStartDate: DateTime(now.year, 1, 1),
-                        newEndDate: DateTime(now.year, 12, 31, 23, 59, 59),
-                      ));
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Classe représentant un élément de navigation
-class NavigationItem {
-  final IconData icon;
-  final String label;
-
-  NavigationItem({
-    required this.icon,
-    required this.label,
-  });
 }

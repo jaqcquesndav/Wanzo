@@ -18,8 +18,8 @@ class ChatMessageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.isUserMessage;
     final bubbleColor = isUser 
-        ? Theme.of(context).primaryColor.withOpacity(0.2)
-        : Colors.grey.withOpacity(0.1);
+        ? Theme.of(context).primaryColor.withAlpha((0.2 * 255).round())
+        : Colors.grey.withAlpha((0.1 * 255).round());
     final textColor = isUser 
         ? Theme.of(context).primaryColor
         : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
@@ -52,7 +52,7 @@ class ChatMessageWidget extends StatelessWidget {
                     _formatTimestamp(message.timestamp),
                     style: TextStyle(
                       fontSize: 10,
-                      color: textColor.withOpacity(0.6),
+                      color: textColor.withAlpha((0.6 * 255).round()),
                     ),
                   ),
                 ],
@@ -73,11 +73,11 @@ class ChatMessageWidget extends StatelessWidget {
       case AdhaMessageType.text:
         return _buildTextMessage(context, textColor);
       case AdhaMessageType.code:
-        return _buildCodeMessage();
+        return _buildCodeMessage(context);
       case AdhaMessageType.latex:
         return _buildLatexMessage();
       case AdhaMessageType.graph:
-        return _buildGraphMessage();
+        return _buildGraphMessage(context); // Pass context
       case AdhaMessageType.media:
         return _buildMediaMessage();
     }
@@ -91,7 +91,7 @@ class ChatMessageWidget extends StatelessWidget {
         p: TextStyle(color: textColor, fontSize: 16),
         strong: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         em: TextStyle(color: textColor, fontStyle: FontStyle.italic),
-        blockquote: TextStyle(color: textColor.withOpacity(0.7), fontSize: 16),
+        blockquote: TextStyle(color: textColor.withAlpha((0.7 * 255).round()), fontSize: 16),
         blockquoteDecoration: BoxDecoration(
           border: Border(
             left: BorderSide(
@@ -106,7 +106,7 @@ class ChatMessageWidget extends StatelessWidget {
   }
 
   /// Construit un message avec du code
-  Widget _buildCodeMessage() {
+  Widget _buildCodeMessage(BuildContext context) {
     // Extrait le code des blocs de code markdown ```
     final pattern = RegExp(r'```(\w+)?\n([\s\S]*?)\n```');
     final match = pattern.firstMatch(message.content);
@@ -133,7 +133,9 @@ class ChatMessageWidget extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.black.withAlpha((0.7 * 255).round()) 
+                : Colors.grey[200], 
             borderRadius: BorderRadius.circular(8),
           ),
           child: HighlightView(
@@ -189,20 +191,20 @@ class ChatMessageWidget extends StatelessWidget {
   }
 
   /// Construit un message avec un graphique
-  Widget _buildGraphMessage() {
+  Widget _buildGraphMessage(BuildContext context) {
     // Dans une application réelle, on générerait un graphique à partir du code Python
     // Ici, on simule avec un message expliquant que le graphique serait affiché
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (message.content.contains('```python'))
-          _buildCodeMessage(),
+          _buildCodeMessage(context),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
           height: 200,
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withAlpha((0.2 * 255).round()),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Center(
@@ -250,8 +252,8 @@ class ChatMessageWidget extends StatelessWidget {
     return CircleAvatar(
       radius: 16,
       backgroundColor: message.isUserMessage 
-          ? Colors.blue.withOpacity(0.2)
-          : Colors.purple.withOpacity(0.2),
+          ? Colors.blue.withAlpha((0.2 * 255).round())
+          : Colors.purple.withAlpha((0.2 * 255).round()),
       child: Icon(
         message.isUserMessage ? Icons.person : Icons.smart_toy,
         size: 18,

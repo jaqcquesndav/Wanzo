@@ -1,13 +1,15 @@
-﻿import "package:flutter/material.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
-import "package:go_router/go_router.dart";
-import "package:intl/intl.dart";
-import "../../../constants/spacing.dart";
-import "../bloc/sales_bloc.dart";
-import "../models/sale.dart";
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../constants/spacing.dart';
+import '../bloc/sales_bloc.dart';
+import '../models/sale.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../../settings/bloc/settings_state.dart';
 import '../../invoice/services/invoice_service.dart';
+import '../../../core/utils/currency_formatter.dart'; // Import for formatCurrency
+import '../../settings/models/settings.dart'; // Import for CurrencyType and Settings
 
 /// Écran de détails d'une vente
 class SaleDetailsScreen extends StatelessWidget {
@@ -20,10 +22,15 @@ class SaleDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(
-      symbol: "FC",
-      decimalDigits: 0,
-    );
+    final settingsBloc = BlocProvider.of<SettingsBloc>(context);
+    CurrencyType currencyType = CurrencyType.usd; // Default
+
+    if (settingsBloc.state is SettingsLoaded) {
+      currencyType = (settingsBloc.state as SettingsLoaded).settings.currency;
+    } else if (settingsBloc.state is SettingsUpdated) {
+      currencyType = (settingsBloc.state as SettingsUpdated).settings.currency;
+    }
+    // Add other state checks if necessary, e.g., for an initial loading state
 
     Color statusColor;
     String statusText;
@@ -52,15 +59,14 @@ class SaleDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Détails de la vente"),
         actions: [
-          // Menu d'options
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == "edit") {
                 // TODO: Naviguer vers l'écran d'édition
               } else if (value == "delete") {
-                _showDeleteConfirmation(context);
+                _showDeleteConfirmation(context, sale);
               } else if (value == "print") {
-                _printInvoice(context);
+                _printInvoice(context, sale);
               }
             },
             itemBuilder: (context) => [
@@ -103,7 +109,6 @@ class SaleDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // En-tête avec information générale
             Card(
               margin: EdgeInsets.zero,
               child: Padding(
@@ -111,7 +116,6 @@ class SaleDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Status de la vente
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -122,7 +126,7 @@ class SaleDetailsScreen extends StatelessWidget {
                         Chip(
                           label: Text(
                             statusText,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
@@ -136,7 +140,6 @@ class SaleDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: WanzoSpacing.sm),
-                    // Information sur la date et le client
                     Row(
                       children: [
                         const Icon(Icons.calendar_today, size: 16),
@@ -159,7 +162,6 @@ class SaleDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: WanzoSpacing.sm),
-                    // Information sur le paiement
                     Row(
                       children: [
                         const Icon(Icons.payment, size: 16),
@@ -171,7 +173,6 @@ class SaleDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const Divider(),
-                    // Résumé des montants
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -180,7 +181,7 @@ class SaleDetailsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          currencyFormat.format(sale.totalAmount),
+                          formatCurrency(sale.totalAmount, currencyType),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -189,8 +190,8 @@ class SaleDetailsScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Payé"),
-                        Text(currencyFormat.format(sale.paidAmount)),
+                        const Text("Payé"),
+                        Text(formatCurrency(sale.paidAmount, currencyType)),
                       ],
                     ),
                     const SizedBox(height: WanzoSpacing.xs),
@@ -207,8 +208,7 @@ class SaleDetailsScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          currencyFormat.format(
-                              sale.totalAmount - sale.paidAmount),
+                          formatCurrency(sale.totalAmount - sale.paidAmount, currencyType),
                           style: TextStyle(
                             color: sale.totalAmount > sale.paidAmount
                                 ? Colors.red
@@ -223,7 +223,6 @@ class SaleDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: WanzoSpacing.base),
-            // Liste des articles vendus
             Text(
               "Articles vendus",
               style: Theme.of(context).textTheme.titleMedium,
@@ -241,10 +240,10 @@ class SaleDetailsScreen extends StatelessWidget {
                   return ListTile(
                     title: Text(item.productName),
                     subtitle: Text(
-                      "${item.quantity} × ${currencyFormat.format(item.unitPrice)}",
+                      "${item.quantity} × ${formatCurrency(item.unitPrice, currencyType)}",
                     ),
                     trailing: Text(
-                      currencyFormat.format(item.totalPrice),
+                      formatCurrency(item.totalPrice, currencyType),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   );
@@ -264,7 +263,7 @@ class SaleDetailsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ElevatedButton.icon(
-                onPressed: () => _printInvoice(context),
+                onPressed: () => _printInvoice(context, sale),
                 icon: const Icon(Icons.print),
                 label: const Text("Imprimer"),
                 style: ElevatedButton.styleFrom(
@@ -275,7 +274,6 @@ class SaleDetailsScreen extends StatelessWidget {
               if (sale.status == SaleStatus.pending)
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Marquer la vente comme terminée
                     context
                         .read<SalesBloc>()
                         .add(UpdateSaleStatus(sale.id, SaleStatus.completed));
@@ -295,24 +293,23 @@ class SaleDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Affiche une boîte de dialogue de confirmation pour supprimer la vente
-  void _showDeleteConfirmation(BuildContext context) {
+  void _showDeleteConfirmation(BuildContext dialogContext, Sale sale) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: dialogContext,
+      builder: (BuildContext alertContext) => AlertDialog(
         title: const Text("Confirmer la suppression"),
         content: const Text(
             "Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible."),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(alertContext),
             child: const Text("Annuler"),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<SalesBloc>().add(DeleteSale(sale.id));
-              GoRouter.of(context).pop();
+              Navigator.pop(alertContext);
+              dialogContext.read<SalesBloc>().add(DeleteSale(sale.id));
+              GoRouter.of(dialogContext).pop();
             },
             child: const Text(
               "Supprimer",
@@ -324,33 +321,62 @@ class SaleDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Imprime la facture
-  void _printInvoice(BuildContext context) async {
+  void _printInvoice(BuildContext invContext, Sale sale) async {
     final invoiceService = InvoiceService();
-    final settingsBloc = context.read<SettingsBloc>();
+    final settingsBloc = BlocProvider.of<SettingsBloc>(invContext);
     final settingsState = settingsBloc.state;
-    
-    String companyName = '';
-    String companyAddress = '';
-    String companyPhone = '';
-    String companyEmail = '';
-    String footerText = '';
-      if (settingsState is SettingsLoaded) {
-      companyName = settingsState.settings.companyName;
-      companyAddress = settingsState.settings.companyAddress;
-      companyPhone = settingsState.settings.companyPhone;
-      companyEmail = settingsState.settings.companyEmail;
-      footerText = settingsState.settings.defaultInvoiceNotes;
+
+    Settings currentSettings;
+
+    if (settingsState is SettingsLoaded) {
+      currentSettings = settingsState.settings;
+    } else if (settingsState is SettingsUpdated) {
+      currentSettings = settingsState.settings;
+    } else {
+      // Fallback or error handling if settings are not loaded
+      // For example, use default settings or show an error.
+      // This is a simplified fallback. Consider a more robust solution.
+      currentSettings = Settings(
+        companyName: 'Ma Compagnie', 
+        companyAddress: 'Adresse Compagnie', 
+        companyPhone: '123456789', 
+        companyEmail: 'email@example.com', 
+        companyLogo: '', 
+        currency: CurrencyType.usd, // Default currency
+        dateFormat: 'dd/MM/yyyy', 
+        themeMode: AppThemeMode.system, 
+        language: 'fr', 
+        showTaxes: false, 
+        defaultTaxRate: 0.0, 
+        invoiceNumberFormat: 'INV-{YYYY}-{SEQ}', 
+        invoicePrefix: 'INV', 
+        defaultPaymentTerms: 'Net 30', 
+        defaultInvoiceNotes: 'Merci pour votre achat.', 
+        taxIdentificationNumber: '', 
+        defaultProductCategory: '', 
+        lowStockAlertDays: 7, 
+        backupEnabled: false, 
+        backupFrequency: 24, 
+        reportEmail: '', 
+        rccmNumber: '', 
+        idNatNumber: '', 
+        pushNotificationsEnabled: true, 
+        inAppNotificationsEnabled: true, 
+        emailNotificationsEnabled: true, 
+        soundNotificationsEnabled: true
+        );
+      ScaffoldMessenger.of(invContext).showSnackBar(
+        const SnackBar(content: Text('Paramètres par défaut utilisés pour la facture.')),
+      );
     }
     
     await invoiceService.generateAndShowReceipt(
       sale: sale,
-      companyName: companyName,
-      companyAddress: companyAddress,
-      companyPhone: companyPhone,
-      companyEmail: companyEmail,
-      footerText: footerText,
-      context: context,
+      companyName: currentSettings.companyName,
+      companyAddress: currentSettings.companyAddress,
+      companyPhone: currentSettings.companyPhone,
+      companyEmail: currentSettings.companyEmail,
+      footerText: currentSettings.defaultInvoiceNotes,
     );
   }
 }

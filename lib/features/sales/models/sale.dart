@@ -2,11 +2,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
+import './sale_item.dart'; // Import SaleItem from its own file
 
 part 'sale.g.dart';
 
 /// Statut possible d'une vente
-@HiveType(typeId: 6)
+@HiveType(typeId: 6) // Keep existing typeId for SaleStatus
 @JsonEnum()
 enum SaleStatus {
   @HiveField(0)
@@ -18,7 +19,7 @@ enum SaleStatus {
 }
 
 /// Modèle représentant une vente
-@HiveType(typeId: 7)
+@HiveType(typeId: 7) // Keep existing typeId for Sale
 @JsonSerializable(explicitToJson: true)
 class Sale extends Equatable {
   /// Identifiant unique de la vente
@@ -39,7 +40,7 @@ class Sale extends Equatable {
   
   /// Liste des produits vendus
   @HiveField(4)
-  final List<SaleItem> items;
+  final List<SaleItem> items; // This will now refer to the SaleItem from sale_item.dart
   
   /// Montant total de la vente
   @HiveField(5)
@@ -126,42 +127,5 @@ class Sale extends Equatable {
   ];
 }
 
-/// Modèle représentant un article dans une vente
-@HiveType(typeId: 2)
-@JsonSerializable(explicitToJson: true)
-class SaleItem extends Equatable {
-  /// Identifiant du produit
-  @HiveField(0)
-  final String productId;
-  
-  /// Nom du produit
-  @HiveField(1)
-  final String productName;
-  
-  /// Quantité vendue
-  @HiveField(2)
-  final double quantity;
-  
-  /// Prix unitaire
-  @HiveField(3)
-  final double unitPrice;
-  
-  /// Montant total pour cet article
-  @HiveField(4)
-  final double totalPrice;
-
-  /// Constructeur
-  const SaleItem({
-    required this.productId,
-    required this.productName,
-    required this.quantity,
-    required this.unitPrice,
-    required this.totalPrice,
-  });
-
-  factory SaleItem.fromJson(Map<String, dynamic> json) => _$SaleItemFromJson(json);
-  Map<String, dynamic> toJson() => _$SaleItemToJson(this);
-
-  @override
-  List<Object?> get props => [productId, productName, quantity, unitPrice, totalPrice];
-}
+// Removed the duplicate SaleItem class definition from here.
+// The correct SaleItem model is in 'sale_item.dart' and has HiveType(typeId: 41).

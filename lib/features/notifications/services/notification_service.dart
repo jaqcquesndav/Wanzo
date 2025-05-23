@@ -96,11 +96,11 @@ class NotificationService {  static final NotificationService _instance = Notifi
     // Hive est déjà initialisé dans main.dart, pas besoin de l'initialiser à nouveau
     
     // Vérifier si les adaptateurs sont déjà enregistrés
-    if (!Hive.isAdapterRegistered(9)) {
+    if (!Hive.isAdapterRegistered(28)) { // Corrected typeId for NotificationModelAdapter
       Hive.registerAdapter(NotificationModelAdapter()); // Using the imported adapter
     }
     
-    if (!Hive.isAdapterRegistered(10)) {
+    if (!Hive.isAdapterRegistered(29)) { // Corrected typeId for NotificationTypeAdapter
       Hive.registerAdapter(NotificationTypeAdapter()); // Using the imported adapter
     }
     

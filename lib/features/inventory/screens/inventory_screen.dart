@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'dart:io'; // Added for File support
-import '../../../constants/colors.dart';
 import '../../../constants/spacing.dart';
 import '../../../constants/typography.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
@@ -132,11 +131,11 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           ),
         ],
       ),
-      floatingActionButton: _tabController.index != 2 
+      floatingActionButton: _tabController.index != 2
           ? FloatingActionButton(
               onPressed: () => context.push('/inventory/add'),
-              backgroundColor: WanzoColors.primary,
-              child: const Icon(Icons.add),
+              backgroundColor: Theme.of(context).colorScheme.primary, // Use theme color
+              child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary), // Use theme color for icon
             )
           : null,
     );
@@ -254,7 +253,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             Icon(
               lowStockOnly ? Icons.check_circle : Icons.inventory_2,
               size: 64,
-              color: lowStockOnly ? WanzoColors.success : Colors.grey.shade400,
+              color: lowStockOnly ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()), // Use theme color
             ),
             const SizedBox(height: 16),
             Text(
@@ -303,10 +302,10 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                   // Fallback for image loading errors
                   return CircleAvatar(
                     radius: 25,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Use theme color
                     child: Text(
                       product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
-                      style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
                     ),
                   );
                 },
@@ -317,10 +316,10 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           // Fallback if no image path is available
           leadingWidget = CircleAvatar(
             radius: 25,
-            backgroundColor: Colors.grey[300],
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Use theme color
             child: Text(
               product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
-              style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
             ),
           );
         }
@@ -345,7 +344,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               Text(
                 'Stock: ${product.stockQuantity} ${product.unit.toString().split('.').last}',
                 style: TextStyle(
-                  color: isLowStock ? WanzoColors.error : null,
+                  color: isLowStock ? Theme.of(context).colorScheme.error : null, // Use theme color
                   fontWeight: isLowStock ? WanzoTypography.fontWeightBold : null,
                 ),
               ),
@@ -364,7 +363,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               ),
             ],
           ),
-          onTap: () => context.push('/inventory/${product.id}'),
+          onTap: () => context.push('/inventory/${product.id}'), // Added missing parenthesis
         );
       },
     );
@@ -380,7 +379,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           Icon(
             Icons.history,
             size: 64,
-            color: Colors.grey.shade400,
+            color: Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()), // Use theme color
           ),
           const SizedBox(height: 16),
           const Text(
@@ -401,87 +400,96 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           Icon(
             Icons.error_outline,
             size: 64,
-            color: WanzoColors.error,
+            color: Theme.of(context).colorScheme.error, // Use theme color
           ),
           const SizedBox(height: 16),
           Text(
-            'Erreur: $message',
-            style: TextStyle(
-              fontSize: 18,
-              color: WanzoColors.error,
-            ),
+            message,
+            style: const TextStyle(fontSize: 18),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              context.read<InventoryBloc>().add(const LoadProducts());
+              // Relancer le chargement en fonction de l'onglet actif
+              final currentIndex = _tabController.index;
+              if (currentIndex == 0) {
+                context.read<InventoryBloc>().add(const LoadProducts());
+              } else if (currentIndex == 1) {
+                context.read<InventoryBloc>().add(const LoadLowStockProducts());
+              } else if (currentIndex == 2) {
+                context.read<InventoryBloc>().add(const LoadAllTransactions());
+              }
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Réessayer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.errorContainer, // Use theme color
+              foregroundColor: Theme.of(context).colorScheme.onErrorContainer, // Use theme color
+            ),
           ),
         ],
       ),
     );
   }
-  
-  /// Afficher la boîte de dialogue d'ajout de stock
+
+  /// Afficher la boîte de dialogue pour ajouter du stock
   void _showAddStockDialog(BuildContext context, Product product) {
-    final TextEditingController quantityController = TextEditingController();
-    final TextEditingController noteController = TextEditingController();
-    
+    final quantityController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Ajouter du stock'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Produit: ${product.name}'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: quantityController,
-                decoration: InputDecoration(
-                  labelText: 'Quantité (${product.unit.toString().split('.').last})',
-                  border: const OutlineInputBorder(),
+          title: Text('Ajouter du stock pour ${product.name}'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Stock actuel: ${product.stockQuantity} ${product.unit.toString().split('.').last}'),
+                TextFormField(
+                  controller: quantityController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantité à ajouter',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer une quantité';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Veuillez entrer un nombre valide';
+                    }
+                    if (double.parse(value) <= 0) {
+                      return 'La quantité doit être positive';
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Note (optionnel)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () {
-                if (quantityController.text.isNotEmpty) {
-                  try {
-                    final quantity = double.parse(quantityController.text);
-                    if (quantity > 0) {
-                      // TODO: Implémenter dans le bloc
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Stock ajouté pour ${product.name}')),
-                      );
-                    }
-                  } catch (e) {
-                    // Gestion d'erreur pour conversion de nombre
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Veuillez entrer un nombre valide')),
-                    );
-                  }
+                if (formKey.currentState!.validate()) {
+                  final quantity = double.parse(quantityController.text);
+                  final transaction = StockTransaction(
+                    id: 'temp_id_${DateTime.now().millisecondsSinceEpoch}', // Generate a temporary ID or handle ID generation in BLoC/Repository
+                    productId: product.id,
+                    type: StockTransactionType.adjustment, // Corrected enum constant
+                    quantity: quantity,
+                    date: DateTime.now(),
+                    // Optional: Add other fields like reason, relatedDocumentId if needed
+                  );
+                  context.read<InventoryBloc>().add(AddStockTransaction(transaction));
+                  Navigator.pop(dialogContext);
                 }
               },
               child: const Text('Ajouter'),
@@ -489,9 +497,6 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           ],
         );
       },
-    ).then((_) {
-      quantityController.dispose();
-      noteController.dispose();
-    });
+    );
   }
 }

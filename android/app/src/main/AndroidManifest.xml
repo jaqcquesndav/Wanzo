@@ -36,6 +36,13 @@
             android:screenOrientation="portrait"/>
         <!-- End of image_cropper activity -->
 
+        <!-- Add this activity for UCrop -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!-- End of UCrop activity -->
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

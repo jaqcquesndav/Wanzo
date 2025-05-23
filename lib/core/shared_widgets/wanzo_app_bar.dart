@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:badges/badges.dart' as badges;
 import 'dart:io';
 import 'package:go_router/go_router.dart'; // Import go_router
-import '../../constants/colors.dart';
 import '../../constants/spacing.dart';
 import '../../constants/typography.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
@@ -114,13 +113,13 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
                 showBadge: unreadCount > 0,
                 badgeContent: Text(
                   unreadCount > 9 ? '9+' : unreadCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onError, // Use theme color
                     fontSize: 10,
                   ),
                 ),
-                badgeStyle: const badges.BadgeStyle(
-                  badgeColor: WanzoColors.error,
+                badgeStyle: badges.BadgeStyle( // Use theme color
+                  badgeColor: Theme.of(context).colorScheme.error,
                   padding: EdgeInsets.all(5),
                 ),
                 child: const Icon(Icons.notifications_outlined),
@@ -155,7 +154,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'profile',
               child: Row(
                 children: [
-                  const Icon(Icons.person, color: WanzoColors.primary),
+                  Icon(Icons.person, color: Theme.of(context).colorScheme.primary), // Use theme color
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Profil'),
                 ],
@@ -166,7 +165,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'subscription',
               child: Row(
                 children: [
-                  const Icon(Icons.subscriptions, color: WanzoColors.primary), // Changed from WanzoColors.accent
+                  Icon(Icons.subscriptions, color: Theme.of(context).colorScheme.primary), // Use theme color
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Gestion des abonnements'),
                 ],
@@ -177,7 +176,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'settings',
               child: Row(
                 children: [
-                  const Icon(Icons.settings, color: WanzoColors.info),
+                  Icon(Icons.settings, color: Theme.of(context).colorScheme.surfaceVariant), // Use theme color (info mapped to surfaceVariant)
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Paramètres'),
                 ],
@@ -189,7 +188,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'logout',
               child: Row(
                 children: [
-                  const Icon(Icons.logout, color: WanzoColors.error),
+                  Icon(Icons.logout, color: Theme.of(context).colorScheme.error), // Use theme color
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Déconnexion'),
                 ],
@@ -200,12 +199,12 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.all(WanzoSpacing.sm), // Minimal padding for tap area
             child: CircleAvatar(
               radius: 18, // Results in a 36dp diameter circle
-              backgroundColor: WanzoColors.backgroundSecondaryLight, // Changed from WanzoColors.primary.withOpacity(0.2)
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer, // Use theme color
               child: Text(
                 userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                 style: TextStyle(
                   fontSize: WanzoTypography.fontSizeBase, // Ensure text fits well
-                  color: WanzoColors.primary,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer, // Use theme color
                   fontWeight: WanzoTypography.fontWeightBold,
                 ),
               ),

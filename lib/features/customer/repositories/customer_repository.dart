@@ -11,13 +11,7 @@ class CustomerRepository {
   /// Initialise le repository
   Future<void> init() async {
     // Enregistrement des adaptateurs Hive
-    if (!Hive.isAdapterRegistered(3)) {
-      Hive.registerAdapter(CustomerAdapter());
-    }
-    
-    if (!Hive.isAdapterRegistered(4)) {
-      Hive.registerAdapter(CustomerCategoryAdapter());
-    }
+    // Adapters are now registered in hive_setup.dart
     
     _customersBox = await Hive.openBox<Customer>(_customersBoxName);
     

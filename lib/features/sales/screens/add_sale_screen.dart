@@ -18,6 +18,7 @@ import 'package:wanzo/features/settings/models/settings.dart';
 import '../../../constants/spacing.dart';
 import '../bloc/sales_bloc.dart';
 import '../models/sale.dart';
+import '../models/sale_item.dart'; // Ensure this import is present
 
 /// Écran d'ajout d'une nouvelle vente
 class AddSaleScreen extends StatefulWidget {
@@ -957,7 +958,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                         SaleItem(
                           productId: resolvedProductId,
                           productName: productName,
-                          quantity: currentQuantity.toDouble(),
+                          quantity: currentQuantity, // Ensure this is int, removed .toDouble()
                           unitPrice: currentUnitPrice,
                           totalPrice: currentTotalPrice,
                         ),

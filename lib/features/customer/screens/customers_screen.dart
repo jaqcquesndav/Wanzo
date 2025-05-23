@@ -215,16 +215,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
   Widget _buildCustomerListItem(Customer customer) {
     final lastPurchaseText = customer.lastPurchaseDate != null
         ? 'Dernier achat: ${_formatDate(customer.lastPurchaseDate!)}'
-        : 'Pas d\'achat récent';
+        : 'Pas d\\\'achat récent';
     
+    final categoryColor = _getCategoryColor(context, customer.category); // Pass context
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getCategoryColor(customer.category),
+          backgroundColor: categoryColor, // Use theme color
           child: Text(
             customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer), // Ensure text is visible
           ),
         ),
         title: Text(customer.name),
@@ -322,7 +324,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _showCategoriesFilter() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) { // Changed context to dialogContext to avoid conflict
         return AlertDialog(
           title: const Text('Filtrer par catégorie'),
           content: Column(
@@ -330,14 +332,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
             children: CustomerCategory.values.map((category) {
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getCategoryColor(category),
+                  backgroundColor: _getCategoryColor(context, category), // Pass context
                   radius: 12,
+                  child: Text( // Adding a contrasting text for better visibility if needed
+                    _getCategoryName(category)[0],
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  ),
                 ),
                 title: Text(_getCategoryName(category)),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext); // Use dialogContext
                   // Ici, on pourrait implémenter un filtre par catégorie
-                  // Pour l'instant, nous revenons simplement à tous les clients
+                  // Pour l\'instant, nous revenons simplement à tous les clients
                   context.read<CustomerBloc>().add(const LoadCustomers());
                 },
               );
@@ -345,7 +351,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext), // Use dialogContext
               child: const Text('Annuler'),
             ),
           ],
@@ -374,7 +380,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 Navigator.pop(context);
                 context.read<CustomerBloc>().add(DeleteCustomer(customer.id));
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error), // Use theme color
               child: const Text('Supprimer'),
             ),
           ],
@@ -414,24 +420,22 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   /// Retourne la couleur associée à une catégorie de client
-  Color _getCategoryColor(CustomerCategory category) {
+  Color _getCategoryColor(BuildContext context, CustomerCategory category) { // Added BuildContext
     switch (category) {
       case CustomerCategory.vip:
-        return Colors.purple;
+        return Theme.of(context).colorScheme.primary;
       case CustomerCategory.regular:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.secondary;
       case CustomerCategory.new_customer:
-        return Colors.green;
+        return Theme.of(context).colorScheme.tertiary;
       case CustomerCategory.occasional:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.surfaceVariant;
       case CustomerCategory.business:
-        return Colors.indigo;
-      default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.primaryContainer;
     }
   }
 
-  /// Retourne le nom d'une catégorie de client
+  /// Retourne le nom d\'une catégorie de client
   String _getCategoryName(CustomerCategory category) {
     switch (category) {
       case CustomerCategory.vip:

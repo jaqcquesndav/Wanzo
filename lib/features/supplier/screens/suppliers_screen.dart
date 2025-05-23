@@ -215,16 +215,18 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   Widget _buildSupplierListItem(Supplier supplier) {
     final lastPurchaseText = supplier.lastPurchaseDate != null
         ? 'Dernier achat: ${_formatDate(supplier.lastPurchaseDate!)}'
-        : 'Pas d\'achat récent';
+        : 'Pas d\\\'achat récent';
     
+    final categoryColor = _getCategoryColor(context, supplier.category); // Pass context
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getCategoryColor(supplier.category),
+          backgroundColor: categoryColor, // Use theme color
           child: Text(
             supplier.name.isNotEmpty ? supplier.name[0].toUpperCase() : '?',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer), // Ensure text is visible
           ),
         ),
         title: Text(supplier.name),
@@ -324,7 +326,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   void _showCategoriesFilter() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) { // Changed context to dialogContext to avoid conflict
         return AlertDialog(
           title: const Text('Filtrer par catégorie'),
           content: Column(
@@ -332,12 +334,16 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             children: SupplierCategory.values.map((category) {
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getCategoryColor(category),
+                  backgroundColor: _getCategoryColor(context, category), // Pass context
                   radius: 12,
+                  child: Text( // Adding a contrasting text for better visibility if needed
+                    _getCategoryName(category)[0],
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  ),
                 ),
                 title: Text(_getCategoryName(category)),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext); // Use dialogContext
                   // Ici, on pourrait implémenter un filtre par catégorie
                   // Pour l'instant, nous revenons simplement à tous les fournisseurs
                   context.read<SupplierBloc>().add(const LoadSuppliers());
@@ -347,7 +353,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext), // Use dialogContext
               child: const Text('Annuler'),
             ),
           ],
@@ -376,7 +382,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                 Navigator.pop(context);
                 context.read<SupplierBloc>().add(DeleteSupplier(supplier.id));
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error), // Use theme color
               child: const Text('Supprimer'),
             ),
           ],
@@ -415,21 +421,21 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     );
   }
   /// Retourne la couleur associée à une catégorie de fournisseur
-  Color _getCategoryColor(SupplierCategory category) {
+  Color _getCategoryColor(BuildContext context, SupplierCategory category) { // Added BuildContext
     switch (category) {
       case SupplierCategory.strategic:
-        return Colors.indigo;
+        return Theme.of(context).colorScheme.primary;
       case SupplierCategory.regular:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.secondary;
       case SupplierCategory.newSupplier:
-        return Colors.green;
+        return Theme.of(context).colorScheme.tertiary;
       case SupplierCategory.occasional:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.surfaceVariant;
       case SupplierCategory.international:
-        return Colors.purple;
+        return Theme.of(context).colorScheme.primaryContainer;
     }
   }
-  /// Retourne le nom d'une catégorie de fournisseur
+  /// Retourne le nom d\'une catégorie de fournisseur
   String _getCategoryName(SupplierCategory category) {
     switch (category) {
       case SupplierCategory.strategic:

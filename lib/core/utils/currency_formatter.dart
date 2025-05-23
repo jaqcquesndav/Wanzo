@@ -53,3 +53,16 @@ String getCurrencyString(CurrencyType currencyType) {
     // No default needed here as CurrencyType enum covers all cases.
   }
 }
+
+// Helper to get just the currency symbol
+String getCurrencySymbol(CurrencyType currencyType) {
+  switch (currencyType) {
+    case CurrencyType.usd:
+      return '\$';
+    case CurrencyType.cdf:
+      return 'FC'; // Or CDF
+    case CurrencyType.fc:
+      return 'FC';
+    // No default needed here as CurrencyType enum covers all cases.
+  }
+}

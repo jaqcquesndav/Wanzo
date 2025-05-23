@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../constants/colors.dart';
+
 import '../../../constants/spacing.dart';
 import '../../../constants/typography.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
@@ -49,7 +49,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
         children: [
           // TabBar pour les filtres de vente
           Material(
-            color: Theme.of(context).primaryColor,
+            color: Theme.of(context).colorScheme.primary, // Use theme color
             child: TabBar(
               controller: _tabController,
               tabs: const [
@@ -91,7 +91,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                                     Icon(
                                       Icons.shopping_cart,
                                       size: 64,
-                                      color: Colors.grey[400],
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), // Use theme color
                                     ),
                                     const SizedBox(height: WanzoSpacing.md),
                                     const Text(
@@ -126,14 +126,14 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                         Icon(
                           Icons.error_outline,
                           size: 64,
-                          color: WanzoColors.error,
+                          color: Theme.of(context).colorScheme.error, // Use theme color
                         ),
                         const SizedBox(height: WanzoSpacing.md),
                         Text(
                           'Erreur: ${state.message}',
                           style: TextStyle(
                             fontSize: 18,
-                            color: WanzoColors.error,
+                            color: Theme.of(context).colorScheme.error, // Use theme color
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -156,7 +156,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddSale(context),
-        backgroundColor: WanzoColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary, // Use theme color
         child: const Icon(Icons.add),
       ),
     );
@@ -274,16 +274,16 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 children: [
                   Text(
                     currencyFormat.format(state.totalAmount),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: WanzoTypography.fontWeightBold,
-                      color: WanzoColors.primary,
+                      color: Theme.of(context).colorScheme.primary, // Use theme color
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Montant total',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -300,10 +300,10 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                       fontWeight: WanzoTypography.fontWeightBold,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Ventes',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -315,16 +315,16 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 children: [
                   Text(
                     '${state.sales.where((s) => s.status == SaleStatus.pending).length}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: WanzoTypography.fontWeightBold,
-                      color: WanzoColors.warning,
+                      color: Theme.of(context).colorScheme.tertiary, // Use theme color for warning/pending
                     ),
                   ),
-                  const Text(
+                  Text(
                     'En attente',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -376,14 +376,13 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   Text(
                     'Client: ${sale.customerName.isNotEmpty ? sale.customerName : 'Client occasionnel'}',
                     style: TextStyle(
-                      color: Colors.grey[700],
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                   Text(
                     dateFormat.format(sale.date),
                     style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: WanzoTypography.fontSizeSm,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                 ],
@@ -396,16 +395,16 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   Text(
                     '${sale.items.length} article${sale.items.length > 1 ? 's' : ''}',
                     style: TextStyle(
-                      color: Colors.grey[700],
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: WanzoTypography.fontSizeSm,
                     ),
                   ),
                   Text(
                     currencyFormat.format(sale.totalAmount),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: WanzoTypography.fontWeightBold,
                       fontSize: WanzoTypography.fontSizeLg,
-                      color: WanzoColors.primary,
+                      color: Theme.of(context).colorScheme.primary, // Use theme color
                     ),
                   ),
                 ],
@@ -424,15 +423,15 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
     
     switch (status) {
       case SaleStatus.pending:
-        color = WanzoColors.warning;
+        color = Theme.of(context).colorScheme.tertiary; // Use theme color for warning/pending
         label = 'En attente';
         break;
       case SaleStatus.completed:
-        color = WanzoColors.success;
+        color = Theme.of(context).colorScheme.secondary; // Use theme color for success/completed
         label = 'Terminée';
         break;
       case SaleStatus.cancelled:
-        color = WanzoColors.error;
+        color = Theme.of(context).colorScheme.error; // Use theme color
         label = 'Annulée';
         break;
     }

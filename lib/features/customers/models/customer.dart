@@ -5,7 +5,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'customer.g.dart';
 
 /// Modèle représentant un client
-@HiveType(typeId: 5)
+@HiveType(typeId: 42)
 @JsonSerializable(explicitToJson: true)
 class Customer extends Equatable {
   /// Identifiant unique du client

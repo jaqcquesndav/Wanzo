@@ -14,7 +14,7 @@ enum DocumentType {
 }
 
 /// Modèle représentant un document
-@HiveType(typeId: 3)
+@HiveType(typeId: 31)
 class Document extends Equatable {
   /// Identifiant unique du document
   @HiveField(0)

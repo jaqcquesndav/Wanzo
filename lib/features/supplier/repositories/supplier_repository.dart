@@ -10,15 +10,6 @@ class SupplierRepository {
 
   /// Initialise le repository
   Future<void> init() async {
-    // Enregistrement des adaptateurs Hive
-    if (!Hive.isAdapterRegistered(5)) {
-      Hive.registerAdapter(SupplierAdapter());
-    }
-    
-    if (!Hive.isAdapterRegistered(6)) {
-      Hive.registerAdapter(SupplierCategoryAdapter());
-    }
-    
     _suppliersBox = await Hive.openBox<Supplier>(_suppliersBoxName);
     
     // En mode développement, ajoutons quelques fournisseurs de test si la boîte est vide
@@ -173,87 +164,5 @@ class SupplierRepository {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     
     return suppliers.take(limit).toList();
-  }
-}
-
-/// Adaptateur Hive pour Supplier
-class SupplierAdapter extends TypeAdapter<Supplier> {
-  @override
-  final int typeId = 5;
-
-  @override
-  Supplier read(BinaryReader reader) {
-    final id = reader.readString();
-    final name = reader.readString();
-    final phoneNumber = reader.readString();
-    final email = reader.readString();
-    final address = reader.readString();
-    final contactPerson = reader.readString();
-    final createdAt = DateTime.fromMillisecondsSinceEpoch(reader.readInt());
-    final notes = reader.readString();
-    final totalPurchases = reader.readDouble();
-    
-    final hasLastPurchaseDate = reader.readBool();
-    final lastPurchaseDate = hasLastPurchaseDate
-        ? DateTime.fromMillisecondsSinceEpoch(reader.readInt())
-        : null;
-    
-    final categoryIndex = reader.readInt();
-    final deliveryTimeInDays = reader.readInt();
-    final paymentTerms = reader.readString();
-    
-    return Supplier(
-      id: id,
-      name: name,
-      phoneNumber: phoneNumber,
-      email: email,
-      address: address,
-      contactPerson: contactPerson,
-      createdAt: createdAt,
-      notes: notes,
-      totalPurchases: totalPurchases,
-      lastPurchaseDate: lastPurchaseDate,
-      category: SupplierCategory.values[categoryIndex],
-      deliveryTimeInDays: deliveryTimeInDays,
-      paymentTerms: paymentTerms,
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, Supplier obj) {
-    writer.writeString(obj.id);
-    writer.writeString(obj.name);
-    writer.writeString(obj.phoneNumber);
-    writer.writeString(obj.email);
-    writer.writeString(obj.address);
-    writer.writeString(obj.contactPerson);
-    writer.writeInt(obj.createdAt.millisecondsSinceEpoch);
-    writer.writeString(obj.notes);
-    writer.writeDouble(obj.totalPurchases);
-    
-    writer.writeBool(obj.lastPurchaseDate != null);
-    if (obj.lastPurchaseDate != null) {
-      writer.writeInt(obj.lastPurchaseDate!.millisecondsSinceEpoch);
-    }
-    
-    writer.writeInt(obj.category.index);
-    writer.writeInt(obj.deliveryTimeInDays);
-    writer.writeString(obj.paymentTerms);
-  }
-}
-
-/// Adaptateur Hive pour SupplierCategory
-class SupplierCategoryAdapter extends TypeAdapter<SupplierCategory> {
-  @override
-  final int typeId = 6;
-
-  @override
-  SupplierCategory read(BinaryReader reader) {
-    return SupplierCategory.values[reader.readInt()];
-  }
-
-  @override
-  void write(BinaryWriter writer, SupplierCategory obj) {
-    writer.writeInt(obj.index);
   }
 }

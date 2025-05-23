@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart'; // Re-added for context.pop() and context.go()
 import 'package:intl/intl.dart';
-import 'package:wanzo/constants/colors.dart';
+
 import 'package:wanzo/constants/spacing.dart';
 import 'package:wanzo/core/utils/currency_formatter.dart'; // Added import
 import 'package:wanzo/features/settings/bloc/settings_bloc.dart'; // Added import
@@ -124,27 +124,27 @@ class _SubscriptionViewState extends State<SubscriptionView> {
         listener: (context, state) {
           if (state is SubscriptionUpdateSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: WanzoColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: Theme.of(context).colorScheme.secondary),
             );
           } else if (state is SubscriptionUpdateFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error), backgroundColor: WanzoColors.error),
+              SnackBar(content: Text(state.error), backgroundColor: Theme.of(context).colorScheme.error),
             );
           } else if (state is TokenTopUpSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: WanzoColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: Theme.of(context).colorScheme.secondary),
             );
           } else if (state is TokenTopUpFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error), backgroundColor: WanzoColors.error),
+              SnackBar(content: Text(state.error), backgroundColor: Theme.of(context).colorScheme.error),
             );
           } else if (state is PaymentProofUploadSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: WanzoColors.success),
+              SnackBar(content: Text(state.message), backgroundColor: Theme.of(context).colorScheme.secondary),
             );
           } else if (state is PaymentProofUploadFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error), backgroundColor: WanzoColors.error),
+              SnackBar(content: Text(state.error), backgroundColor: Theme.of(context).colorScheme.error),
             );
           }
         },
@@ -158,9 +158,9 @@ class _SubscriptionViewState extends State<SubscriptionView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, color: WanzoColors.error, size: 48),
+                  Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
                   const SizedBox(height: WanzoSpacing.md),
-                  Text(state.message, style: const TextStyle(color: WanzoColors.error)),
+                  Text(state.message, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   const SizedBox(height: WanzoSpacing.md),
                   ElevatedButton(
                     onPressed: () => context.read<SubscriptionBloc>().add(LoadSubscriptionDetails()),
@@ -253,7 +253,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
       elevation: isCurrent ? 6 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: isCurrent ? WanzoColors.primary : Colors.grey.shade300, width: isCurrent ? 2 : 1),
+        side: BorderSide(color: isCurrent ? Theme.of(context).colorScheme.primary : Colors.grey.shade300, width: isCurrent ? 2 : 1),
       ),
       margin: const EdgeInsets.only(right: WanzoSpacing.md, bottom: WanzoSpacing.sm, top: WanzoSpacing.sm),
       child: Container(
@@ -262,7 +262,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(tier.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: WanzoColors.primary)),
+            Text(tier.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
             const SizedBox(height: WanzoSpacing.xs),
             Text(tier.price.toLowerCase() == "gratuit" ? "Gratuit" : formatCurrency(priceAmount, currencyType), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: WanzoSpacing.sm),
@@ -280,10 +280,10 @@ class _SubscriptionViewState extends State<SubscriptionView> {
             ),
             const SizedBox(height: WanzoSpacing.sm),
             if (isCurrent)
-              const Chip(
-                label: Text('Plan Actuel'),
-                backgroundColor: WanzoColors.successLight,
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              Chip(
+                label: const Text('Plan Actuel'),
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer, // Adjusted to use theme color
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               )
             else
               SizedBox(
@@ -324,7 +324,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
             LinearProgressIndicator(
               value: tokenUsage,
               backgroundColor: Colors.grey.shade300,
-              valueColor: const AlwaysStoppedAnimation<Color>(WanzoColors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
               minHeight: 10,
             ),
             const SizedBox(height: WanzoSpacing.md),
@@ -452,7 +452,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
                           padding: const EdgeInsets.only(bottom: WanzoSpacing.sm),
                           child: Row(
                             children: [
-                              const Icon(Icons.check_circle, color: WanzoColors.success),
+                              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.secondary),
                               const SizedBox(width: WanzoSpacing.xs),
                               Expanded(child: Text('Preuve: ${loadedState.uploadedProofName}', overflow: TextOverflow.ellipsis)),
                             ],
@@ -465,7 +465,7 @@ class _SubscriptionViewState extends State<SubscriptionView> {
                           _pickImageAndUpload(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: loadedState.uploadedProofName == null ? WanzoColors.primary : WanzoColors.accent,
+                          backgroundColor: loadedState.uploadedProofName == null ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.tertiary, // Adjusted to use theme colors
                         ),
                       ),
                     ]

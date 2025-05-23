@@ -5,7 +5,7 @@ import 'settings.dart';
 /// Adaptateur Hive pour la classe Settings
 class SettingsAdapter extends TypeAdapter<Settings> {
   @override
-  final int typeId = 24;
+  final int typeId = 24; // Make sure this typeId is unique and registered in main.dart
 
   @override
   Settings read(BinaryReader reader) {
@@ -15,33 +15,33 @@ class SettingsAdapter extends TypeAdapter<Settings> {
     };
     
     return Settings(
-      companyName: fields[0] as String,
-      companyAddress: fields[1] as String,
-      companyPhone: fields[2] as String,
-      companyEmail: fields[3] as String,
-      companyLogo: fields[4] as String,
-      currency: fields[5] as String,
-      dateFormat: fields[6] as String,
-      themeMode: fields[7] as AppThemeMode,
-      language: fields[8] as String,
-      showTaxes: fields[9] as bool,
-      defaultTaxRate: fields[10] as double,
-      invoiceNumberFormat: fields[11] as String,
-      invoicePrefix: fields[12] as String,
-      defaultPaymentTerms: fields[13] as String,
-      defaultInvoiceNotes: fields[14] as String,
-      taxIdentificationNumber: fields[15] as String,
-      defaultProductCategory: fields[16] as String,
-      lowStockAlertDays: fields[17] as int,
-      backupEnabled: fields[18] as bool,
-      backupFrequency: fields[19] as int,
-      reportEmail: fields[20] as String,
-      rccmNumber: fields[21] as String,
-      idNatNumber: fields[22] as String,
-      pushNotificationsEnabled: fields[23] as bool,
-      inAppNotificationsEnabled: fields[24] as bool,
-      emailNotificationsEnabled: fields[25] as bool,
-      soundNotificationsEnabled: fields[26] as bool,
+      companyName: fields[0] as String? ?? '',
+      companyAddress: fields[1] as String? ?? '',
+      companyPhone: fields[2] as String? ?? '',
+      companyEmail: fields[3] as String? ?? '',
+      companyLogo: fields[4] as String? ?? '',
+      currency: fields[5] is String ? CurrencyType.values.firstWhere((e) => e.name == fields[5], orElse: () => CurrencyType.usd) : fields[5] as CurrencyType? ?? CurrencyType.usd,
+      dateFormat: fields[6] as String? ?? 'dd/MM/yyyy',
+      themeMode: fields[7] as AppThemeMode? ?? AppThemeMode.system,
+      language: fields[8] as String? ?? 'fr',
+      showTaxes: fields[9] as bool? ?? false,
+      defaultTaxRate: fields[10] as double? ?? 0.0,
+      invoiceNumberFormat: fields[11] as String? ?? 'INV-{YYYY}-{NNNN}',
+      invoicePrefix: fields[12] as String? ?? 'INV',
+      defaultPaymentTerms: fields[13] as String? ?? 'Net 30',
+      defaultInvoiceNotes: fields[14] as String? ?? '',
+      taxIdentificationNumber: fields[15] as String? ?? '',
+      defaultProductCategory: fields[16] as String? ?? '',
+      lowStockAlertDays: fields[17] as int? ?? 7,
+      backupEnabled: fields[18] as bool? ?? false,
+      backupFrequency: fields[19] as int? ?? 24, // Assuming hours
+      reportEmail: fields[20] as String? ?? '',
+      rccmNumber: fields[21] as String? ?? '',
+      idNatNumber: fields[22] as String? ?? '',
+      pushNotificationsEnabled: fields[23] as bool? ?? true,
+      inAppNotificationsEnabled: fields[24] as bool? ?? true,
+      emailNotificationsEnabled: fields[25] as bool? ?? true,
+      soundNotificationsEnabled: fields[26] as bool? ?? true,
     );
   }
 
@@ -49,59 +49,59 @@ class SettingsAdapter extends TypeAdapter<Settings> {
   void write(BinaryWriter writer, Settings obj) {
     writer.writeByte(27); // Total number of fields
     writer.writeByte(0);
-    writer.write(obj.companyName);
+    writer.writeString(obj.companyName);
     writer.writeByte(1);
-    writer.write(obj.companyAddress);
+    writer.writeString(obj.companyAddress);
     writer.writeByte(2);
-    writer.write(obj.companyPhone);
+    writer.writeString(obj.companyPhone);
     writer.writeByte(3);
-    writer.write(obj.companyEmail);
+    writer.writeString(obj.companyEmail);
     writer.writeByte(4);
-    writer.write(obj.companyLogo);
+    writer.writeString(obj.companyLogo);
     writer.writeByte(5);
-    writer.write(obj.currency);
+    writer.writeString(obj.currency.name); // Store enum as string
     writer.writeByte(6);
-    writer.write(obj.dateFormat);
+    writer.writeString(obj.dateFormat);
     writer.writeByte(7);
-    writer.write(obj.themeMode);
+    writer.write(obj.themeMode); // Assuming AppThemeMode is already a HiveObject or has an adapter
     writer.writeByte(8);
-    writer.write(obj.language);
+    writer.writeString(obj.language);
     writer.writeByte(9);
-    writer.write(obj.showTaxes);
+    writer.writeBool(obj.showTaxes);
     writer.writeByte(10);
-    writer.write(obj.defaultTaxRate);
+    writer.writeDouble(obj.defaultTaxRate);
     writer.writeByte(11);
-    writer.write(obj.invoiceNumberFormat);
+    writer.writeString(obj.invoiceNumberFormat);
     writer.writeByte(12);
-    writer.write(obj.invoicePrefix);
+    writer.writeString(obj.invoicePrefix);
     writer.writeByte(13);
-    writer.write(obj.defaultPaymentTerms);
+    writer.writeString(obj.defaultPaymentTerms);
     writer.writeByte(14);
-    writer.write(obj.defaultInvoiceNotes);
+    writer.writeString(obj.defaultInvoiceNotes);
     writer.writeByte(15);
-    writer.write(obj.taxIdentificationNumber);
+    writer.writeString(obj.taxIdentificationNumber);
     writer.writeByte(16);
-    writer.write(obj.defaultProductCategory);
+    writer.writeString(obj.defaultProductCategory);
     writer.writeByte(17);
-    writer.write(obj.lowStockAlertDays);
+    writer.writeInt(obj.lowStockAlertDays);
     writer.writeByte(18);
-    writer.write(obj.backupEnabled);
+    writer.writeBool(obj.backupEnabled);
     writer.writeByte(19);
-    writer.write(obj.backupFrequency);
+    writer.writeInt(obj.backupFrequency);
     writer.writeByte(20);
-    writer.write(obj.reportEmail);
+    writer.writeString(obj.reportEmail);
     writer.writeByte(21);
-    writer.write(obj.rccmNumber);
+    writer.writeString(obj.rccmNumber);
     writer.writeByte(22);
-    writer.write(obj.idNatNumber);
+    writer.writeString(obj.idNatNumber);
     writer.writeByte(23);
-    writer.write(obj.pushNotificationsEnabled);
+    writer.writeBool(obj.pushNotificationsEnabled);
     writer.writeByte(24);
-    writer.write(obj.inAppNotificationsEnabled);
+    writer.writeBool(obj.inAppNotificationsEnabled);
     writer.writeByte(25);
-    writer.write(obj.emailNotificationsEnabled);
+    writer.writeBool(obj.emailNotificationsEnabled);
     writer.writeByte(26);
-    writer.write(obj.soundNotificationsEnabled);
+    writer.writeBool(obj.soundNotificationsEnabled);
   }
 }
 

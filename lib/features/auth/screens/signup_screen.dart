@@ -89,9 +89,9 @@ class _SignupScreenState extends State<SignupScreen> {
     } else {
       // Afficher une validation d'erreur
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez remplir tous les champs requis correctement'),
-          backgroundColor: WanzoColors.error,
+        SnackBar(
+          content: const Text('Veuillez remplir tous les champs requis correctement'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -109,9 +109,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       if (!_agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vous devez accepter les conditions d\'utilisation pour continuer'),
-            backgroundColor: WanzoColors.error,
+          SnackBar(
+            content: const Text('Vous devez accepter les conditions d\'utilisation pour continuer'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -147,9 +147,9 @@ class _SignupScreenState extends State<SignupScreen> {
           
           // Afficher un message de succès
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Inscription réussie ! Vous êtes maintenant connecté.'),
-              backgroundColor: WanzoColors.success,
+            SnackBar(
+              content: const Text('Inscription réussie ! Vous êtes maintenant connecté.'),
+              backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
           );
           
@@ -161,7 +161,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Erreur lors de l\'inscription: $e'),
-              backgroundColor: WanzoColors.error,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
@@ -256,11 +256,12 @@ class _SignupScreenState extends State<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Informations personnelles',
           style: TextStyle(
             fontSize: WanzoTypography.fontSizeLg,
             fontWeight: WanzoTypography.fontWeightBold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: WanzoSpacing.md),
@@ -400,11 +401,12 @@ class _SignupScreenState extends State<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Informations de l\'entreprise',
+        Text(
+          'Informations sur l\'entreprise',
           style: TextStyle(
             fontSize: WanzoTypography.fontSizeLg,
             fontWeight: WanzoTypography.fontWeightBold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: WanzoSpacing.md),
@@ -499,11 +501,12 @@ class _SignupScreenState extends State<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Vérifiez vos informations',
+        Text(
+          'Termes et conditions',
           style: TextStyle(
             fontSize: WanzoTypography.fontSizeLg,
             fontWeight: WanzoTypography.fontWeightBold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: WanzoSpacing.md),
@@ -557,7 +560,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   _agreeToTerms = value ?? false;
                 });
               },
-              activeColor: WanzoColors.primary,
+              activeColor: Theme.of(context).colorScheme.primary,
             ),
             Expanded(
               child: GestureDetector(
@@ -567,14 +570,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   });
                 },
                 child: RichText(
-                  text: const TextSpan(
+                  text: TextSpan(
                     text: 'J\'accepte les ',
-                    style: TextStyle(color: WanzoColors.textPrimaryLight),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     children: [
                       TextSpan(
                         text: 'conditions d\'utilisation',
                         style: TextStyle(
-                          color: WanzoColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -582,7 +585,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       TextSpan(
                         text: 'politique de confidentialité',
                         style: TextStyle(
-                          color: WanzoColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -592,6 +595,14 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: WanzoSpacing.sm),
+        Text(
+          'En cochant cette case, vous confirmez avoir lu et accepté nos Conditions Générales d\'Utilisation et notre Politique de Confidentialité.',
+          style: TextStyle(
+            fontSize: WanzoTypography.fontSizeSm,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -606,9 +617,10 @@ class _SignupScreenState extends State<SignupScreen> {
           SizedBox(
             width: 140,
             child: Text(
-              label,              style: const TextStyle(
+              label,
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: WanzoColors.textSecondaryLight,
+                color: Theme.of(context).textTheme.bodySmall?.color,
               ),
             ),
           ),

@@ -205,7 +205,7 @@ class SyncService {
     }
 
     try {
-      final apiResponse = await _productApiService.getProducts(queryParams: queryParams.isNotEmpty ? queryParams : null);
+      final apiResponse = await _productApiService.getProducts(queryParameters: queryParams.isNotEmpty ? queryParams : null);
       if (apiResponse.success && apiResponse.data != null) {
         for (var product in apiResponse.data!) {
           await productBox.put(product.id, product);
@@ -263,7 +263,7 @@ class SyncService {
     }
 
     try {
-      final apiResponse = await _saleApiService.getSales(queryParams: queryParams.isNotEmpty ? queryParams : null);
+      final apiResponse = await _saleApiService.getSales(queryParameters: queryParams.isNotEmpty ? queryParams : null);
       if (apiResponse.success && apiResponse.data != null) {
         for (var sale in apiResponse.data!) {
           await saleBox.put(sale.id, sale);

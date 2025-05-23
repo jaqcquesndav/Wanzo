@@ -8,7 +8,7 @@ part of 'stock_transaction.dart';
 
 class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
   @override
-  final int typeId = 24;
+  final int typeId = 33;
 
   @override
   StockTransaction read(BinaryReader reader) {
@@ -60,7 +60,7 @@ class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
 
 class StockTransactionTypeAdapter extends TypeAdapter<StockTransactionType> {
   @override
-  final int typeId = 23;
+  final int typeId = 32;
 
   @override
   StockTransactionType read(BinaryReader reader) {

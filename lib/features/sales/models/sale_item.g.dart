@@ -8,7 +8,7 @@ part of 'sale_item.dart';
 
 class SaleItemAdapter extends TypeAdapter<SaleItem> {
   @override
-  final int typeId = 2;
+  final int typeId = 41;
 
   @override
   SaleItem read(BinaryReader reader) {
@@ -51,3 +51,23 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+SaleItem _$SaleItemFromJson(Map<String, dynamic> json) => SaleItem(
+      productId: json['productId'] as String,
+      productName: json['productName'] as String,
+      quantity: (json['quantity'] as num).toInt(),
+      unitPrice: (json['unitPrice'] as num).toDouble(),
+      totalPrice: (json['totalPrice'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$SaleItemToJson(SaleItem instance) => <String, dynamic>{
+      'productId': instance.productId,
+      'productName': instance.productName,
+      'quantity': instance.quantity,
+      'unitPrice': instance.unitPrice,
+      'totalPrice': instance.totalPrice,
+    };
