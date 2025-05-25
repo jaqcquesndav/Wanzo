@@ -18,6 +18,37 @@ import 'package:wanzo/features/auth/models/user.dart'; // Import User model
 // Import core services
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
+import 'package:wanzo/core/services/api_client.dart'; // Added
+import 'package:wanzo/features/notifications/services/notification_service.dart'; // Added
+
+// Import Repositories
+import 'package:wanzo/features/settings/repositories/settings_repository.dart'; // Added
+import 'package:wanzo/features/inventory/repositories/inventory_repository.dart'; // Added
+import 'package:wanzo/features/sales/repositories/sales_repository.dart'; // Added
+import 'package:wanzo/features/adha/repositories/adha_repository.dart'; // Added
+import 'package:wanzo/features/customer/repositories/customer_repository.dart'; // Added
+import 'package:wanzo/features/supplier/repositories/supplier_repository.dart'; // Added
+import 'package:wanzo/features/notifications/repositories/notification_repository.dart'; // Added
+import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart'; // Added
+import 'package:wanzo/features/expenses/repositories/expense_repository.dart'; // Added
+import 'package:wanzo/features/financing/repositories/financing_repository.dart'; // Added
+import 'package:wanzo/features/subscription/repositories/subscription_repository.dart'; // Added
+import 'package:wanzo/features/transactions/repositories/transaction_repository.dart'; // Added
+
+// Import BLoCs
+import 'package:wanzo/features/inventory/bloc/inventory_bloc.dart'; // Added
+import 'package:wanzo/features/sales/bloc/sales_bloc.dart'; // Added
+import 'package:wanzo/features/adha/bloc/adha_bloc.dart'; // Added
+import 'package:wanzo/features/customer/bloc/customer_bloc.dart'; // Added
+import 'package:wanzo/features/supplier/bloc/supplier_bloc.dart'; // Added
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart'; // Added
+import 'package:wanzo/features/notifications/bloc/notifications_bloc.dart'; // Added
+import 'package:wanzo/features/dashboard/bloc/operation_journal_bloc.dart'; // Added
+import 'package:wanzo/features/expenses/bloc/expense_bloc.dart'; // Added
+import 'package:wanzo/features/subscription/bloc/subscription_bloc.dart'; // Added
+import 'package:wanzo/features/financing/bloc/financing_bloc.dart'; // Added
+import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart'; // Added
+
 
 import 'package:hive_flutter/hive_flutter.dart'; // Corrected Hive import
 import 'package:wanzo/main.dart'; // Import MyApp
@@ -55,12 +86,104 @@ void main() {
     await authRepository.init(); // Call init
 
     final authBloc = AuthBloc(authRepository: authRepository);
-
     final appRouter = AppRouter(authBloc: authBloc);
+    final apiClient = ApiClient(); // Added
+    final notificationService = NotificationService(); //Added
+
+    // Instantiate Repositories (using real ones for simplicity in this basic test)
+    // For more complex tests, these should be mocked.
+    final settingsRepository = SettingsRepository();
+    await settingsRepository.init();
+    final inventoryRepository = InventoryRepository();
+    await inventoryRepository.init();
+    final salesRepository = SalesRepository();
+    await salesRepository.init();
+    final adhaRepository = AdhaRepository();
+    await adhaRepository.init();
+    final customerRepository = CustomerRepository();
+    await customerRepository.init();
+    final supplierRepository = SupplierRepository();
+    await supplierRepository.init();
+    final notificationRepository = NotificationRepository();
+    await notificationRepository.init();
+    final operationJournalRepository = OperationJournalRepository();
+    await operationJournalRepository.init();
+    final expenseRepository = ExpenseRepository();
+    await expenseRepository.init();
+    final financingRepository = FinancingRepository();
+    await financingRepository.init();
+    final subscriptionRepository = SubscriptionRepository(
+      expenseRepository: expenseRepository,
+      apiService: apiClient,
+    );
+    final transactionRepository = TransactionRepository();
+    await transactionRepository.init();
+
+    // Instantiate BLoCs
+    final operationJournalBloc = OperationJournalBloc(repository: operationJournalRepository);
+    final inventoryBloc = InventoryBloc(
+        inventoryRepository: inventoryRepository,
+        notificationService: notificationService,
+        operationJournalBloc: operationJournalBloc);
+    final salesBloc = SalesBloc(
+        salesRepository: salesRepository,
+        operationJournalBloc: operationJournalBloc);
+    final adhaBloc = AdhaBloc(
+        adhaRepository: adhaRepository,
+        authRepository: authRepository,
+        operationJournalRepository: operationJournalRepository);
+    final customerBloc = CustomerBloc(customerRepository: customerRepository);
+    final supplierBloc = SupplierBloc(supplierRepository: supplierRepository);
+    final settingsBloc = SettingsBloc(settingsRepository: settingsRepository);
+    final notificationsBloc = NotificationsBloc(notificationService);
+    final expenseBloc = ExpenseBloc(
+        expenseRepository: expenseRepository,
+        operationJournalBloc: operationJournalBloc);
+    final subscriptionBloc = SubscriptionBloc(subscriptionRepository: subscriptionRepository);
+    final financingBloc = FinancingBloc(
+        financingRepository: financingRepository,
+        operationJournalBloc: operationJournalBloc);
+    final transactionRepository = TransactionRepository(); // Added
+    await transactionRepository.init(); // Added
+
+    final dashboardBloc = DashboardBloc( // Added
+      salesRepository: salesRepository,
+      customerRepository: customerRepository,
+      transactionRepository: transactionRepository,
+      operationJournalRepository: operationJournalRepository,
+    );
 
     // Build our app and trigger a frame.
-    // MyApp now only takes appRouter.router
-    await tester.pumpWidget(MyApp(appRouter: appRouter.router));
+    await tester.pumpWidget(MyApp(
+      appRouter: appRouter, // Corrected: pass AppRouter instance
+      authBloc: authBloc,
+      inventoryBloc: inventoryBloc,
+      salesBloc: salesBloc,
+      adhaBloc: adhaBloc,
+      customerBloc: customerBloc,
+      supplierBloc: supplierBloc,
+      settingsBloc: settingsBloc,
+      notificationsBloc: notificationsBloc,
+      operationJournalBloc: operationJournalBloc,
+      expenseBloc: expenseBloc,
+      subscriptionBloc: subscriptionBloc,
+      financingBloc: financingBloc,
+      dashboardBloc: dashboardBloc, // Added
+      // Pass repositories
+      authRepository: authRepository,
+      settingsRepository: settingsRepository,
+      inventoryRepository: inventoryRepository,
+      salesRepository: salesRepository,
+      adhaRepository: adhaRepository,
+      customerRepository: customerRepository,
+      supplierRepository: supplierRepository,
+      notificationRepository: notificationRepository,
+      operationJournalRepository: operationJournalRepository,
+      expenseRepository: expenseRepository,
+      financingRepository: financingRepository,
+      subscriptionRepository: subscriptionRepository,
+      transactionRepository: transactionRepository, // Added
+    ));
 
     // Verify that the app launches and shows MaterialApp
     expect(find.byType(MaterialApp), findsOneWidget);

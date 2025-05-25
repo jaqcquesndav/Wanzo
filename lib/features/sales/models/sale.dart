@@ -16,6 +16,8 @@ enum SaleStatus {
   completed,  // Terminée
   @HiveField(2)
   cancelled,  // Annulée
+  @HiveField(3) // Added new enum member
+  partiallyPaid, // Partiellement payée
 }
 
 /// Modèle représentant une vente

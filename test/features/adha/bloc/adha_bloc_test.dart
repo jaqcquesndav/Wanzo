@@ -6,22 +6,39 @@ import 'package:wanzo/features/adha/repositories/adha_repository.dart';
 import 'package:wanzo/features/adha/models/adha_message.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:wanzo/features/auth/repositories/auth_repository.dart';
+import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart';
+
 import 'adha_bloc_test.mocks.dart';
 
-@GenerateMocks([AdhaRepository])
+@GenerateMocks([AdhaRepository, AuthRepository, OperationJournalRepository])
 
 void main() {
   late AdhaBloc adhaBloc;
-  late MockAdhaRepository mockRepository;
+  late MockAdhaRepository mockAdhaRepository;
+  late MockAuthRepository mockAuthRepository;
+  late MockOperationJournalRepository mockOperationJournalRepository;
 
   setUp(() {
-    mockRepository = MockAdhaRepository();
-    when(mockRepository.getConversations()).thenAnswer((_) async => <AdhaConversation>[]);
-    when(mockRepository.getConversation(any)).thenAnswer((_) async => null);
-    when(mockRepository.saveConversation(any)).thenAnswer((_) async { return; });
-    when(mockRepository.deleteConversation(any)).thenAnswer((_) async { return; });
-    when(mockRepository.sendMessage(conversationId: anyNamed('conversationId'), message: anyNamed('message'))).thenAnswer((_) async => '');
-    adhaBloc = AdhaBloc(adhaRepository: mockRepository);
+    mockAdhaRepository = MockAdhaRepository();
+    mockAuthRepository = MockAuthRepository();
+    mockOperationJournalRepository = MockOperationJournalRepository();
+
+    when(mockAdhaRepository.getConversations()).thenAnswer((_) async => <AdhaConversation>[]);
+    when(mockAdhaRepository.getConversation(any)).thenAnswer((_) async => null);
+    when(mockAdhaRepository.saveConversation(any)).thenAnswer((_) async { return; });
+    when(mockAdhaRepository.deleteConversation(any)).thenAnswer((_) async { return; });
+    when(mockAdhaRepository.sendMessage(
+      conversationId: anyNamed('conversationId'),
+      message: anyNamed('message'),
+      contextInfo: anyNamed('contextInfo'),
+    )).thenAnswer((_) async => 'Mocked AI Response');
+
+    adhaBloc = AdhaBloc(
+      adhaRepository: mockAdhaRepository,
+      authRepository: mockAuthRepository,
+      operationJournalRepository: mockOperationJournalRepository,
+    );
   });
 
   tearDown(() {

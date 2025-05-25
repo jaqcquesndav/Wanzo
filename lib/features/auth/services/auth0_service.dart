@@ -348,7 +348,14 @@ class Auth0Service {
   Future<void> updateUserMetadata(String token, User user) async {
     final managementApiToken = await _getManagementApiToken();
     if (managementApiToken == null) {
-      throw Exception('Could not retrieve management API token.');
+      // Temporarily allow updates without management API token for fields Auth0 might allow updating directly
+      // This is NOT standard for user_metadata. Proper solution needs _getManagementApiToken implemented.
+      // However, some basic profile fields might be updatable via /userinfo or other means if not custom metadata.
+      // For now, we'll proceed assuming user_metadata update is the goal and requires management token.
+      debugPrint("Auth0Service: Management API token is null. Cannot update user_metadata fields like business profile details.");
+      // Depending on policy, either throw an error or allow updating only standard claims if possible elsewhere.
+      // For this specific function targeting user_metadata, a management token is essential.
+      throw Exception('Could not retrieve management API token. User metadata update failed.');
     }
 
     if (user.id.isEmpty) {
@@ -357,7 +364,10 @@ class Auth0Service {
 
     final url = Uri.parse('https://$_auth0Domain/api/v2/users/${user.id}');
     final Map<String, dynamic> userMetadata = {
-      'phone_number': user.phone,
+      'phone_number': user.phone, // Standard claim, might be handled differently by Auth0
+      'name': user.name, // Standard claim
+      'picture': user.picture, // Standard claim
+      // Custom metadata fields (these typically go into user_metadata)
       'job_title': user.jobTitle,
       'physical_address': user.physicalAddress,
       'id_card': user.idCard,
@@ -367,18 +377,56 @@ class Auth0Service {
       'company_name': user.companyName,
       'rccm_number': user.rccmNumber,
       'company_location': user.companyLocation,
-      'business_sector': user.businessSector,
+      'business_sector': user.businessSector, // Name of the sector
+      'business_sector_id': user.businessSectorId, // ID of the sector
+      'business_address': user.businessAddress,
+      'business_logo_url': user.businessLogoUrl,
+      // Note: Standard claims like email, given_name, family_name are often managed separately or part of root profile.
     };
 
     final Map<String, dynamic> filteredUserMetadata = {};
     userMetadata.forEach((key, value) {
       if (value != null) {
+        // Auth0 expects user_metadata for custom fields.
+        // Standard fields like phone_number, name, picture might need to be in the root of the PATCH body
+        // or handled by different Auth0 API scopes/endpoints if not part of user_metadata.
+        // For simplicity here, we assume all these are intended for user_metadata or Auth0 handles mapping.
         filteredUserMetadata[key] = value;
       }
     });
 
     if (filteredUserMetadata.isEmpty) {
+      debugPrint("Auth0Service: No metadata to update or all values are null.");
       return;
+    }
+
+    // Construct the body. Auth0 usually distinguishes between root attributes and metadata.
+    // For custom attributes, they should be nested under 'user_metadata'.
+    // Standard attributes (like name, picture) might be at the root.
+    // This example assumes we are primarily updating user_metadata for custom fields.
+    // If phone_number, name, picture are standard OIDC claims, their update path might differ.
+    // A more precise implementation would separate standard profile updates from custom metadata updates.
+
+    Map<String, dynamic> bodyToUpdate = {};
+    Map<String, dynamic> customMetadataForPayload = {};
+
+    // Separate known standard claims from custom ones for Auth0 PATCH /api/v2/users/{id}
+    // This is a common pattern, but exact fields depend on Auth0 setup (e.g. if phone_number is a root attribute)
+    if (filteredUserMetadata.containsKey('name')) bodyToUpdate['name'] = filteredUserMetadata.remove('name');
+    if (filteredUserMetadata.containsKey('picture')) bodyToUpdate['picture'] = filteredUserMetadata.remove('picture');
+    if (filteredUserMetadata.containsKey('phone_number')) bodyToUpdate['phone_number'] = filteredUserMetadata.remove('phone_number');
+    // Add other potential root attributes if necessary, e.g., given_name, family_name
+
+    // All remaining fields in filteredUserMetadata are assumed to be custom user_metadata
+    customMetadataForPayload = Map.from(filteredUserMetadata);
+
+    if (customMetadataForPayload.isNotEmpty) {
+      bodyToUpdate['user_metadata'] = customMetadataForPayload;
+    }
+    
+    if (bodyToUpdate.isEmpty) {
+        debugPrint("Auth0Service: No data to update after filtering standard/custom fields.");
+        return;
     }
 
     final response = await http.patch(
@@ -387,16 +435,79 @@ class Auth0Service {
         'Authorization': 'Bearer $managementApiToken',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'user_metadata': filteredUserMetadata}),
+      body: jsonEncode(bodyToUpdate),
     );
 
     if (response.statusCode != 200) {
-      debugPrint('Auth0 Metadata Update Error: ${response.body}');
-      throw Exception('Failed to update Auth0 user metadata: ${response.body}');
+      debugPrint('Auth0 Metadata/Profile Update Error: ${response.body}');
+      throw Exception('Failed to update Auth0 user profile/metadata: ${response.body}');
     }
+    debugPrint("Auth0Service: User profile/metadata updated successfully.");
   }
 
   Future<String?> _getManagementApiToken() async {
-    return null; // Placeholder
+    // TODO: CRITICAL - Implement actual Auth0 Management API token retrieval.
+    // This typically involves a backend service making a secure call to the Auth0 /oauth/token endpoint
+    // using client_credentials grant type with a Machine-to-Machine application that has permissions
+    // to read/write user_metadata (e.g., update:users_app_metadata and read:users_app_metadata scopes).
+    // 
+    // DO NOT embed client secrets directly in the mobile application.
+    // The mobile app should call a secure backend endpoint that you create, 
+    // which then obtains and returns the Management API token.
+    // 
+    // Example of what the backend would do (conceptual):
+    // POST https://YOUR_AUTH0_DOMAIN/oauth/token
+    // Content-Type: application/x-www-form-urlencoded
+    // 
+    // client_id=YOUR_M2M_CLIENT_ID&
+    // client_secret=YOUR_M2M_CLIENT_SECRET&
+    // audience=https://YOUR_AUTH0_DOMAIN/api/v2/&
+    // grant_type=client_credentials
+    //
+    // Returning null will cause updateUserMetadata to fail for metadata fields.
+    // debugPrint("Auth0Service: _getManagementApiToken is not implemented. User metadata updates will fail.");
+    // return null; // Placeholder - THIS NEEDS SECURE BACKEND IMPLEMENTATION
+
+    final accessToken = await getAccessToken();
+    if (accessToken == null) {
+      debugPrint("Auth0Service: Cannot get management token without user access token.");
+      return null;
+    }
+
+    // TODO: Replace with actual API client call
+    // final apiClient = ApiClient(); // Assuming you have an ApiClient instance
+    // final response = await apiClient.post('/api/auth/management-token', {}, token: accessToken);
+
+    // This is a placeholder for the actual API call using http package for now
+    // You should replace this with your ApiClient or http service configured for your app
+    final url = Uri.parse('http://localhost:3000/api/auth/management-token'); // Use your actual base URL
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({}), // Empty body as per API_DOCUMENTATION.md
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        if (responseBody['success'] == true && responseBody['data'] != null && responseBody['data']['managementApiToken'] != null) {
+          debugPrint("Auth0Service: Management API token retrieved successfully from backend.");
+          return responseBody['data']['managementApiToken'] as String;
+        } else {
+          debugPrint("Auth0Service: Failed to get management token from backend. Response: ${response.body}");
+          return null;
+        }
+      } else {
+        debugPrint("Auth0Service: Error calling backend for management token. Status: ${response.statusCode}, Body: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Auth0Service: Exception while calling backend for management token: $e");
+      return null;
+    }
   }
 }

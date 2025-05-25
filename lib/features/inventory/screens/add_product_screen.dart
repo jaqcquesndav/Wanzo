@@ -8,8 +8,6 @@ import 'package:image_picker/image_picker.dart'; // Added image_picker
 import 'package:path_provider/path_provider.dart'; // Added path_provider
 import 'package:path/path.dart' as path; // Added path
 import '../../../constants/spacing.dart';
-import '../../../constants/typography.dart';
-import '../../../constants/colors.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
 import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';
@@ -466,8 +464,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     
                     // Unité
                     Expanded(
-                      flex: 1,
+                      flex: 1, 
                       child: DropdownButtonFormField<ProductUnit>(
+                        isExpanded: true, // Add this to allow the dropdown to fill the Expanded width
                         value: _selectedUnit,
                         decoration: const InputDecoration(
                           labelText: 'Unité',
@@ -476,7 +475,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         items: ProductUnit.values.map((unit) {
                           return DropdownMenuItem<ProductUnit>(
                             value: unit,
-                            child: Text(_getUnitName(unit)),
+                            child: Text(_getUnitName(unit), overflow: TextOverflow.ellipsis), // Add ellipsis for long text
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -673,10 +672,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       case ProductCategory.office:
         return 'Fournitures de bureau';
       case ProductCategory.other:
-        return 'Autres';
+        return 'Autre';
     }
   }
-  
+
   /// Obtenir le nom d'une unité
   String _getUnitName(ProductUnit unit) {
     switch (unit) {
@@ -690,11 +689,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         return 'Litre(s)';
       case ProductUnit.ml:
         return 'Millilitre(s)';
-      case ProductUnit.package:
+      case ProductUnit.package: // Corrected from pack to package
         return 'Paquet(s)';
       case ProductUnit.box:
         return 'Boîte(s)';
-      case ProductUnit.other:
+      case ProductUnit.other: // Added case for other
         return 'Autre';
     }
   }

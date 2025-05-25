@@ -302,7 +302,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                   // Fallback for image loading errors
                   return CircleAvatar(
                     radius: 25,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Use theme color
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
                     child: Text(
                       product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
@@ -316,7 +316,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           // Fallback if no image path is available
           leadingWidget = CircleAvatar(
             radius: 25,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Use theme color
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
             child: Text(
               product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color

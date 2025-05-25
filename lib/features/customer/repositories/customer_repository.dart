@@ -101,9 +101,8 @@ class CustomerRepository {
 
   /// Met à jour un client existant
   Future<Customer> updateCustomer(Customer customer) async {
-    final updatedCustomer = customer.copyWith();
-    await _customersBox.put(updatedCustomer.id, updatedCustomer);
-    return updatedCustomer;
+    await _customersBox.put(customer.id, customer);
+    return customer;
   }
 
   /// Supprime un client
@@ -111,48 +110,55 @@ class CustomerRepository {
     await _customersBox.delete(id);
   }
 
+  /// Recherche des clients par nom, email ou numéro de téléphone
+  Future<List<Customer>> searchCustomers(String searchTerm) async {
+    final lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return _customersBox.values
+        .where((customer) =>
+            customer.name.toLowerCase().contains(lowerCaseSearchTerm) ||
+            (customer.email?.toLowerCase().contains(lowerCaseSearchTerm) ?? false) ||
+            customer.phoneNumber.toLowerCase().contains(lowerCaseSearchTerm))
+        .toList();
+  }
+
+  /// Récupère les meilleurs clients (ceux avec le total d'achats le plus élevé)
+  Future<List<Customer>> getTopCustomers({int limit = 5}) async {
+    final customers = _customersBox.values.toList();
+    customers.sort((a, b) => b.totalPurchases.compareTo(a.totalPurchases));
+    return customers.take(limit).toList();
+  }
+
+  /// Récupère les clients les plus récents (ceux avec la date d'achat la plus récente)
+  Future<List<Customer>> getRecentCustomers({int limit = 5}) async {
+    final customers = _customersBox.values.toList();
+    customers.sort((a, b) {
+      if (a.lastPurchaseDate == null && b.lastPurchaseDate == null) return 0;
+      if (a.lastPurchaseDate == null) return 1; // b comes first
+      if (b.lastPurchaseDate == null) return -1; // a comes first
+      return b.lastPurchaseDate!.compareTo(a.lastPurchaseDate!);
+    });
+    return customers.take(limit).toList();
+  }
+
   /// Met à jour le total des achats d'un client
-  Future<Customer> updateCustomerPurchaseTotal(
-    String customerId,
-    double amount,
-  ) async {
+  Future<Customer> updateCustomerPurchaseTotal(String customerId, double amount) async {
     final customer = await getCustomer(customerId);
     if (customer == null) {
-      throw Exception('Client non trouvé');
+      throw Exception('Client non trouvé pour la mise à jour du total des achats');
     }
-    
     final updatedCustomer = customer.copyWith(
       totalPurchases: customer.totalPurchases + amount,
       lastPurchaseDate: DateTime.now(),
     );
-    
     await _customersBox.put(customerId, updatedCustomer);
     return updatedCustomer;
   }
 
-  /// Recherche des clients par nom ou numéro de téléphone
-  Future<List<Customer>> searchCustomers(String query) async {
-    final lowercaseQuery = query.toLowerCase();
-    
-    return _customersBox.values.where((customer) {
-      return customer.name.toLowerCase().contains(lowercaseQuery) ||
-          customer.phoneNumber.contains(query);
-    }).toList();
-  }
-
-  /// Récupère les meilleurs clients (par montant d'achat)
-  Future<List<Customer>> getTopCustomers({int limit = 5}) async {
-    final customers = _customersBox.values.toList()
-      ..sort((a, b) => b.totalPurchases.compareTo(a.totalPurchases));
-    
-    return customers.take(limit).toList();
-  }
-
-  /// Récupère les clients récemment ajoutés
-  Future<List<Customer>> getRecentCustomers({int limit = 5}) async {
-    final customers = _customersBox.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    
-    return customers.take(limit).toList();
+  /// Récupère le nombre de clients uniques pour une période donnée
+  Future<int> getUniqueCustomersCountForDateRange(DateTime startDate, DateTime endDate) async {
+    // This is a placeholder implementation. 
+    // In a real scenario, you would filter sales by date range and then count unique customer IDs.
+    // For now, it returns the total number of customers as a mock.
+    return _customersBox.length;
   }
 }

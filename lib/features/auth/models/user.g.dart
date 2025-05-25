@@ -34,13 +34,16 @@ class UserAdapter extends TypeAdapter<User> {
       rccmNumber: fields[14] as String?,
       companyLocation: fields[15] as String?,
       businessSector: fields[16] as String?,
+      businessSectorId: fields[17] as String?,
+      businessAddress: fields[18] as String?,
+      businessLogoUrl: fields[19] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +77,13 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(15)
       ..write(obj.companyLocation)
       ..writeByte(16)
-      ..write(obj.businessSector);
+      ..write(obj.businessSector)
+      ..writeByte(17)
+      ..write(obj.businessSectorId)
+      ..writeByte(18)
+      ..write(obj.businessAddress)
+      ..writeByte(19)
+      ..write(obj.businessLogoUrl);
   }
 
   @override
@@ -159,6 +168,9 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
       rccmNumber: json['rccm_number'] as String?,
       companyLocation: json['company_location'] as String?,
       businessSector: json['business_sector'] as String?,
+      businessSectorId: json['business_sector_id'] as String?,
+      businessAddress: json['business_address'] as String?,
+      businessLogoUrl: json['business_logo_url'] as String?,
     );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -181,4 +193,9 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
       if (instance.rccmNumber case final value?) 'rccm_number': value,
       if (instance.companyLocation case final value?) 'company_location': value,
       if (instance.businessSector case final value?) 'business_sector': value,
+      if (instance.businessSectorId case final value?)
+        'business_sector_id': value,
+      if (instance.businessAddress case final value?) 'business_address': value,
+      if (instance.businessLogoUrl case final value?)
+        'business_logo_url': value,
     };

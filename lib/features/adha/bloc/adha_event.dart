@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../models/adha_context_info.dart'; // Importation ajoutée
 
 /// Événements pour le bloc Adha
 abstract class AdhaEvent extends Equatable {
@@ -12,11 +13,13 @@ abstract class AdhaEvent extends Equatable {
 class SendMessage extends AdhaEvent {
   /// Contenu du message
   final String message;
+  final String? conversationId; // Peut être null pour une nouvelle conversation
+  final AdhaContextInfo? contextInfo; // Ajouté pour le contexte
 
-  const SendMessage(this.message);
+  const SendMessage(this.message, {this.conversationId, this.contextInfo});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, conversationId, contextInfo];
 }
 
 /// Chargement de l'historique des conversations
@@ -37,7 +40,13 @@ class LoadConversation extends AdhaEvent {
 
 /// Création d'une nouvelle conversation
 class NewConversation extends AdhaEvent {
-  const NewConversation();
+  final String initialMessage;
+  final AdhaContextInfo contextInfo; // Contexte requis pour une nouvelle conversation
+
+  const NewConversation(this.initialMessage, this.contextInfo);
+
+  @override
+  List<Object?> get props => [initialMessage, contextInfo];
 }
 
 /// Suppression d'une conversation

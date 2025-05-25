@@ -429,7 +429,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       case CustomerCategory.new_customer:
         return Theme.of(context).colorScheme.tertiary;
       case CustomerCategory.occasional:
-        return Theme.of(context).colorScheme.surfaceVariant;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
       case CustomerCategory.business:
         return Theme.of(context).colorScheme.primaryContainer;
     }

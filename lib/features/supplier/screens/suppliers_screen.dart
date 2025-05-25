@@ -215,7 +215,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   Widget _buildSupplierListItem(Supplier supplier) {
     final lastPurchaseText = supplier.lastPurchaseDate != null
         ? 'Dernier achat: ${_formatDate(supplier.lastPurchaseDate!)}'
-        : 'Pas d\\\'achat récent';
+        : 'Pas d\'achat récent'; // Corrected string
     
     final categoryColor = _getCategoryColor(context, supplier.category); // Pass context
 
@@ -232,6 +232,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         title: Text(supplier.name),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // Added to constrain the Column's height
           children: [
             Text(supplier.contactPerson.isNotEmpty 
               ? 'Contact: ${supplier.contactPerson}'
@@ -430,7 +431,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       case SupplierCategory.newSupplier:
         return Theme.of(context).colorScheme.tertiary;
       case SupplierCategory.occasional:
-        return Theme.of(context).colorScheme.surfaceVariant;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
       case SupplierCategory.international:
         return Theme.of(context).colorScheme.primaryContainer;
     }

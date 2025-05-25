@@ -4,8 +4,7 @@ import 'package:equatable/equatable.dart';
 import '../models/sale.dart';
 import '../repositories/sales_repository.dart';
 import '../../dashboard/models/operation_journal_entry.dart';
-import '../../dashboard/repositories/operation_journal_repository.dart';
-import '../../dashboard/bloc/operation_journal_bloc.dart'; // Import OperationJournalBloc
+import '../../dashboard/bloc/operation_journal_bloc.dart'; // Imports events too
 import 'package:uuid/uuid.dart';
 
 part 'sales_event.dart';
@@ -14,17 +13,14 @@ part 'sales_state.dart';
 /// Bloc gérant l'état des ventes
 class SalesBloc extends Bloc<SalesEvent, SalesState> {
   final SalesRepository _salesRepository;
-  final OperationJournalRepository _journalRepository; // Ajout du repository du journal
-  final OperationJournalBloc _operationJournalBloc; // Add OperationJournalBloc
+  final OperationJournalBloc _operationJournalBloc;
   final _uuid = const Uuid(); // Pour générer des IDs pour les entrées de journal
 
   SalesBloc({
     required SalesRepository salesRepository,
-    required OperationJournalRepository journalRepository, // Injection de dépendance
-    required OperationJournalBloc operationJournalBloc, // Inject OperationJournalBloc
+    required OperationJournalBloc operationJournalBloc,
   })  : _salesRepository = salesRepository,
-        _journalRepository = journalRepository, // Initialisation
-        _operationJournalBloc = operationJournalBloc, // Initialize OperationJournalBloc
+        _operationJournalBloc = operationJournalBloc,
         super(const SalesInitial()) {
     on<LoadSales>(_onLoadSales);
     on<LoadSalesByStatus>(_onLoadSalesByStatus);
@@ -155,8 +151,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         ));
       }
 
-      await _journalRepository.addOperationEntries(journalEntries);
-      _operationJournalBloc.add(const RefreshJournal()); // Dispatch RefreshJournal event
+      // await _journalRepository.addOperationEntries(journalEntries); // Removed direct repository call
+      _operationJournalBloc.add(AddMultipleOperationJournalEntries(journalEntries)); // Dispatch event
 
       add(const LoadSales());
     } catch (e) {

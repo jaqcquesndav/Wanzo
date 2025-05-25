@@ -13,7 +13,20 @@ enum OperationType {
   financingRequest, // Nouvelle demande de financement
   financingApproved, // Financement approuvé (entrée de fonds)
   financingRepayment, // Remboursement de financement (sortie de fonds)
-  other,
+  other;
+
+  // Helper to convert string to OperationType, with a default value
+  static OperationType fromString(String? typeString) {
+    if (typeString == null) return OperationType.other;
+    try {
+      return OperationType.values.firstWhere((e) => e.toString().split('.').last.toLowerCase() == typeString.toLowerCase());
+    } catch (e) {
+      return OperationType.other;
+    }
+  }
+
+  String toJson() => name;
+  static OperationType fromJson(String json) => fromString(json);
 }
 
 extension OperationTypeExtension on OperationType {
@@ -74,4 +87,50 @@ class OperationJournalEntry {
     this.productName,
     this.paymentMethod,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date.toIso8601String(),
+      'description': description,
+      'type': type.toJson(), // Use the enum's toJson method
+      'amount': amount,
+      if (relatedDocumentId != null) 'relatedDocumentId': relatedDocumentId,
+      if (quantity != null) 'quantity': quantity,
+      if (productId != null) 'productId': productId,
+      if (productName != null) 'productName': productName,
+      if (paymentMethod != null) 'paymentMethod': paymentMethod,
+    };
+  }
+
+  factory OperationJournalEntry.fromJson(Map<String, dynamic> json) {
+    return OperationJournalEntry(
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      description: json['description'] as String,
+      type: OperationType.fromJson(json['type'] as String), // Use the enum's fromJson method
+      amount: (json['amount'] as num).toDouble(),
+      relatedDocumentId: json['relatedDocumentId'] as String?,
+      quantity: (json['quantity'] as num?)?.toDouble(),
+      productId: json['productId'] as String?,
+      productName: json['productName'] as String?,
+      paymentMethod: json['paymentMethod'] as String?,
+    );
+  }
+
+  // Placeholder for AdhaBloc integration
+  Map<String, dynamic> toContextMap() {
+    return {
+      'id': id,
+      'date': date.toIso8601String(),
+      'description': description,
+      'type': type.toString().split('.').last, // Enum to string
+      'amount': amount,
+      if (relatedDocumentId != null) 'relatedDocumentId': relatedDocumentId,
+      if (quantity != null) 'quantity': quantity,
+      if (productId != null) 'productId': productId,
+      if (productName != null) 'productName': productName,
+      if (paymentMethod != null) 'paymentMethod': paymentMethod,
+    };
+  }
 }

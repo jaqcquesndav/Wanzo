@@ -6,6 +6,7 @@ import '../bloc/adha_event.dart';
 import '../bloc/adha_state.dart';
 import 'chat_message_widget.dart';
 import 'voice_recognition_widget.dart';
+import '../models/adha_context_info.dart'; // Added for AdhaContextInfo
 
 class AdhaScreen extends StatefulWidget {
   const AdhaScreen({super.key});
@@ -162,6 +163,8 @@ class _AdhaScreenState extends State<AdhaScreen> {
     bool canSendMessage = !isProcessing && !isVoiceActive && _messageController.text.trim().isNotEmpty;
     bool canUseVoice = isConversationActive && !isProcessing;
     bool canStartNewConversationViaButton = !isProcessing;
+    // Placeholder for base context that will be populated by the BLoC
+    final AdhaBaseContext placeholderBaseContext = AdhaBaseContext(operationJournalSummary: {}, businessProfile: {});
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 12.0),
@@ -191,7 +194,18 @@ class _AdhaScreenState extends State<AdhaScreen> {
                 ),
                 onPressed: canStartNewConversationViaButton
                     ? () {
-                        context.read<AdhaBloc>().add(const NewConversation());
+                        final interactionContext = AdhaInteractionContext(
+                          interactionType: AdhaInteractionType.directInitiation,
+                          sourceIdentifier: 'new_conversation_button',
+                        );
+                        final contextInfo = AdhaContextInfo(
+                           baseContext: placeholderBaseContext, 
+                           interactionContext: interactionContext,
+                        );
+                        context.read<AdhaBloc>().add(NewConversation(
+                          "", 
+                          contextInfo,
+                        ));
                         _messageController.clear();
                       }
                     : null,
@@ -240,7 +254,29 @@ class _AdhaScreenState extends State<AdhaScreen> {
                   },
                   onSubmitted: (value) {
                     if (value.trim().isNotEmpty && canSendMessage) {
-                      context.read<AdhaBloc>().add(SendMessage(value.trim()));
+                      AdhaInteractionType interactionType;
+                      String sourceIdentifier;
+
+                      if (adhaState is AdhaConversationActive && adhaState.conversation.messages.isNotEmpty) {
+                        interactionType = AdhaInteractionType.followUp;
+                        sourceIdentifier = 'text_input_follow_up';
+                      } else {
+                        interactionType = AdhaInteractionType.directInitiation;
+                        sourceIdentifier = 'text_input_direct_initiation';
+                      }
+                      
+                      final interactionContext = AdhaInteractionContext(
+                        interactionType: interactionType,
+                        sourceIdentifier: sourceIdentifier,
+                      );
+                      final contextInfo = AdhaContextInfo(
+                        baseContext: placeholderBaseContext,
+                        interactionContext: interactionContext,
+                      );
+                      context.read<AdhaBloc>().add(SendMessage(
+                        value.trim(),
+                        contextInfo: contextInfo,
+                      ));
                       _messageController.clear();
                       setState(() {});
                     }
@@ -286,7 +322,29 @@ class _AdhaScreenState extends State<AdhaScreen> {
                     ? () {
                         final message = _messageController.text.trim();
                         if (message.isNotEmpty) {
-                          context.read<AdhaBloc>().add(SendMessage(message));
+                          AdhaInteractionType interactionType;
+                          String sourceIdentifier;
+
+                          if (adhaState is AdhaConversationActive && adhaState.conversation.messages.isNotEmpty) {
+                            interactionType = AdhaInteractionType.followUp;
+                            sourceIdentifier = 'fab_send_follow_up';
+                          } else {
+                            interactionType = AdhaInteractionType.directInitiation;
+                            sourceIdentifier = 'fab_send_direct_initiation';
+                          }
+
+                          final interactionContext = AdhaInteractionContext(
+                            interactionType: interactionType,
+                            sourceIdentifier: sourceIdentifier,
+                          );
+                          final contextInfo = AdhaContextInfo(
+                            baseContext: placeholderBaseContext,
+                            interactionContext: interactionContext,
+                          );
+                          context.read<AdhaBloc>().add(SendMessage(
+                            message,
+                            contextInfo: contextInfo,
+                          ));
                           _messageController.clear();
                           setState(() {});
                         }
@@ -308,6 +366,7 @@ class _AdhaScreenState extends State<AdhaScreen> {
   }
 
   Widget _buildFeatureSuggestions(BuildContext context) {
+    final AdhaBaseContext placeholderBaseContext = AdhaBaseContext(operationJournalSummary: {}, businessProfile: {});
     final List<Map<String, dynamic>> features = [
       {
         'icon': Icons.analytics,
@@ -361,7 +420,22 @@ class _AdhaScreenState extends State<AdhaScreen> {
                 final feature = features[index];
                 return InkWell(
                   onTap: () {
-                    context.read<AdhaBloc>().add(SendMessage(feature['prompt'] as String));
+                    final interactionContext = AdhaInteractionContext(
+                      interactionType: AdhaInteractionType.genericCardAnalysis,
+                      sourceIdentifier: 'suggestion_card_${feature['title']?.toString().replaceAll(' ', '_').toLowerCase() ?? 'unknown'}',
+                      interactionData: {
+                        'cardTitle': feature['title'],
+                        'cardPrompt': feature['prompt'],
+                      }
+                    );
+                    final contextInfo = AdhaContextInfo(
+                      baseContext: placeholderBaseContext,
+                      interactionContext: interactionContext,
+                    );
+                    context.read<AdhaBloc>().add(SendMessage(
+                      feature['prompt'] as String,
+                      contextInfo: contextInfo,
+                    ));
                   },
                   child: Card(
                     elevation: 2,

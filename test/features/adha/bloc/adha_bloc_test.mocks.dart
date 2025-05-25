@@ -3,12 +3,20 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
+import 'dart:async' as _i4;
+import 'dart:io' as _i9;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i5;
-import 'package:wanzo/features/adha/models/adha_message.dart' as _i4;
-import 'package:wanzo/features/adha/repositories/adha_repository.dart' as _i2;
+import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:wanzo/features/adha/models/adha_context_info.dart' as _i6;
+import 'package:wanzo/features/adha/models/adha_message.dart' as _i5;
+import 'package:wanzo/features/adha/repositories/adha_repository.dart' as _i3;
+import 'package:wanzo/features/auth/models/user.dart' as _i2;
+import 'package:wanzo/features/auth/repositories/auth_repository.dart' as _i8;
+import 'package:wanzo/features/dashboard/models/operation_journal_entry.dart'
+    as _i11;
+import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart'
+    as _i10;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -24,71 +32,82 @@ import 'package:wanzo/features/adha/repositories/adha_repository.dart' as _i2;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeUser_0 extends _i1.SmartFake implements _i2.User {
+  _FakeUser_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [AdhaRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAdhaRepository extends _i1.Mock implements _i2.AdhaRepository {
+class MockAdhaRepository extends _i1.Mock implements _i3.AdhaRepository {
   MockAdhaRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<void> init() => (super.noSuchMethod(
+  _i4.Future<void> init() => (super.noSuchMethod(
         Invocation.method(
           #init,
           [],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<List<_i4.AdhaConversation>> getConversations() =>
+  _i4.Future<List<_i5.AdhaConversation>> getConversations() =>
       (super.noSuchMethod(
         Invocation.method(
           #getConversations,
           [],
         ),
-        returnValue: _i3.Future<List<_i4.AdhaConversation>>.value(
-            <_i4.AdhaConversation>[]),
-      ) as _i3.Future<List<_i4.AdhaConversation>>);
+        returnValue: _i4.Future<List<_i5.AdhaConversation>>.value(
+            <_i5.AdhaConversation>[]),
+      ) as _i4.Future<List<_i5.AdhaConversation>>);
 
   @override
-  _i3.Future<_i4.AdhaConversation?> getConversation(String? conversationId) =>
+  _i4.Future<_i5.AdhaConversation?> getConversation(String? conversationId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getConversation,
           [conversationId],
         ),
-        returnValue: _i3.Future<_i4.AdhaConversation?>.value(),
-      ) as _i3.Future<_i4.AdhaConversation?>);
+        returnValue: _i4.Future<_i5.AdhaConversation?>.value(),
+      ) as _i4.Future<_i5.AdhaConversation?>);
 
   @override
-  _i3.Future<void> saveConversation(_i4.AdhaConversation? conversation) =>
+  _i4.Future<void> saveConversation(_i5.AdhaConversation? conversation) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveConversation,
           [conversation],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<void> deleteConversation(String? conversationId) =>
+  _i4.Future<void> deleteConversation(String? conversationId) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteConversation,
           [conversationId],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<String> sendMessage({
+  _i4.Future<String> sendMessage({
     required String? conversationId,
     required String? message,
+    _i6.AdhaContextInfo? contextInfo,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -97,9 +116,10 @@ class MockAdhaRepository extends _i1.Mock implements _i2.AdhaRepository {
           {
             #conversationId: conversationId,
             #message: message,
+            #contextInfo: contextInfo,
           },
         ),
-        returnValue: _i3.Future<String>.value(_i5.dummyValue<String>(
+        returnValue: _i4.Future<String>.value(_i7.dummyValue<String>(
           this,
           Invocation.method(
             #sendMessage,
@@ -107,8 +127,244 @@ class MockAdhaRepository extends _i1.Mock implements _i2.AdhaRepository {
             {
               #conversationId: conversationId,
               #message: message,
+              #contextInfo: contextInfo,
             },
           ),
         )),
-      ) as _i3.Future<String>);
+      ) as _i4.Future<String>);
+}
+
+/// A class which mocks [AuthRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAuthRepository extends _i1.Mock implements _i8.AuthRepository {
+  MockAuthRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<void> init() => (super.noSuchMethod(
+        Invocation.method(
+          #init,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.User> login(
+    String? email,
+    String? password,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #login,
+          [
+            email,
+            password,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.User>.value(_FakeUser_0(
+          this,
+          Invocation.method(
+            #login,
+            [
+              email,
+              password,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.User>);
+
+  @override
+  _i4.Future<_i2.User> loginWithDemoAccount() => (super.noSuchMethod(
+        Invocation.method(
+          #loginWithDemoAccount,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.User>.value(_FakeUser_0(
+          this,
+          Invocation.method(
+            #loginWithDemoAccount,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.User>);
+
+  @override
+  _i4.Future<void> logout() => (super.noSuchMethod(
+        Invocation.method(
+          #logout,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> sendPasswordResetEmail(String? email) => (super.noSuchMethod(
+        Invocation.method(
+          #sendPasswordResetEmail,
+          [email],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.User?> getCurrentUser() => (super.noSuchMethod(
+        Invocation.method(
+          #getCurrentUser,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.User?>.value(),
+      ) as _i4.Future<_i2.User?>);
+
+  @override
+  _i4.Future<bool> isLoggedIn() => (super.noSuchMethod(
+        Invocation.method(
+          #isLoggedIn,
+          [],
+        ),
+        returnValue: _i4.Future<bool>.value(false),
+      ) as _i4.Future<bool>);
+
+  @override
+  _i4.Future<void> updateUserProfile(
+    _i2.User? user, {
+    _i9.File? profileImage,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateUserProfile,
+          [user],
+          {#profileImage: profileImage},
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> updateLocalUser(_i2.User? user) => (super.noSuchMethod(
+        Invocation.method(
+          #updateLocalUser,
+          [user],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.User?> getUser({bool? forceRemote = false}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getUser,
+          [],
+          {#forceRemote: forceRemote},
+        ),
+        returnValue: _i4.Future<_i2.User?>.value(),
+      ) as _i4.Future<_i2.User?>);
+
+  @override
+  _i4.Future<void> setDemoUserActive(bool? isActive) => (super.noSuchMethod(
+        Invocation.method(
+          #setDemoUserActive,
+          [isActive],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+}
+
+/// A class which mocks [OperationJournalRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockOperationJournalRepository extends _i1.Mock
+    implements _i10.OperationJournalRepository {
+  MockOperationJournalRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<void> init() => (super.noSuchMethod(
+        Invocation.method(
+          #init,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i11.OperationJournalEntry>> getOperations(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOperations,
+          [
+            startDate,
+            endDate,
+          ],
+        ),
+        returnValue: _i4.Future<List<_i11.OperationJournalEntry>>.value(
+            <_i11.OperationJournalEntry>[]),
+      ) as _i4.Future<List<_i11.OperationJournalEntry>>);
+
+  @override
+  _i4.Future<double> getOpeningBalance(DateTime? forDate) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOpeningBalance,
+          [forDate],
+        ),
+        returnValue: _i4.Future<double>.value(0.0),
+      ) as _i4.Future<double>);
+
+  @override
+  _i4.Future<void> addOperation(_i11.OperationJournalEntry? entry) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addOperation,
+          [entry],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> addOperationEntries(
+          List<_i11.OperationJournalEntry>? entries) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addOperationEntries,
+          [entries],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<Map<String, dynamic>>> getRecentEntries({int? limit = 5}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getRecentEntries,
+          [],
+          {#limit: limit},
+        ),
+        returnValue: _i4.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i4.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i4.Future<Map<String, dynamic>> getSummaryMetrics() => (super.noSuchMethod(
+        Invocation.method(
+          #getSummaryMetrics,
+          [],
+        ),
+        returnValue:
+            _i4.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i4.Future<Map<String, dynamic>>);
 }

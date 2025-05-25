@@ -48,6 +48,11 @@ class SaleDetailsScreen extends StatelessWidget {
         statusText = "Terminée";
         statusIcon = Icons.check_circle;
         break;
+      case SaleStatus.partiallyPaid: // Added case
+        statusColor = Colors.blue; // Or another appropriate color
+        statusText = "Partiellement payée";
+        statusIcon = Icons.hourglass_bottom; // Or another appropriate icon
+        break;
       case SaleStatus.cancelled:
         statusColor = Colors.red;
         statusText = "Annulée";
@@ -299,7 +304,7 @@ class SaleDetailsScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
               ),
-              if (sale.status == SaleStatus.pending)
+              if (sale.status == SaleStatus.pending || sale.status == SaleStatus.partiallyPaid) // Modified condition
                 ElevatedButton.icon(
                   onPressed: () {
                     // Marquer la vente comme terminée

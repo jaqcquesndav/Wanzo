@@ -92,6 +92,15 @@ class User extends Equatable {
   @HiveField(16)
   final String? businessSector;
 
+  @HiveField(17) // Ensure this HiveField index is unique and sequential
+  final String? businessSectorId;
+
+  @HiveField(18) // Ensure this HiveField index is unique and sequential
+  final String? businessAddress;
+
+  @HiveField(19) // Ensure this HiveField index is unique and sequential
+  final String? businessLogoUrl;
+
   const User({
     required this.id,
     required this.name,
@@ -110,6 +119,9 @@ class User extends Equatable {
     this.rccmNumber,
     this.companyLocation,
     this.businessSector,
+    this.businessSectorId, // Added field
+    this.businessAddress, // Added field
+    this.businessLogoUrl, // Added field
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -134,6 +146,9 @@ class User extends Equatable {
     String? rccmNumber,
     String? companyLocation,
     String? businessSector,
+    String? businessSectorId, // Added parameter
+    String? businessAddress, // Added parameter
+    String? businessLogoUrl, // Added parameter
   }) {
     return User(
       id: id ?? this.id,
@@ -153,6 +168,9 @@ class User extends Equatable {
       rccmNumber: rccmNumber ?? this.rccmNumber,
       companyLocation: companyLocation ?? this.companyLocation,
       businessSector: businessSector ?? this.businessSector,
+      businessSectorId: businessSectorId ?? this.businessSectorId, // Added assignment
+      businessAddress: businessAddress ?? this.businessAddress, // Added assignment
+      businessLogoUrl: businessLogoUrl ?? this.businessLogoUrl, // Added assignment
     );
   }
 
@@ -175,5 +193,21 @@ class User extends Equatable {
         rccmNumber,
         companyLocation,
         businessSector,
+        businessSectorId, // Added to props
+        businessAddress, // Added to props
+        businessLogoUrl, // Added to props
       ];
+
+  // Helper method for Adha businessProfile context
+  Map<String, dynamic> toBusinessProfileContext() {
+    return {
+      'businessName': companyName ?? name, // Fallback to user name if company name is not set
+      'businessSector': businessSector, // This is a string name, consider using businessSectorId if an ID is preferred by backend
+      'businessSectorId': businessSectorId,
+      'businessAddress': businessAddress ?? companyLocation ?? physicalAddress, // Fallback strategy for address
+      'rccmNumber': rccmNumber,
+      'businessLogoUrl': businessLogoUrl,
+      // Add any other fields from User model that are relevant to businessProfile as per API_DOCUMENTATION.md
+    };
+  }
 }

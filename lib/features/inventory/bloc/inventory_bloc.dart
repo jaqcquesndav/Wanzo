@@ -3,8 +3,7 @@ import '../repositories/inventory_repository.dart';
 import 'inventory_event.dart';
 import 'inventory_state.dart';
 import '../../dashboard/models/operation_journal_entry.dart';
-import '../../dashboard/repositories/operation_journal_repository.dart';
-import '../../dashboard/bloc/operation_journal_bloc.dart'; // Import OperationJournalBloc
+import '../../dashboard/bloc/operation_journal_bloc.dart'; // Corrected import
 import '../../notifications/services/notification_service.dart'; // Corrected import
 import '../../notifications/models/notification_model.dart'; // Added import for NotificationType
 import '../models/stock_transaction.dart'; // Added import for StockTransaction and StockTransactionType
@@ -13,20 +12,17 @@ import 'package:uuid/uuid.dart';
 /// BLoC pour la gestion de l'inventaire
 class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   final InventoryRepository _inventoryRepository;
-  final OperationJournalRepository _journalRepository; // Added repository
-  final NotificationService _notificationService; // Added notification service
-  final OperationJournalBloc _operationJournalBloc; // Add OperationJournalBloc
-  final _uuid = const Uuid(); // Added uuid generator
+  final NotificationService _notificationService;
+  final OperationJournalBloc _operationJournalBloc;
+  final _uuid = const Uuid();
 
   InventoryBloc({
     required InventoryRepository inventoryRepository,
-    required OperationJournalRepository journalRepository, // Added repository to constructor
-    required NotificationService notificationService, // Added notification service to constructor
-    required OperationJournalBloc operationJournalBloc, // Inject OperationJournalBloc
+    required NotificationService notificationService,
+    required OperationJournalBloc operationJournalBloc,
   })  : _inventoryRepository = inventoryRepository,
-        _journalRepository = journalRepository, // Initialize repository
-        _notificationService = notificationService, // Initialize notification service
-        _operationJournalBloc = operationJournalBloc, // Initialize OperationJournalBloc
+        _notificationService = notificationService,
+        _operationJournalBloc = operationJournalBloc,
         super(const InventoryInitial()) {
     on<LoadProducts>(_onLoadProducts);
     on<LoadProductsByCategory>(_onLoadProductsByCategory);
@@ -170,8 +166,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name,
         relatedDocumentId: product.id, // Could be product ID or a purchase order ID if available
       );
-      await _journalRepository.addOperation(journalEntry); // Changed to addOperation
-      _operationJournalBloc.add(const RefreshJournal()); // Dispatch RefreshJournal event
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
       
       emit(InventoryOperationSuccess('Produit ajouté avec succès et enregistré dans le journal'));
       add(const LoadProducts()); // Reload products list
@@ -241,8 +236,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: transaction.id,
       );
-      await _journalRepository.addOperation(journalEntry); // Changed to addOperation
-      _operationJournalBloc.add(const RefreshJournal()); // Dispatch RefreshJournal event
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
       emit(InventoryOperationSuccess('Transaction de stock ajoutée avec succès et enregistrée dans le journal'));
       add(LoadProduct(transaction.productId)); // Reload product details
@@ -296,8 +290,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: originalTransaction.id, // Link to original transaction ID
       );
-      await _journalRepository.addOperation(journalEntry); // Changed to addOperation
-      _operationJournalBloc.add(const RefreshJournal()); // Dispatch RefreshJournal event
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
       emit(const InventoryOperationSuccess('Transaction de stock annulée et enregistrée dans le journal.'));
       add(LoadProduct(originalTransaction.productId));

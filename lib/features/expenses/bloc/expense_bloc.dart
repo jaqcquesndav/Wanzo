@@ -4,25 +4,21 @@ import 'package:uuid/uuid.dart';
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../../dashboard/models/operation_journal_entry.dart';
-import '../../dashboard/repositories/operation_journal_repository.dart';
-import '../../dashboard/bloc/operation_journal_bloc.dart'; // Import OperationJournalBloc
+import '../../dashboard/bloc/operation_journal_bloc.dart';
 
 part 'expense_event.dart';
 part 'expense_state.dart';
 
 class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   final ExpenseRepository _expenseRepository;
-  final OperationJournalRepository _journalRepository;
-  final OperationJournalBloc _operationJournalBloc; // Add OperationJournalBloc
+  final OperationJournalBloc _operationJournalBloc;
   final _uuid = const Uuid();
 
   ExpenseBloc({
     required ExpenseRepository expenseRepository,
-    required OperationJournalRepository journalRepository,
-    required OperationJournalBloc operationJournalBloc, // Inject OperationJournalBloc
+    required OperationJournalBloc operationJournalBloc,
   })  : _expenseRepository = expenseRepository,
-        _journalRepository = journalRepository,
-        _operationJournalBloc = operationJournalBloc, // Initialize OperationJournalBloc
+        _operationJournalBloc = operationJournalBloc,
         super(const ExpenseInitial()) {
     on<LoadExpenses>(_onLoadExpenses);
     on<LoadExpensesByDateRange>(_onLoadExpensesByDateRange);
@@ -75,16 +71,14 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         date: newExpense.date,
         type: OperationType.cashOut, // Dépense est une sortie d'argent
         description: "Dépense: ${newExpense.description}",
-        amount: -newExpense.amount, // Montant négatif pour une sortie
+        amount: -newExpense.amount.abs(), // Assurer que le montant est négatif pour cashOut
         paymentMethod: newExpense.paymentMethod,
         relatedDocumentId: newExpense.id, // Lier au document de dépense
       );
-      await _journalRepository.addOperation(journalEntry); // Changed to addOperation
-      _operationJournalBloc.add(const RefreshJournal()); // Dispatch RefreshJournal event
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
       emit(ExpenseOperationSuccess('Dépense ajoutée avec succès et enregistrée au journal.'));
       add(const LoadExpenses()); // Recharger la liste des dépenses
-      // Potentiellement notifier OperationJournalBloc pour rafraîchir
     } catch (e) {
       emit(ExpenseError("Erreur lors de l'ajout de la dépense: ${e.toString()}"));
     }
@@ -93,11 +87,43 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   Future<void> _onUpdateExpense(UpdateExpense event, Emitter<ExpenseState> emit) async {
     emit(const ExpenseLoading());
     try {
+      // Fetch the original expense to compare changes
+      final originalExpense = await _expenseRepository.getExpenseById(event.expense.id);
+
+      if (originalExpense == null) {
+        emit(ExpenseError("Dépense originale non trouvée pour la mise à jour du journal."));
+        add(const LoadExpenses()); // Reload to reflect current state
+        return;
+      }
+      
       await _expenseRepository.updateExpense(event.expense);
-      // TODO: Mettre à jour l'entrée de journal correspondante si nécessaire. 
-      // Cela peut être complexe si le montant ou la date change.
-      // Pour l'instant, on ne met à jour que la dépense elle-même.
-      emit(const ExpenseOperationSuccess('Dépense mise à jour avec succès.'));
+      final updatedExpense = event.expense; // Alias for clarity
+
+      // 1. Create a reversing journal entry for the original expense
+      final reversalJournalEntry = OperationJournalEntry(
+        id: _uuid.v4(),
+        date: DateTime.now(), // Or originalExpense.date - using now for reversal event time
+        type: OperationType.cashIn, // Reversing a cashOut
+        description: "Annulation (MàJ) Dépense: ${originalExpense.description}",
+        amount: originalExpense.amount.abs(), // Positive amount for cashIn
+        paymentMethod: originalExpense.paymentMethod,
+        relatedDocumentId: originalExpense.id,
+      );
+      _operationJournalBloc.add(AddOperationJournalEntry(reversalJournalEntry));
+
+      // 2. Create a new journal entry for the updated expense
+      final newJournalEntry = OperationJournalEntry(
+        id: _uuid.v4(),
+        date: updatedExpense.date,
+        type: OperationType.cashOut,
+        description: "Dépense (MàJ): ${updatedExpense.description}",
+        amount: -updatedExpense.amount.abs(), // Negative amount for cashOut
+        paymentMethod: updatedExpense.paymentMethod,
+        relatedDocumentId: updatedExpense.id,
+      );
+      _operationJournalBloc.add(AddOperationJournalEntry(newJournalEntry));
+
+      emit(const ExpenseOperationSuccess('Dépense mise à jour et journal ajusté avec succès.'));
       add(const LoadExpenses());
     } catch (e) {
       emit(ExpenseError("Erreur lors de la mise à jour de la dépense: ${e.toString()}"));
@@ -107,10 +133,29 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   Future<void> _onDeleteExpense(DeleteExpense event, Emitter<ExpenseState> emit) async {
     emit(const ExpenseLoading());
     try {
+      // Fetch the expense before deleting to get its details for the journal entry
+      final expenseToDelete = await _expenseRepository.getExpenseById(event.expenseId);
+
+      if (expenseToDelete == null) {
+        emit(ExpenseError("Dépense non trouvée pour l'annulation du journal."));
+        return;
+      }
+
       await _expenseRepository.deleteExpense(event.expenseId);
-      // TODO: Supprimer ou marquer comme annulée l'entrée de journal correspondante.
-      // Pour l'instant, on ne supprime que la dépense elle-même.
-      emit(const ExpenseOperationSuccess('Dépense supprimée avec succès.'));
+
+      // Create a reversing journal entry
+      final journalEntry = OperationJournalEntry(
+        id: _uuid.v4(),
+        date: DateTime.now(), // Or expenseToDelete.date - decide on consistent date for reversal
+        type: OperationType.cashIn, // Reversing a cashOut
+        description: "Annulation Dépense: ${expenseToDelete.description}",
+        amount: expenseToDelete.amount.abs(), // Positive amount for cashIn
+        paymentMethod: expenseToDelete.paymentMethod,
+        relatedDocumentId: expenseToDelete.id,
+      );
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
+
+      emit(const ExpenseOperationSuccess('Dépense supprimée et annulation enregistrée au journal.'));
       add(const LoadExpenses());
     } catch (e) {
       emit(ExpenseError("Erreur lors de la suppression de la dépense: ${e.toString()}"));

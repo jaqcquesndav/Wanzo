@@ -30,4 +30,16 @@ class AddOperationJournalEntry extends OperationJournalEvent {
   final OperationJournalEntry entry;
 
   const AddOperationJournalEntry(this.entry);
+
+  @override
+  List<Object> get props => [entry];
+}
+
+class AddMultipleOperationJournalEntries extends OperationJournalEvent {
+  final List<OperationJournalEntry> entries;
+
+  const AddMultipleOperationJournalEntries(this.entries);
+
+  @override
+  List<Object> get props => [entries];
 }

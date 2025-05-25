@@ -1,6 +1,7 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\features\sales\models\sale_adapter.dart
 import 'package:hive/hive.dart';
 import 'sale.dart';
+import './sale_item.dart'; // Added import for SaleItem
 
 /// Adaptateur Hive pour la classe SaleStatus
 class SaleStatusAdapter extends TypeAdapter<SaleStatus> {

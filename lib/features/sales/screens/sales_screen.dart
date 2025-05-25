@@ -299,6 +299,10 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
         statusColor = Colors.green;
         statusText = 'Terminée';
         break;
+      case SaleStatus.partiallyPaid: // Added case
+        statusColor = Colors.blue; 
+        statusText = 'Partiellement payée';
+        break;
       case SaleStatus.cancelled:
         statusColor = Colors.red;
         statusText = 'Annulée';

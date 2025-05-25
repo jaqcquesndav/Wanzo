@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/adha_bloc.dart';
 import '../bloc/adha_event.dart';
+import '../models/adha_context_info.dart'; // Added import
 import 'adha_screen.dart';
 
 /// Page d'accueil de l'assistant Adha
@@ -26,7 +27,7 @@ class AdhaHomePage extends StatelessWidget {
               child: Center(
                 child: CircleAvatar(
                   radius: 80,
-                  backgroundColor: Colors.purple.withOpacity(0.1),
+                  backgroundColor: Colors.purple.withAlpha((0.1 * 255).round()), // Fixed deprecated withOpacity
                   child: const Icon(
                     Icons.smart_toy,
                     size: 80,
@@ -102,7 +103,16 @@ class AdhaHomePage extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 // Crée une nouvelle conversation et navigue vers l'écran de chat
-                context.read<AdhaBloc>().add(const NewConversation());
+                final contextInfo = AdhaContextInfo(
+                  baseContext: AdhaBaseContext(
+                    businessProfile: {}, // Will be populated by AdhaBloc
+                    operationJournalSummary: {}, // Will be populated by AdhaBloc
+                  ),
+                  interactionContext: AdhaInteractionContext(
+                    interactionType: AdhaInteractionType.directInitiation, // Corrected enum & removed const
+                  ),
+                );
+                context.read<AdhaBloc>().add(NewConversation("Bonjour Adha!", contextInfo)); // Fixed arguments
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const AdhaScreen(),

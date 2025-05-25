@@ -23,6 +23,8 @@ class AdhaMessage extends Equatable {
     required this.timestamp,
     required this.isUserMessage,
     this.type = AdhaMessageType.text,
+    // contextInfo n'est pas stocké directement dans AdhaMessage,
+    // il est utilisé lors de l'envoi du premier message d'une conversation.
   });
 
   @override
@@ -64,14 +66,38 @@ class AdhaConversation extends Equatable {
   /// Liste des messages de la conversation
   final List<AdhaMessage> messages;
 
+  /// Informations de contexte initiales pour cette conversation
+  /// Peut être null si le contexte n'est pas applicable ou déjà traité
+  final Map<String, dynamic>? initialContextJson; // Stocke le JSON du AdhaContextInfo initial
+
   const AdhaConversation({
     required this.id,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
     required this.messages,
+    this.initialContextJson, // Ajouté au constructeur
   });
 
+  AdhaConversation copyWith({
+    String? id,
+    String? title,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<AdhaMessage>? messages,
+    Map<String, dynamic>? initialContextJson,
+    bool clearInitialContext = false, // Pour explicitement nullifier le contexte
+  }) {
+    return AdhaConversation(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      messages: messages ?? this.messages,
+      initialContextJson: clearInitialContext ? null : initialContextJson ?? this.initialContextJson,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, title, createdAt, updatedAt, messages];
+  List<Object?> get props => [id, title, createdAt, updatedAt, messages, initialContextJson];
 }

@@ -5,9 +5,10 @@ import 'package:intl/intl.dart'; // Pour le formatage des dates
 import 'package:fl_chart/fl_chart.dart'; // Added import for charts
 import '../../../constants/constants.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
-import '../../sales/bloc/sales_bloc.dart'; // Import SalesBloc
-import '../../sales/models/sale.dart'; // Import Sale model
+import 'package:wanzo/features/sales/bloc/sales_bloc.dart'; // Import SalesBloc
+import 'package:wanzo/features/sales/models/sale.dart'; // Import Sale model
 import '../bloc/operation_journal_bloc.dart';
+import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart'; // Corrected: Import BLoC, not parts
 import '../models/operation_journal_entry.dart';
 import 'package:wanzo/features/dashboard/services/journal_service.dart';
 import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
@@ -29,16 +30,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late SalesBloc _salesBloc;
   late SettingsBloc _settingsBloc; // Added SettingsBloc
   late JournalService _journalService; // Added JournalService
-  Widget? _expandedViewWidget; // To hold the expanded card's content
+  late DashboardBloc _dashboardBloc; // Added
+  Widget? _expandedViewWidget; // To hold the expanded card\'s content
 
   @override
   void initState() {
     super.initState();
     _operationJournalBloc = BlocProvider.of<OperationJournalBloc>(context);
     _salesBloc = BlocProvider.of<SalesBloc>(context);
-    _settingsBloc = BlocProvider.of<SettingsBloc>(context); // Initialize SettingsBloc
-    _settingsBloc.add(LoadSettings()); // Load settings
-    _journalService = JournalService(); // Initialize JournalService
+    _settingsBloc = BlocProvider.of<SettingsBloc>(context); 
+    _dashboardBloc = BlocProvider.of<DashboardBloc>(context); // Initialize DashboardBloc
+    _settingsBloc.add(LoadSettings()); 
+    _journalService = JournalService(); 
 
     final now = DateTime.now();
     _operationJournalBloc.add(LoadOperations(
@@ -48,6 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _salesBloc.add(LoadSalesByDateRange(
         startDate: now.subtract(const Duration(days: 7)),
         endDate: now));
+    _dashboardBloc.add(LoadDashboardData(date: now)); // Dispatch event to load data
   }
 
   @override
@@ -488,7 +492,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary, // Use theme color
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   );
                 },
@@ -497,10 +501,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // En-tête avec les statistiques principales
-          _buildHeaderStats(context, currencyType),
+          BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, state) {
+              if (state is DashboardLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is DashboardError) {
+                return Center(child: Text('Erreur: ${state.message}'));
+              } else if (state is DashboardLoaded) {
+                return _buildHeaderStats(context, currencyType, state);
+              }
+              // Show a default/loading state for DashboardInitial or other unhandled states
+              return _buildHeaderStats(context, currencyType, null); 
+            },
+          ),
           const SizedBox(height: WanzoSpacing.lg),
 
-          // Graphique des ventes récentes
+          // Graphique des ventes
           _buildSalesChart(context, currencyType),
           const SizedBox(height: WanzoSpacing.lg),
 
@@ -521,44 +537,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  /// Construit les statistiques d'en-tête
-  Widget _buildHeaderStats(BuildContext context, CurrencyType currencyType) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: WanzoSpacing.md,
-      mainAxisSpacing: WanzoSpacing.md,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+  /// Construit l'en-tête avec les statistiques principales
+  Widget _buildHeaderStats(BuildContext context, CurrencyType currencyType, DashboardLoaded? dashboardState) {
+    return Column(
       children: [
-        _buildStatCard(
-          title: 'Ventes du jour',
-          value: 150000,
-          currencyType: currencyType,
-          icon: Icons.insert_chart,
-          color: Theme.of(context).colorScheme.primary, // Use theme color
-          increase: '+8% vs hier',
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                title: 'Ventes du jour',
+                value: dashboardState?.salesToday ?? 0.0,
+                currencyType: currencyType,
+                icon: Icons.trending_up,
+                color: Theme.of(context).colorScheme.primary,
+                onTap: () => context.push('/sales'),
+              ),
+            ),
+            const SizedBox(width: WanzoSpacing.md),
+            Expanded(
+              child: _buildStatCard(
+                title: 'Clients servis',
+                value: dashboardState?.clientsServedToday.toDouble() ?? 0.0,
+                isMonetary: false,
+                icon: Icons.people,
+                color: Theme.of(context).colorScheme.secondary,
+                onTap: () => context.push('/customers'),
+              ),
+            ),
+          ],
         ),
-        _buildStatCard(
-          title: 'Clients servis',
-          value: 24,
-          icon: Icons.people,
-          color: Theme.of(context).colorScheme.tertiary, // Use theme color for info/tertiary
-          increase: '+3 vs hier',
-          isMonetary: false,
-        ),
-        _buildStatCard(
-          title: 'À recevoir',
-          value: 450000,
-          currencyType: currencyType,
-          icon: Icons.account_balance_wallet,
-          color: Theme.of(context).colorScheme.secondary, // Use theme color for success/secondary
-        ),
-        _buildStatCard(
-          title: 'Transactions',
-          value: 0,
-          icon: Icons.receipt_long,
-          color: Theme.of(context).colorScheme.surfaceTint, // Use a less prominent theme color or define a new one
-          isMonetary: false,
+        const SizedBox(height: WanzoSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                title: 'Créances clients',
+                value: dashboardState?.receivables ?? 0.0,
+                currencyType: currencyType,
+                icon: Icons.account_balance_wallet,
+                color: Theme.of(context).colorScheme.tertiary,
+                onTap: () => context.push('/sales/receivables'),
+              ),
+            ),
+            const SizedBox(width: WanzoSpacing.md),
+            Expanded(
+              child: _buildStatCard(
+                title: 'Transactions',
+                value: dashboardState?.transactionsToday.toDouble() ?? 0.0,
+                isMonetary: false,
+                icon: Icons.receipt_long,
+                color: Theme.of(context).colorScheme.errorContainer,
+                onTap: () => _expandOperationsJournal(),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -573,68 +605,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color color,
     String? increase,
     bool isMonetary = true,
+    VoidCallback? onTap, // Added onTap parameter
   }) {
     String displayValue;
     if (isMonetary) {
       if (currencyType == null) {
         displayValue = 'N/A';
-        // print("Warning: currencyType is null for monetary StatCard '$title'"); // Replaced with logger or removed
       } else {
         displayValue = formatCurrency(value, currencyType);
       }
     } else {
-      displayValue = NumberFormat.compact().format(value);
+      // Ensure non-monetary values are formatted as integers if they don't have decimal parts
+      if (value == value.truncateToDouble()) {
+        displayValue = NumberFormat.compact().format(value.toInt());
+      } else {
+        displayValue = NumberFormat.compact().format(value);
+      }
     }
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(WanzoSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return InkWell( 
+      onTap: onTap, 
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
+        ),
+        child: SizedBox( // Added SizedBox to provide bounded height
+          height: 130.0, // Adjust height as needed for UI consistency
+          child: Padding(
+            padding: const EdgeInsets.all(WanzoSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: WanzoTypography.fontSizeSm,
-                      color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: WanzoTypography.fontSizeSm,
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1, // Prevent title from taking too much vertical space
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    Icon(
+                      icon,
+                      color: color,
+                      size: 24,
+                    ),
+                  ],
                 ),
-                Icon(
-                  icon,
-                  color: color,
-                  size: 24,
+                const Spacer(), // Spacer will now work within the bounded height of SizedBox
+                Column( // Group bottom texts
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      displayValue,
+                      style: TextStyle(
+                        fontSize: WanzoTypography.fontSizeXl,
+                        fontWeight: WanzoTypography.fontWeightBold,
+                        color: color,
+                      ),
+                    ),
+                    if (increase != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2.0), // Add a small gap
+                        child: Text(
+                          increase,
+                          style: TextStyle(
+                            fontSize: WanzoTypography.fontSizeXs,
+                            color: increase.contains('+') ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error,
+                            fontWeight: WanzoTypography.fontWeightMedium,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
-            const Spacer(),
-            Text(
-              displayValue,
-              style: TextStyle(
-                fontSize: WanzoTypography.fontSizeXl,
-                fontWeight: WanzoTypography.fontWeightBold,
-                color: color,
-              ),
-            ),
-            if (increase != null)
-              Text(
-                increase,
-                style: TextStyle(
-                  fontSize: WanzoTypography.fontSizeXs,
-                  color: increase.contains('+') ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.error,
-                  fontWeight: WanzoTypography.fontWeightMedium,
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );

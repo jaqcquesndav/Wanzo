@@ -80,6 +80,8 @@ class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
         return SaleStatus.completed;
       case 2:
         return SaleStatus.cancelled;
+      case 3:
+        return SaleStatus.partiallyPaid;
       default:
         return SaleStatus.pending;
     }
@@ -96,6 +98,9 @@ class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
         break;
       case SaleStatus.cancelled:
         writer.writeByte(2);
+        break;
+      case SaleStatus.partiallyPaid:
+        writer.writeByte(3);
         break;
     }
   }
@@ -147,4 +152,5 @@ const _$SaleStatusEnumMap = {
   SaleStatus.pending: 'pending',
   SaleStatus.completed: 'completed',
   SaleStatus.cancelled: 'cancelled',
+  SaleStatus.partiallyPaid: 'partiallyPaid',
 };

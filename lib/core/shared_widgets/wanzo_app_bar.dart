@@ -176,7 +176,7 @@ class WanzoAppBar extends StatelessWidget implements PreferredSizeWidget {
               value: 'settings',
               child: Row(
                 children: [
-                  Icon(Icons.settings, color: Theme.of(context).colorScheme.surfaceVariant), // Use theme color (info mapped to surfaceVariant)
+                  Icon(Icons.settings, color: Theme.of(context).colorScheme.surfaceContainerHighest), // Use theme color (info mapped to surfaceVariant)
                   const SizedBox(width: WanzoSpacing.sm),
                   const Text('Paramètres'),
                 ],

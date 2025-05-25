@@ -96,7 +96,7 @@ class WanzoTheme {
         onTertiaryContainer: Colors.white,
         errorContainer: error, // Consider a lighter error for containers if needed
         onErrorContainer: Colors.white,
-        surfaceVariant: const Color(0xFFF3F4F6), // A light grey for card backgrounds etc.
+        surfaceContainerHighest: const Color(0xFFF3F4F6), // A light grey for card backgrounds etc.
         onSurfaceVariant: const Color(0xFF4B5563), // Text color for surfaceVariant
         outline: const Color(0xFFD1D5DB), // Border color
         shadow: Colors.black.withOpacity(0.15), // Increased shadow opacity slightly
@@ -208,7 +208,7 @@ class WanzoTheme {
         onTertiaryContainer: Colors.white,
         errorContainer: error, // Consider a darker error for containers
         onErrorContainer: Colors.white,
-        surfaceVariant: const Color(0xFF374151), // Darker grey for card backgrounds etc.
+        surfaceContainerHighest: const Color(0xFF374151), // Darker grey for card backgrounds etc.
         onSurfaceVariant: const Color(0xFFD1D5DB), // Text color for surfaceVariant
         outline: const Color(0xFF4B5563), // Border color
         shadow: Colors.black.withOpacity(0.25), // Slightly stronger shadow for dark mode

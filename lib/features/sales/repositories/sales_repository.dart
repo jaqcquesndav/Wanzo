@@ -79,4 +79,13 @@ class SalesRepository {
   Future<int> getSalesCount() async {
     return _salesBox.length;
   }
+
+  /// Calculer le total des montants à recevoir (ventes non entièrement payées)
+  Future<double> getTotalReceivables() async {
+    final sales = _salesBox.values.where((sale) => 
+      sale.status == SaleStatus.pending || 
+      (sale.status == SaleStatus.partiallyPaid && sale.paidAmount < sale.totalAmount)
+    );
+    return sales.fold<double>(0, (total, sale) => total + (sale.totalAmount - sale.paidAmount));
+  }
 }

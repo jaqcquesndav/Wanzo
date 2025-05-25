@@ -41,6 +41,7 @@ import 'package:wanzo/features/dashboard/repositories/operation_journal_reposito
 import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/financing/repositories/financing_repository.dart';
 import 'package:wanzo/features/subscription/repositories/subscription_repository.dart'; // Ensure this import is present
+import 'package:wanzo/features/transactions/repositories/transaction_repository.dart'; // Added
 
 // BLoCs
 import 'package:wanzo/features/auth/bloc/auth_bloc.dart';
@@ -55,6 +56,7 @@ import 'package:wanzo/features/dashboard/bloc/operation_journal_bloc.dart';
 import 'package:wanzo/features/expenses/bloc/expense_bloc.dart';
 import 'package:wanzo/features/subscription/bloc/subscription_bloc.dart';
 import 'package:wanzo/features/financing/bloc/financing_bloc.dart';
+import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart'; // Added
 
 // BLoC Events & States
 import 'package:wanzo/features/settings/bloc/settings_event.dart';
@@ -142,6 +144,9 @@ Future<void> main() async {
   final financingRepository = FinancingRepository();
   await financingRepository.init();
 
+  final transactionRepository = TransactionRepository(); // Added
+  await transactionRepository.init(); // Added
+
   final subscriptionRepository = SubscriptionRepository(
     expenseRepository: expenseRepository,
     apiService: apiClient,
@@ -162,18 +167,20 @@ Future<void> main() async {
 
   final inventoryBloc = InventoryBloc(
     inventoryRepository: inventoryRepository,
-    journalRepository: operationJournalRepository,
     notificationService: notificationService,
     operationJournalBloc: operationJournalBloc,
   );
 
   final salesBloc = SalesBloc(
     salesRepository: salesRepository,
-    journalRepository: operationJournalRepository,
     operationJournalBloc: operationJournalBloc,
   );
   
-  final adhaBloc = AdhaBloc(adhaRepository: adhaRepository);
+  final adhaBloc = AdhaBloc(
+    adhaRepository: adhaRepository,
+    authRepository: authRepository, // Added
+    operationJournalRepository: operationJournalRepository, // Added
+  );
   
   final customerBloc = CustomerBloc(customerRepository: customerRepository);
   
@@ -187,7 +194,6 @@ Future<void> main() async {
 
   final expenseBloc = ExpenseBloc(
     expenseRepository: expenseRepository,
-    journalRepository: operationJournalRepository,
     operationJournalBloc: operationJournalBloc,
   );
   
@@ -196,6 +202,12 @@ Future<void> main() async {
   final financingBloc = FinancingBloc(
     financingRepository: financingRepository,
     operationJournalBloc: operationJournalBloc,
+  );
+  
+  final dashboardBloc = DashboardBloc( // Added
+    salesRepository: salesRepository, 
+    customerRepository: customerRepository, 
+    transactionRepository: transactionRepository, 
   );
   
   final appRouter = AppRouter(authBloc: authBloc);
@@ -214,6 +226,7 @@ Future<void> main() async {
     expenseBloc: expenseBloc,
     subscriptionBloc: subscriptionBloc,
     financingBloc: financingBloc,
+    dashboardBloc: dashboardBloc, // Added
     // Pass repositories
     authRepository: authRepository,
     settingsRepository: settingsRepository,
@@ -226,6 +239,7 @@ Future<void> main() async {
     operationJournalRepository: operationJournalRepository,
     expenseRepository: expenseRepository,
     financingRepository: financingRepository,
+    transactionRepository: transactionRepository, // Added
     subscriptionRepository: subscriptionRepository,
     // Pass services that might be needed via RepositoryProvider (if any)
     // For now, focusing on repositories as per RepositoryProvider.of usage.
@@ -247,6 +261,7 @@ class MyApp extends StatelessWidget {
   final ExpenseBloc expenseBloc;
   final SubscriptionBloc subscriptionBloc;
   final FinancingBloc financingBloc;
+  final DashboardBloc dashboardBloc; // Added
 
   // Repositories
   final AuthRepository authRepository;
@@ -261,6 +276,7 @@ class MyApp extends StatelessWidget {
   final ExpenseRepository expenseRepository;
   final FinancingRepository financingRepository;
   final SubscriptionRepository subscriptionRepository;
+  final TransactionRepository transactionRepository; // Added
   // final NotificationService notificationService; // Example
 
   const MyApp({
@@ -278,6 +294,7 @@ class MyApp extends StatelessWidget {
     required this.expenseBloc,
     required this.subscriptionBloc,
     required this.financingBloc,
+    required this.dashboardBloc, // Added
     // Repositories
     required this.authRepository,
     required this.settingsRepository,
@@ -290,6 +307,7 @@ class MyApp extends StatelessWidget {
     required this.operationJournalRepository,
     required this.expenseRepository,
     required this.financingRepository,
+    required this.transactionRepository, // Added
     required this.subscriptionRepository,
     // required this.notificationService, // Example
   });
@@ -309,6 +327,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: operationJournalRepository),
         RepositoryProvider.value(value: expenseRepository),
         RepositoryProvider.value(value: financingRepository),
+        RepositoryProvider.value(value: transactionRepository), // Added
         RepositoryProvider.value(value: subscriptionRepository),
         // If NotificationService needs to be available via RepositoryProvider.of<NotificationService>(context)
         // RepositoryProvider.value(value: notificationService), 
@@ -327,6 +346,7 @@ class MyApp extends StatelessWidget {
           BlocProvider.value(value: expenseBloc),
           BlocProvider.value(value: subscriptionBloc),
           BlocProvider.value(value: financingBloc),
+          BlocProvider.value(value: dashboardBloc), // Added
         ],
         child: BlocBuilder<SettingsBloc, settings_bloc_state.SettingsState>(
           builder: (context, settingsState) {

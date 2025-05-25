@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Text('Fonctionnalité à venir !'),
-                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // Or another appropriate theme color for info
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Or another appropriate theme color for info
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(WanzoBorderRadius.md),

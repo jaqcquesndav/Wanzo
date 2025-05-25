@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import '../models/adha_message.dart';
+import '../models/adha_context_info.dart';
 
 /// Repository pour gérer les interactions avec l'assistant Adha
 class AdhaRepository {
@@ -36,8 +37,19 @@ class AdhaRepository {
   Future<String> sendMessage({
     required String conversationId,
     required String message,
+    AdhaContextInfo? contextInfo,
   }) async {
     // Dans une version réelle, cette méthode ferait un appel à une API IA
+    // L'appel API devrait inclure le message et contextInfo si présent
+    // Exemple (pseudo-code pour l'appel API):
+    // final response = await apiClient.post('/api/adha/message', data: {
+    //   'text': message,
+    //   'conversationId': conversationId, // ou null si nouvelle conversation
+    //   'timestamp': DateTime.now().toIso8601String(),
+    //   if (contextInfo != null) 'contextInfo': contextInfo.toJson(),
+    // });
+    // return response.data['data']['replyText'];
+
     // Pour l'instant, nous simulons une réponse
     await Future.delayed(const Duration(seconds: 1));
     

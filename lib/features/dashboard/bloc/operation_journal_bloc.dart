@@ -18,6 +18,7 @@ class OperationJournalBloc
     on<FilterPeriodChanged>(_onFilterPeriodChanged);
     on<RefreshJournal>(_onRefreshJournal);
     on<AddOperationJournalEntry>(_onAddOperationJournalEntry); // Added handler
+    on<AddMultipleOperationJournalEntries>(_onAddMultipleOperationJournalEntries); // Added handler
   }
 
   Future<void> _onLoadOperations(
@@ -97,6 +98,29 @@ class OperationJournalBloc
       if (state is! OperationJournalError) { // Avoid overwriting existing error if not relevant
          // emit(OperationJournalError('Erreur lors de l\'ajout de l\'entrée: $e'));
       }
+    }
+  }
+
+  // Handler for adding multiple journal entries
+  Future<void> _onAddMultipleOperationJournalEntries(
+    AddMultipleOperationJournalEntries event,
+    Emitter<OperationJournalState> emit,
+  ) async {
+    try {
+      await _repository.addOperationEntries(event.entries);
+      // After adding, refresh the journal to show the new entries
+      if (state is OperationJournalLoaded) {
+        final currentState = state as OperationJournalLoaded;
+        add(LoadOperations(startDate: currentState.startDate, endDate: currentState.endDate));
+      } else {
+        final now = DateTime.now();
+        add(LoadOperations(startDate: DateTime(now.year, now.month, 1), endDate: now));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur lors de l\'ajout de plusieurs entrées à l\'operation journal: $e');
+      }
+      // Optionally emit an error state
     }
   }
 
