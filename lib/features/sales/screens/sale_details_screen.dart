@@ -2,13 +2,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:wanzo/core/enums/currency_enum.dart';
 import 'package:wanzo/core/utils/currency_formatter.dart';
 import 'package:wanzo/constants/spacing.dart';
 import 'package:wanzo/features/sales/bloc/sales_bloc.dart';
 import 'package:wanzo/features/sales/models/sale.dart';
-import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
-import 'package:wanzo/features/settings/bloc/settings_state.dart';
-import 'package:wanzo/features/settings/models/settings.dart';
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart' as old_settings_bloc;
+import 'package:wanzo/features/settings/bloc/settings_state.dart' as old_settings_state;
+import 'package:wanzo/features/settings/models/settings.dart' as old_settings_model;
+import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
 import 'package:wanzo/features/invoice/services/invoice_service.dart';
 
 /// Écran de détails d'une vente
@@ -22,15 +24,10 @@ class SaleDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settingsState = context.watch<SettingsBloc>().state;
-    CurrencyType currencyType;
-    if (settingsState is SettingsLoaded) {
-      currencyType = settingsState.settings.currency;
-    } else if (settingsState is SettingsUpdated) {
-      currencyType = settingsState.settings.currency;
-    } else {
-      currencyType = CurrencyType.cdf; // Default currency
-    }
+    // Access currency settings
+    final currencySettingsState = context.watch<CurrencySettingsCubit>().state;
+    final Currency appDefaultCurrency = currencySettingsState.settings.activeCurrency; // Corrected: activeCurrency is the app's default/active
+    final String transactionCurrencyCode = sale.transactionCurrencyCode;
 
     Color statusColor;
     String statusText;
@@ -48,10 +45,10 @@ class SaleDetailsScreen extends StatelessWidget {
         statusText = "Terminée";
         statusIcon = Icons.check_circle;
         break;
-      case SaleStatus.partiallyPaid: // Added case
-        statusColor = Colors.blue; // Or another appropriate color
+      case SaleStatus.partiallyPaid: 
+        statusColor = Colors.blue; 
         statusText = "Partiellement payée";
-        statusIcon = Icons.hourglass_bottom; // Or another appropriate icon
+        statusIcon = Icons.hourglass_bottom; 
         break;
       case SaleStatus.cancelled:
         statusColor = Colors.red;
@@ -69,12 +66,13 @@ class SaleDetailsScreen extends StatelessWidget {
             onSelected: (value) {
               if (value == "edit") {
                 // TODO: Naviguer vers l'écran d'édition
+                // Consider passing the sale object and currency settings
               } else if (value == "delete") {
                 _showDeleteConfirmation(context);
               } else if (value == "print") {
-                _printInvoice(context);
+                _printOrShareInvoice(context, print: true);
               } else if (value == "share") {
-                _shareInvoice(context);
+                _printOrShareInvoice(context, print: false);
               }
             },
             itemBuilder: (context) => [
@@ -204,19 +202,45 @@ class SaleDetailsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          formatCurrency(sale.totalAmount, currencyType),
+                          formatCurrency(sale.totalAmountInTransactionCurrency, transactionCurrencyCode),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
                     ),
+                    if (transactionCurrencyCode != appDefaultCurrency.code)
+                      Padding(
+                        padding: const EdgeInsets.only(top: WanzoSpacing.xxs, bottom: WanzoSpacing.xs),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              "(${formatCurrency(sale.totalAmountInCdf, appDefaultCurrency.code)})", // Display in app's active currency
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: WanzoSpacing.xs),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Payé"),
-                        Text(formatCurrency(sale.paidAmount, currencyType)),
+                        Text(formatCurrency(sale.paidAmountInTransactionCurrency, transactionCurrencyCode)),
                       ],
                     ),
+                     if (transactionCurrencyCode != appDefaultCurrency.code)
+                      Padding(
+                        padding: const EdgeInsets.only(top: WanzoSpacing.xxs),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              "(${formatCurrency(sale.paidAmountInCdf, appDefaultCurrency.code)})", // Display in app's active currency
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: WanzoSpacing.xs),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,18 +248,18 @@ class SaleDetailsScreen extends StatelessWidget {
                         Text(
                           "Reste à payer",
                           style: TextStyle(
-                            color: sale.totalAmount > sale.paidAmount
-                                ? Colors.red
-                                : Colors.green,
+                            color: (sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency).abs() < 0.001 || sale.paidAmountInTransactionCurrency >= sale.totalAmountInTransactionCurrency
+                                ? Colors.green
+                                : Colors.red,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          formatCurrency(sale.totalAmount - sale.paidAmount, currencyType),
+                          formatCurrency(sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency, transactionCurrencyCode),
                           style: TextStyle(
-                            color: sale.totalAmount > sale.paidAmount
-                                ? Colors.red
-                                : Colors.green,
+                           color: (sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency).abs() < 0.001 || sale.paidAmountInTransactionCurrency >= sale.totalAmountInTransactionCurrency
+                                ? Colors.green
+                                : Colors.red,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -264,10 +288,10 @@ class SaleDetailsScreen extends StatelessWidget {
                   return ListTile(
                     title: Text(item.productName),
                     subtitle: Text(
-                      "${item.quantity.toInt()} × ${formatCurrency(item.unitPrice, currencyType)}",
+                      "${item.quantity.toInt()} × ${formatCurrency(item.unitPrice, item.currencyCode)}", // item.currencyCode is transaction currency
                     ),
                     trailing: Text(
-                      formatCurrency(item.totalPrice, currencyType),
+                      formatCurrency(item.totalPrice, item.currencyCode), // item.currencyCode is transaction currency
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   );
@@ -287,7 +311,7 @@ class SaleDetailsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ElevatedButton.icon(
-                onPressed: () => _printInvoice(context),
+                onPressed: () => _printOrShareInvoice(context, print: true),
                 icon: const Icon(Icons.print),
                 label: const Text("Imprimer"),
                 style: ElevatedButton.styleFrom(
@@ -296,7 +320,7 @@ class SaleDetailsScreen extends StatelessWidget {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () => _shareInvoice(context),
+                onPressed: () => _printOrShareInvoice(context, print: false),
                 icon: const Icon(Icons.share),
                 label: const Text("Partager"),
                 style: ElevatedButton.styleFrom(
@@ -308,17 +332,14 @@ class SaleDetailsScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     // Marquer la vente comme terminée
-                    final Sale updatedSale = Sale(
-                      id: sale.id,
-                      date: sale.date,
-                      customerId: sale.customerId,
-                      customerName: sale.customerName,
-                      items: sale.items,
-                      totalAmount: sale.totalAmount,
-                      paidAmount: sale.paidAmount,
-                      paymentMethod: sale.paymentMethod,
+                    // All amounts are already correctly stored in the sale object.
+                    // We just need to update the status.
+                    final Sale updatedSale = sale.copyWith(
                       status: SaleStatus.completed,
-                      notes: sale.notes,
+                      // Ensure paid amount covers the total if marking completed this way
+                      // This might need more sophisticated logic if partial payments can lead to completion
+                      paidAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency,
+                      paidAmountInCdf: sale.totalAmountInCdf,
                     );
                     context.read<SalesBloc>().add(UpdateSale(updatedSale));
                     GoRouter.of(context).pop();
@@ -366,79 +387,71 @@ class SaleDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Imprime la facture
-  void _printInvoice(BuildContext context) async {
+  /// Imprime la facture ou la partage
+  void _printOrShareInvoice(BuildContext context, {required bool print}) async {
     final invoiceService = InvoiceService();
-    final settingsBloc = context.read<SettingsBloc>();
-    final settingsState = settingsBloc.state;
-    Settings? currentSettings;
+    // The sale object already contains all necessary currency information.
+    // The InvoiceService is expected to use sale.transactionCurrencyCode, 
+    // sale.totalAmountInTransactionCurrency, etc., for display,
+    // and potentially sale.totalAmountInCdf for records if needed.
 
-    if (settingsState is SettingsLoaded) {
-      currentSettings = settingsState.settings;
-    } else if (settingsState is SettingsUpdated) {
-      currentSettings = settingsState.settings;
+    // Retrieve old settings for invoice template compatibility
+    final settingsBloc = context.read<old_settings_bloc.SettingsBloc>();
+    final settingsState = settingsBloc.state;
+    old_settings_model.Settings? legacySettings;
+
+    if (settingsState is old_settings_state.SettingsLoaded) {
+      legacySettings = settingsState.settings;
+    } else if (settingsState is old_settings_state.SettingsUpdated) {
+      legacySettings = settingsState.settings;
     }
-    
-    try {
-      if (currentSettings != null) {
-        // Générer et afficher la facture/ticket avec les paramètres
-        final pdfPath = await invoiceService.generateInvoicePdf(sale, currentSettings);
-        if (context.mounted) {
-          await invoiceService.previewDocument(pdfPath);
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Impossible de générer la facture : paramètres non chargés'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
+
+    if (legacySettings == null) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Erreur lors de la génération de la facture: $e'),
-          backgroundColor: Colors.red,
-        ));
-      }
-    }
-  }
-
-  /// Partage la facture
-  void _shareInvoice(BuildContext context) async {
-    final invoiceService = InvoiceService();
-    final settingsBloc = context.read<SettingsBloc>();
-    final settingsState = settingsBloc.state;
-    Settings? currentSettings;
-
-    if (settingsState is SettingsLoaded) {
-      currentSettings = settingsState.settings;
-    } else if (settingsState is SettingsUpdated) {
-      currentSettings = settingsState.settings;
-    }
-    
-    try {
-      if (currentSettings != null) {
-        await invoiceService.shareInvoice(
-          sale, 
-          currentSettings,
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de générer le document : anciens paramètres non chargés.'),
+            backgroundColor: Colors.red,
+          ),
         );
+      }
+      return;
+    }
+    
+    try {
+      String? pdfPath;
+      // The Sale object now contains all necessary currency information.
+      // InvoiceService's generateInvoicePdf and generateReceiptPdf methods
+      // should be updated to use these fields (e.g., sale.transactionCurrencyCode,
+      // sale.totalAmountInTransactionCurrency, sale.items[n].currencyCode, etc.)
+      // The legacySettings are passed for template formatting (prefix, notes etc.)
+      if (sale.paymentMethod == 'Crédit' && sale.status != SaleStatus.completed) {
+         pdfPath = await invoiceService.generateInvoicePdf(sale, legacySettings);
       } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Impossible de partager : paramètres non chargés'),
-              backgroundColor: Colors.red,
-            ),
-          );
+         pdfPath = await invoiceService.generateReceiptPdf(sale, legacySettings);
+      }
+      
+      if (pdfPath.isNotEmpty && context.mounted) {
+        if (print) {
+          await invoiceService.previewDocument(pdfPath); // Or printDocument directly if preferred
+        } else {
+          // For sharing, customer phone might be needed if not in sale object or if it can be different
+          // Assuming sale.customerPhoneNumber exists or can be retrieved if necessary for sharing.
+          // For now, InvoiceService.shareInvoice is expected to handle this.
+          await invoiceService.shareInvoice(sale, legacySettings /*, customerPhoneNumber: sale.customerPhoneNumberIfNeeded */);
         }
+      } else if (context.mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de générer le document. Chemin non valide.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Erreur lors du partage de la facture: $e'),
+          content: Text('Erreur lors de la génération/partage du document: $e'),
           backgroundColor: Colors.red,
         ));
       }

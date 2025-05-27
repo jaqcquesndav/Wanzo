@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -68,9 +69,11 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'),
+        title: Text(_isEditing ? localizations.editSupplierTitle : localizations.addSupplierTitle), // Localized
       ),
       body: BlocListener<SupplierBloc, SupplierState>(
         listener: (context, state) {
@@ -96,9 +99,9 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Informations principales
-                const Text(
-                  'Informations du fournisseur',
-                  style: TextStyle(
+                Text(
+                  localizations.supplierInformation, // Localized
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -108,14 +111,14 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Nom du fournisseur
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du fournisseur *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.business),
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierNameLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.business),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Le nom est obligatoire';
+                      return localizations.supplierNameValidationError; // Localized
                     }
                     return null;
                   },
@@ -125,11 +128,11 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Numéro de téléphone
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro de téléphone *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
-                    hintText: '+243 999 123 456',
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierPhoneLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.phone),
+                    hintText: localizations.supplierPhoneHint, // Localized
                   ),
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
@@ -137,7 +140,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Le numéro de téléphone est obligatoire';
+                      return localizations.supplierPhoneValidationError; // Localized
                     }
                     return null;
                   },
@@ -147,17 +150,17 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Email
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierEmailLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
                       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                       if (!emailRegex.hasMatch(value)) {
-                        return 'Veuillez entrer un email valide';
+                        return localizations.supplierEmailValidationError; // Localized
                       }
                     }
                     return null;
@@ -168,10 +171,10 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Personne à contacter
                 TextFormField(
                   controller: _contactPersonController,
-                  decoration: const InputDecoration(
-                    labelText: 'Personne à contacter',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierContactPersonLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.person),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -179,19 +182,19 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Adresse
                 TextFormField(
                   controller: _addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Adresse',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.location_on),
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierAddressLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.location_on),
                   ),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),
                 
                 // Informations commerciales
-                const Text(
-                  'Informations commerciales',
-                  style: TextStyle(
+                Text(
+                  localizations.commercialInformation, // Localized
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -201,10 +204,10 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Délai de livraison
                 TextFormField(
                   controller: _deliveryTimeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Délai de livraison (jours)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.timer),
+                  decoration: InputDecoration(
+                    labelText: localizations.deliveryTimeLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.timer),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -216,19 +219,19 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Conditions de paiement
                 TextFormField(
                   controller: _paymentTermsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Conditions de paiement',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.payment),
-                    hintText: 'Ex: Net 30, 50% d\'avance, etc.',
+                  decoration: InputDecoration(
+                    labelText: localizations.paymentTermsLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.payment),
+                    hintText: localizations.paymentTermsHint, // Localized
                   ),
                 ),
                 const SizedBox(height: 16),
                 
                 // Catégorie de fournisseur
-                const Text(
-                  'Catégorie de fournisseur',
-                  style: TextStyle(
+                Text(
+                  localizations.supplierCategoryLabel, // Localized
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -259,7 +262,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(_getCategoryName(category)),
+                              Text(_getCategoryName(context, category)), // Pass context
                             ],
                           ),
                         );
@@ -279,10 +282,10 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                 // Notes
                 TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.note),
+                  decoration: InputDecoration(
+                    labelText: localizations.supplierNotesLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.note),
                   ),
                   maxLines: 3,
                 ),
@@ -294,7 +297,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _saveSupplier,
-                    child: Text(_isEditing ? 'Mettre à jour' : 'Ajouter'),
+                    child: Text(_isEditing ? localizations.updateSupplierButton : localizations.addSupplierButton), // Localized
                   ),
                 ),
               ],
@@ -349,18 +352,19 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
   }
 
   /// Retourne le nom d'une catégorie de fournisseur
-  String _getCategoryName(SupplierCategory category) {
+  String _getCategoryName(BuildContext context, SupplierCategory category) { // Add context
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     switch (category) {      
       case SupplierCategory.strategic:
-        return 'Stratégique';
+        return localizations.supplierCategoryStrategic;
       case SupplierCategory.regular:
-        return 'Régulier';
+        return localizations.supplierCategoryRegular;
       case SupplierCategory.newSupplier:
-        return 'Nouveau';
+        return localizations.supplierCategoryNew;
       case SupplierCategory.occasional:
-        return 'Occasionnel';
+        return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
-        return 'International';
+        return localizations.supplierCategoryInternational;
     }
   }
 }

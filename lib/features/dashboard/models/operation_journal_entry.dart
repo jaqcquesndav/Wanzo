@@ -74,6 +74,7 @@ class OperationJournalEntry {
   final String? productId; // ID du produit pour les mouvements de stock
   final String? productName; // Nom du produit pour les mouvements de stock
   final String? paymentMethod; // Méthode de paiement pour les transactions financières
+  final String? currencyCode; // Code de la devise pour le montant
 
   const OperationJournalEntry({
     required this.id,
@@ -86,6 +87,7 @@ class OperationJournalEntry {
     this.productId,
     this.productName,
     this.paymentMethod,
+    this.currencyCode, // Added to constructor
   });
 
   Map<String, dynamic> toJson() {
@@ -100,6 +102,7 @@ class OperationJournalEntry {
       if (productId != null) 'productId': productId,
       if (productName != null) 'productName': productName,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (currencyCode != null) 'currencyCode': currencyCode, // Added to toJson
     };
   }
 
@@ -115,6 +118,7 @@ class OperationJournalEntry {
       productId: json['productId'] as String?,
       productName: json['productName'] as String?,
       paymentMethod: json['paymentMethod'] as String?,
+      currencyCode: json['currencyCode'] as String?, // Added to fromJson
     );
   }
 
@@ -131,6 +135,7 @@ class OperationJournalEntry {
       if (productId != null) 'productId': productId,
       if (productName != null) 'productName': productName,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (currencyCode != null) 'currencyCode': currencyCode, // Added to toContextMap
     };
   }
 }

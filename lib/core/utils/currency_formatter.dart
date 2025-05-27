@@ -1,68 +1,51 @@
 import 'package:intl/intl.dart';
-import 'package:wanzo/features/settings/models/settings.dart'; // Assuming this is the correct path to CurrencyType
+import 'package:wanzo/core/enums/currency_enum.dart'; // Updated import
 
-String formatCurrency(double amount, CurrencyType currencyType) {
-  String currencyCode;
-  String symbol;
+String formatCurrency(double amount, String currencyCode) {
+  Currency currency = Currency.values.firstWhere((c) => c.code == currencyCode, orElse: () => Currency.CDF); // Fallback to CDF
 
-  switch (currencyType) {
-    case CurrencyType.usd:
-      currencyCode = 'USD';
-      symbol = '\$';
+  String symbol = currency.symbol;
+  int decimalDigits;
+  String locale;
+
+  switch (currency) {
+    case Currency.USD:
+      decimalDigits = 2;
+      locale = 'en_US'; // Common locale for USD
       break;
-    case CurrencyType.cdf:
-      currencyCode = 'CDF';
-      symbol = 'FC'; // Or CDF, adjust as needed
+    case Currency.CDF:
+      decimalDigits = 0; // CDF often shown with no decimals
+      locale = 'fr_CD'; // Locale for Congolese Franc
       break;
-    case CurrencyType.fc:
-      currencyCode = 'FC'; // Assuming this is a distinct currency, e.g., Franc Congolais
-      symbol = 'FC';
+    case Currency.FCFA:
+      decimalDigits = 0; // FCFA often shown with no decimals, XAF is 0 by default with NumberFormat
+      locale = 'fr_CM'; // Example locale for FCFA (Cameroon), adjust as needed for target region
       break;
-    // No default needed here as CurrencyType enum covers all cases.
-    // However, if CurrencyType could be null or have unhandled cases,
-    // a default or error handling would be wise.
+    // Default case not strictly needed due to enum completeness and fallback, but good for safety
+    default:
+      decimalDigits = 2;
+      locale = 'en_US';
+      break;
   }
 
-  // Using intl package for basic number formatting.
-  final NumberFormat formatter = NumberFormat.currency(
-    locale: 'en_US', // Adjust locale as needed, e.g., 'fr_CD' for CDF
-    symbol: symbol,
-    decimalDigits: 2,
-  );
-
-  // Specific formatting for FC and CDF to place symbol after the amount with a space.
-  if (currencyType == CurrencyType.cdf || currencyType == CurrencyType.fc) {
-    // Example: "1,234.56 FC"
-    // Using a non-breaking space \\u00A0 to ensure symbol stays with the number.
-    return '${NumberFormat("#,##0.00", "en_US").format(amount)}\\u00A0$symbol';
+  // Specific formatting for CDF and FCFA to place symbol after the amount with a space.
+  if (currency == Currency.CDF || currency == Currency.FCFA) {
+    final String pattern = "#,##0${decimalDigits > 0 ? '.' + ''.padRight(decimalDigits, '0') : ''}";
+    final NumberFormat numberFormatter = NumberFormat(pattern, locale);
+    return '${numberFormatter.format(amount)}\\u00A0$symbol';
   }
   
-  // Default formatting for USD (symbol before amount, no space after symbol by default with en_US locale)
+  // Default formatting (e.g., for USD)
+  final NumberFormat formatter = NumberFormat.currency(
+    locale: locale,
+    symbol: symbol,
+    decimalDigits: decimalDigits,
+  );
   return formatter.format(amount);
 }
 
-// Helper to get just the currency string (code)
-String getCurrencyString(CurrencyType currencyType) {
-  switch (currencyType) {
-    case CurrencyType.usd:
-      return 'USD';
-    case CurrencyType.cdf:
-      return 'CDF';
-    case CurrencyType.fc:
-      return 'FC';
-    // No default needed here as CurrencyType enum covers all cases.
-  }
-}
-
-// Helper to get just the currency symbol
-String getCurrencySymbol(CurrencyType currencyType) {
-  switch (currencyType) {
-    case CurrencyType.usd:
-      return '\$';
-    case CurrencyType.cdf:
-      return 'FC'; // Or CDF
-    case CurrencyType.fc:
-      return 'FC';
-    // No default needed here as CurrencyType enum covers all cases.
-  }
+// Example of a more generic number formatter if needed elsewhere
+String formatNumber(double number, {int decimalDigits = 2, String locale = 'en_US'}) {
+  final NumberFormat formatter = NumberFormat("#,##0${decimalDigits > 0 ? '.' + ''.padRight(decimalDigits, '0') : ''}", locale);
+  return formatter.format(number);
 }

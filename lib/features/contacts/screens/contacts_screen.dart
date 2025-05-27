@@ -8,6 +8,7 @@ import 'package:wanzo/features/supplier/bloc/supplier_bloc.dart';
 import 'package:wanzo/features/supplier/bloc/supplier_event.dart';
 import 'package:wanzo/features/supplier/screens/suppliers_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -49,17 +50,18 @@ class _ContactsScreenState extends State<ContactsScreen>
   @override
   Widget build(BuildContext context) {
     const int contactsPageIndex = 3; 
+    final localizations = AppLocalizations.of(context)!;
 
     return WanzoScaffold(
       currentIndex: contactsPageIndex,
-      title: 'Contacts',
+      title: localizations.contactsScreenTitle,
       body: Column(
         children: [
           TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(Icons.person), text: 'Clients'),
-              Tab(icon: Icon(Icons.business), text: 'Fournisseurs'),
+            tabs: [
+              Tab(icon: const Icon(Icons.person), text: localizations.contactsScreenClientsTab),
+              Tab(icon: const Icon(Icons.business), text: localizations.contactsScreenSuppliersTab),
             ],
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey,
@@ -83,7 +85,7 @@ class _ContactsScreenState extends State<ContactsScreen>
             context.push('/suppliers/add');
           }
         },
-        tooltip: _tabController.index == 0 ? 'Ajouter un client' : 'Ajouter un fournisseur',
+        tooltip: _tabController.index == 0 ? localizations.contactsScreenAddClientTooltip : localizations.contactsScreenAddSupplierTooltip,
         child: const Icon(Icons.add),
       ),
     );

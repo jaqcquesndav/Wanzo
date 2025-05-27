@@ -86,13 +86,13 @@ class Product extends Equatable {
   @HiveField(4)
   final ProductCategory category;
   
-  /// Prix d'achat
+  /// Prix d'achat en CDF
   @HiveField(5)
-  final double costPrice;
+  final double costPriceInCdf;
   
-  /// Prix de vente
+  /// Prix de vente en CDF
   @HiveField(6)
-  final double sellingPrice;
+  final double sellingPriceInCdf;
   
   /// Quantité en stock
   @HiveField(7)
@@ -117,6 +117,22 @@ class Product extends Equatable {
   /// Chemin de l'image du produit (optionnel)
   @HiveField(12)
   final String? imagePath; 
+
+  /// Devise dans laquelle les prix ont été saisis
+  @HiveField(13)
+  final String inputCurrencyCode;
+
+  /// Taux de change utilisé lors de la saisie (par rapport au CDF)
+  @HiveField(14)
+  final double inputExchangeRate;
+
+  /// Prix d'achat dans la devise de saisie
+  @HiveField(15)
+  final double costPriceInInputCurrency;
+
+  /// Prix de vente dans la devise de saisie
+  @HiveField(16)
+  final double sellingPriceInInputCurrency;
   
   /// Constructeur
   const Product({
@@ -125,14 +141,18 @@ class Product extends Equatable {
     this.description = '',
     this.barcode = '',
     required this.category,
-    required this.costPrice,
-    required this.sellingPrice,
+    required this.costPriceInCdf,
+    required this.sellingPriceInCdf,
     required this.stockQuantity,
     required this.unit,
     this.alertThreshold = 5,
     required this.createdAt,
     required this.updatedAt,
     this.imagePath,
+    required this.inputCurrencyCode,
+    required this.inputExchangeRate,
+    required this.costPriceInInputCurrency,
+    required this.sellingPriceInInputCurrency,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
@@ -141,14 +161,14 @@ class Product extends Equatable {
   /// Vérifie si le stock est bas
   bool get isLowStock => stockQuantity <= alertThreshold;
   
-  /// Marge bénéficiaire
-  double get profitMargin => sellingPrice - costPrice;
+  /// Marge bénéficiaire en CDF
+  double get profitMarginInCdf => sellingPriceInCdf - costPriceInCdf;
   
-  /// Pourcentage de marge
-  double get profitPercentage => costPrice > 0 ? (profitMargin / costPrice) * 100 : 0;
+  /// Pourcentage de marge en CDF
+  double get profitPercentageInCdf => costPriceInCdf > 0 ? (profitMarginInCdf / costPriceInCdf) * 100 : 0;
   
-  /// Valeur totale du stock pour ce produit
-  double get stockValue => stockQuantity * costPrice;
+  /// Valeur totale du stock pour ce produit en CDF
+  double get stockValueInCdf => stockQuantity * costPriceInCdf;
 
   /// Crée une copie du produit avec des attributs modifiés
   Product copyWith({
@@ -157,14 +177,18 @@ class Product extends Equatable {
     String? description,
     String? barcode,
     ProductCategory? category,
-    double? costPrice,
-    double? sellingPrice,
+    double? costPriceInCdf,
+    double? sellingPriceInCdf,
     double? stockQuantity,
     ProductUnit? unit,
     double? alertThreshold,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? imagePath,
+    String? inputCurrencyCode,
+    double? inputExchangeRate,
+    double? costPriceInInputCurrency,
+    double? sellingPriceInInputCurrency,
   }) {
     return Product(
       id: id ?? this.id,
@@ -172,14 +196,18 @@ class Product extends Equatable {
       description: description ?? this.description,
       barcode: barcode ?? this.barcode,
       category: category ?? this.category,
-      costPrice: costPrice ?? this.costPrice,
-      sellingPrice: sellingPrice ?? this.sellingPrice,
+      costPriceInCdf: costPriceInCdf ?? this.costPriceInCdf,
+      sellingPriceInCdf: sellingPriceInCdf ?? this.sellingPriceInCdf,
       stockQuantity: stockQuantity ?? this.stockQuantity,
       unit: unit ?? this.unit,
       alertThreshold: alertThreshold ?? this.alertThreshold,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       imagePath: imagePath ?? this.imagePath,
+      inputCurrencyCode: inputCurrencyCode ?? this.inputCurrencyCode,
+      inputExchangeRate: inputExchangeRate ?? this.inputExchangeRate,
+      costPriceInInputCurrency: costPriceInInputCurrency ?? this.costPriceInInputCurrency,
+      sellingPriceInInputCurrency: sellingPriceInInputCurrency ?? this.sellingPriceInInputCurrency,
     );
   }
 
@@ -190,13 +218,17 @@ class Product extends Equatable {
     description,
     barcode,
     category,
-    costPrice,
-    sellingPrice,
+    costPriceInCdf,
+    sellingPriceInCdf,
     stockQuantity,
     unit,
     alertThreshold,
     createdAt,
     updatedAt,
     imagePath,
+    inputCurrencyCode,
+    inputExchangeRate,
+    costPriceInInputCurrency,
+    sellingPriceInInputCurrency,
   ];
 }

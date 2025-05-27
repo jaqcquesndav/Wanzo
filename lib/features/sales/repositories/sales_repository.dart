@@ -48,12 +48,16 @@ class SalesRepository {
       date: sale.date,
       customerId: sale.customerId,
       customerName: sale.customerName,
-      items: sale.items,
-      totalAmount: sale.totalAmount,
-      paidAmount: sale.paidAmount,
+      items: sale.items, // Assuming SaleItem objects within sale.items are already correctly populated with new currency fields
+      totalAmountInCdf: sale.totalAmountInCdf, // Use new field
+      paidAmountInCdf: sale.paidAmountInCdf, // Use new field
       paymentMethod: sale.paymentMethod,
       status: sale.status,
       notes: sale.notes,
+      transactionCurrencyCode: sale.transactionCurrencyCode, // Add new field
+      transactionExchangeRate: sale.transactionExchangeRate, // Add new field
+      totalAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency, // Add new field
+      paidAmountInTransactionCurrency: sale.paidAmountInTransactionCurrency, // Add new field
     );
     
     await _salesBox.put(newSale.id, newSale);
@@ -72,7 +76,7 @@ class SalesRepository {
   /// Calculer le total des ventes d'une période
   Future<double> calculateTotalSales(DateTime start, DateTime end) async {
     final sales = await getSalesByDateRange(start, end);
-    return sales.fold<double>(0, (total, sale) => total + sale.totalAmount);
+    return sales.fold<double>(0, (total, sale) => total + sale.totalAmountInCdf); // Use CDF field
   }
 
   /// Récupérer le nombre de ventes
@@ -84,8 +88,8 @@ class SalesRepository {
   Future<double> getTotalReceivables() async {
     final sales = _salesBox.values.where((sale) => 
       sale.status == SaleStatus.pending || 
-      (sale.status == SaleStatus.partiallyPaid && sale.paidAmount < sale.totalAmount)
+      (sale.status == SaleStatus.partiallyPaid && sale.paidAmountInCdf < sale.totalAmountInCdf) // Use CDF fields
     );
-    return sales.fold<double>(0, (total, sale) => total + (sale.totalAmount - sale.paidAmount));
+    return sales.fold<double>(0, (total, sale) => total + (sale.totalAmountInCdf - sale.paidAmountInCdf)); // Use CDF fields
   }
 }

@@ -16,6 +16,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   final OperationJournalBloc _operationJournalBloc;
   final _uuid = const Uuid();
 
+  // Add this getter
+  InventoryRepository get inventoryRepository => _inventoryRepository;
+
   InventoryBloc({
     required InventoryRepository inventoryRepository,
     required NotificationService notificationService,
@@ -44,7 +47,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     emit(const InventoryLoading());
     try {
       final products = _inventoryRepository.getAllProducts();
-      final totalValue = _inventoryRepository.getTotalInventoryValue();
+      final totalValue = _inventoryRepository.getTotalInventoryValue(); // This now returns value in CDF
       final totalCount = _inventoryRepository.getTotalProductCount();
       final lowStockProducts = _inventoryRepository.getLowStockProducts();
 
@@ -61,7 +64,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       
       emit(ProductsLoaded(
         products: products,
-        totalInventoryValue: totalValue,
+        totalInventoryValueInCdf: totalValue, // Updated field name
         totalProductCount: totalCount,
         lowStockCount: lowStockProducts.length,
       ));
@@ -75,12 +78,12 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     emit(const InventoryLoading());
     try {
       final products = _inventoryRepository.getProductsByCategory(event.category);
-      final totalValue = products.fold(0.0, (total, product) => total + product.stockValue);
+      final totalValue = products.fold(0.0, (total, product) => total + product.stockValueInCdf); // Updated to use stockValueInCdf
       final lowStockProducts = products.where((product) => product.isLowStock).toList();
       
       emit(ProductsLoaded(
         products: products,
-        totalInventoryValue: totalValue,
+        totalInventoryValueInCdf: totalValue, // Updated field name
         totalProductCount: products.length,
         lowStockCount: lowStockProducts.length,
       ));
@@ -94,12 +97,12 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     emit(const InventoryLoading());
     try {
       final products = _inventoryRepository.searchProducts(event.query);
-      final totalValue = products.fold(0.0, (total, product) => total + product.stockValue);
+      final totalValue = products.fold(0.0, (total, product) => total + product.stockValueInCdf); // Updated to use stockValueInCdf
       final lowStockProducts = products.where((product) => product.isLowStock).toList();
       
       emit(ProductsLoaded(
         products: products,
-        totalInventoryValue: totalValue,
+        totalInventoryValueInCdf: totalValue, // Updated field name
         totalProductCount: products.length,
         lowStockCount: lowStockProducts.length,
       ));
@@ -113,11 +116,11 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     emit(const InventoryLoading());
     try {
       final products = _inventoryRepository.getLowStockProducts();
-      final totalValue = products.fold(0.0, (total, product) => total + product.stockValue);
+      final totalValue = products.fold(0.0, (total, product) => total + product.stockValueInCdf); // Updated to use stockValueInCdf
       
       emit(ProductsLoaded(
         products: products,
-        totalInventoryValue: totalValue,
+        totalInventoryValueInCdf: totalValue, // Updated field name
         totalProductCount: products.length,
         lowStockCount: products.length,
       ));
@@ -160,11 +163,12 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         date: DateTime.now(),
         type: OperationType.stockIn,
         description: "Ajout initial du produit: ${product.name}",
-        amount: product.costPrice * product.stockQuantity, // Value of initial stock
+        amount: product.costPriceInCdf * product.stockQuantity, // Value of initial stock in CDF
         quantity: product.stockQuantity,
         productId: product.id,
         productName: product.name,
         relatedDocumentId: product.id, // Could be product ID or a purchase order ID if available
+        currencyCode: 'CDF', // Added currency code
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
       
@@ -228,13 +232,12 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
             ? OperationType.stockIn 
             : OperationType.stockOut,
         description: journalDescription,
-        amount: (transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock) && product.costPrice > 0
-            ? (transaction.quantity * product.costPrice) 
-            : 0, // Amount for stock out/adjustments is often 0 or handled differently in journal
+        amount: transaction.totalValueInCdf, // Use totalValueInCdf from transaction
         quantity: transaction.quantity,
         productId: transaction.productId,
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: transaction.id,
+        currencyCode: 'CDF', // Added currency code
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
@@ -282,13 +285,12 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
             ? OperationType.stockOut // Reverse of stockIn is stockOut
             : OperationType.stockIn,  // Reverse of stockOut is stockIn
         description: reversalJournalDescription,
-        amount: (originalTransaction.type == StockTransactionType.purchase || originalTransaction.type == StockTransactionType.initialStock) && product.costPrice > 0
-            ? -(originalTransaction.quantity * product.costPrice) // Negative amount for reversal
-            : 0, 
+        amount: -originalTransaction.totalValueInCdf, // Negative amount for reversal, using totalValueInCdf
         quantity: -originalTransaction.quantity, // Negative quantity for reversal
         productId: originalTransaction.productId,
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: originalTransaction.id, // Link to original transaction ID
+        currencyCode: 'CDF', // Added currency code
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 

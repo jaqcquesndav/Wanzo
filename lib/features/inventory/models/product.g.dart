@@ -22,21 +22,25 @@ class ProductAdapter extends TypeAdapter<Product> {
       description: fields[2] as String,
       barcode: fields[3] as String,
       category: fields[4] as ProductCategory,
-      costPrice: fields[5] as double,
-      sellingPrice: fields[6] as double,
+      costPriceInCdf: fields[5] as double,
+      sellingPriceInCdf: fields[6] as double,
       stockQuantity: fields[7] as double,
       unit: fields[8] as ProductUnit,
       alertThreshold: fields[9] as double,
       createdAt: fields[10] as DateTime,
       updatedAt: fields[11] as DateTime,
       imagePath: fields[12] as String?,
+      inputCurrencyCode: fields[13] as String,
+      inputExchangeRate: fields[14] as double,
+      costPriceInInputCurrency: fields[15] as double,
+      sellingPriceInInputCurrency: fields[16] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, Product obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -48,9 +52,9 @@ class ProductAdapter extends TypeAdapter<Product> {
       ..writeByte(4)
       ..write(obj.category)
       ..writeByte(5)
-      ..write(obj.costPrice)
+      ..write(obj.costPriceInCdf)
       ..writeByte(6)
-      ..write(obj.sellingPrice)
+      ..write(obj.sellingPriceInCdf)
       ..writeByte(7)
       ..write(obj.stockQuantity)
       ..writeByte(8)
@@ -62,7 +66,15 @@ class ProductAdapter extends TypeAdapter<Product> {
       ..writeByte(11)
       ..write(obj.updatedAt)
       ..writeByte(12)
-      ..write(obj.imagePath);
+      ..write(obj.imagePath)
+      ..writeByte(13)
+      ..write(obj.inputCurrencyCode)
+      ..writeByte(14)
+      ..write(obj.inputExchangeRate)
+      ..writeByte(15)
+      ..write(obj.costPriceInInputCurrency)
+      ..writeByte(16)
+      ..write(obj.sellingPriceInInputCurrency);
   }
 
   @override
@@ -224,14 +236,20 @@ Product _$ProductFromJson(Map<String, dynamic> json) => Product(
       description: json['description'] as String? ?? '',
       barcode: json['barcode'] as String? ?? '',
       category: $enumDecode(_$ProductCategoryEnumMap, json['category']),
-      costPrice: (json['costPrice'] as num).toDouble(),
-      sellingPrice: (json['sellingPrice'] as num).toDouble(),
+      costPriceInCdf: (json['costPriceInCdf'] as num).toDouble(),
+      sellingPriceInCdf: (json['sellingPriceInCdf'] as num).toDouble(),
       stockQuantity: (json['stockQuantity'] as num).toDouble(),
       unit: $enumDecode(_$ProductUnitEnumMap, json['unit']),
       alertThreshold: (json['alertThreshold'] as num?)?.toDouble() ?? 5,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       imagePath: json['imagePath'] as String?,
+      inputCurrencyCode: json['inputCurrencyCode'] as String,
+      inputExchangeRate: (json['inputExchangeRate'] as num).toDouble(),
+      costPriceInInputCurrency:
+          (json['costPriceInInputCurrency'] as num).toDouble(),
+      sellingPriceInInputCurrency:
+          (json['sellingPriceInInputCurrency'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
@@ -240,14 +258,18 @@ Map<String, dynamic> _$ProductToJson(Product instance) => <String, dynamic>{
       'description': instance.description,
       'barcode': instance.barcode,
       'category': _$ProductCategoryEnumMap[instance.category]!,
-      'costPrice': instance.costPrice,
-      'sellingPrice': instance.sellingPrice,
+      'costPriceInCdf': instance.costPriceInCdf,
+      'sellingPriceInCdf': instance.sellingPriceInCdf,
       'stockQuantity': instance.stockQuantity,
       'unit': _$ProductUnitEnumMap[instance.unit]!,
       'alertThreshold': instance.alertThreshold,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
       if (instance.imagePath case final value?) 'imagePath': value,
+      'inputCurrencyCode': instance.inputCurrencyCode,
+      'inputExchangeRate': instance.inputExchangeRate,
+      'costPriceInInputCurrency': instance.costPriceInInputCurrency,
+      'sellingPriceInInputCurrency': instance.sellingPriceInInputCurrency,
     };
 
 const _$ProductCategoryEnumMap = {

@@ -75,9 +75,6 @@ class UpdateCompanyInfo extends SettingsEvent {
 
 /// Mise à jour des paramètres de facture
 class UpdateInvoiceSettings extends SettingsEvent {
-  /// Devise utilisée
-  final CurrencyType? currency;
-  
   /// Format de numéro de facture
   final String? invoiceNumberFormat;
   
@@ -97,7 +94,6 @@ class UpdateInvoiceSettings extends SettingsEvent {
   final double? defaultTaxRate;
 
   const UpdateInvoiceSettings({
-    this.currency,
     this.invoiceNumberFormat,
     this.invoicePrefix,
     this.defaultPaymentTerms,
@@ -108,7 +104,6 @@ class UpdateInvoiceSettings extends SettingsEvent {
 
   @override
   List<Object?> get props => [
-    currency,
     invoiceNumberFormat,
     invoicePrefix,
     defaultPaymentTerms,

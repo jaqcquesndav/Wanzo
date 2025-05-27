@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:wanzo/core/enums/currency_enum.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart';
+import 'package:wanzo/core/services/currency_service.dart';
 import '../../../constants/colors.dart';
 import '../../../constants/spacing.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
+import '../../../features/settings/presentation/cubit/currency_settings_cubit.dart';
 import '../bloc/sales_bloc.dart';
 import '../models/sale.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart'; 
 
 /// Écran principal de gestion des ventes
 class SalesScreen extends StatefulWidget {
@@ -23,7 +28,6 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Chargement initial des ventes
     context.read<SalesBloc>().add(const LoadSales());
   }
   
@@ -35,9 +39,13 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final currencySettingsState = context.watch<CurrencySettingsCubit>().state;
+    final String appActiveCurrencyCode = currencySettingsState.settings.activeCurrency.code;
+    final AppLocalizations l10n = AppLocalizations.of(context)!; 
+
     return WanzoScaffold(
-      currentIndex: 1, // Ventes a l'index 1
-      title: 'Gestion des ventes',
+      currentIndex: 1, 
+      title: l10n.salesScreenTitle, 
       appBarActions: [
         IconButton(
           icon: const Icon(Icons.filter_list),
@@ -51,10 +59,10 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
             color: Theme.of(context).primaryColor,
             child: TabBar(
               controller: _tabController,
-              tabs: const [
-                Tab(text: 'Toutes'),
-                Tab(text: 'En attente'),
-                Tab(text: 'Terminées'),
+              tabs: [
+                Tab(text: l10n.salesTabAll), 
+                Tab(text: l10n.salesTabPending), 
+                Tab(text: l10n.salesTabCompleted), 
               ],
               onTap: (index) {
                 if (index == 0) {
@@ -76,7 +84,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   return Column(
                     children: [
                       // Sommaire des ventes
-                      _buildSalesSummary(state),
+                      _buildSalesSummary(state, appActiveCurrencyCode),
                       
                       // Liste des ventes
                       Expanded(
@@ -91,14 +99,14 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                                       color: Colors.grey[400],
                                     ),
                                     const SizedBox(height: WanzoSpacing.md),
-                                    const Text(
-                                      'Aucune vente trouvée',
-                                      style: TextStyle(fontSize: 18),
+                                    Text(
+                                      l10n.salesNoSalesFound, 
+                                      style: const TextStyle(fontSize: 18),
                                     ),
                                     const SizedBox(height: WanzoSpacing.lg),
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.add),
-                                      label: const Text('Ajouter une vente'),
+                                      label: Text(l10n.salesAddSaleButton), 
                                       onPressed: () => _navigateToAddSale(context),
                                     ),
                                   ],
@@ -108,7 +116,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                                 itemCount: state.sales.length,
                                 itemBuilder: (context, index) {
                                   final sale = state.sales[index];
-                                  return _buildSaleItem(context, sale);
+                                  return _buildSaleItem(context, sale, appActiveCurrencyCode);
                                 },
                               ),
                       ),
@@ -126,13 +134,13 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: WanzoSpacing.md),
                         Text(
-                          'Erreur: ${state.message}',
+                          l10n.salesErrorPrefix + ': ${state.message}', // Ensure concatenation is correct
                           style: const TextStyle(color: WanzoColors.error),
                         ),
                         const SizedBox(height: WanzoSpacing.lg),
                         ElevatedButton(
                           onPressed: () => context.read<SalesBloc>().add(const LoadSales()),
-                          child: const Text('Réessayer'),
+                          child: Text(l10n.salesRetryButton), 
                         ),
                       ],
                     ),
@@ -159,15 +167,16 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
       builder: (context) {
         DateTime startDate = DateTime.now().subtract(const Duration(days: 30));
         DateTime endDate = DateTime.now();
+        final AppLocalizations l10n = AppLocalizations.of(context)!; 
         
         return AlertDialog(
-          title: const Text('Filtrer les ventes'),
+          title: Text(l10n.salesFilterDialogTitle), 
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Champ de date de début
               ListTile(
-                title: const Text('Date de début'),
+                title: Text(l10n.salesFilterDialogStartDate), 
                 subtitle: Text(DateFormat('dd/MM/yyyy').format(startDate)),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
@@ -185,7 +194,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
               
               // Champ de date de fin
               ListTile(
-                title: const Text('Date de fin'),
+                title: Text(l10n.salesFilterDialogEndDate), 
                 subtitle: Text(DateFormat('dd/MM/yyyy').format(endDate)),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
@@ -205,7 +214,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(l10n.salesFilterDialogCancel), 
             ),
             ElevatedButton(
               onPressed: () {
@@ -217,7 +226,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   ),
                 );
               },
-              child: const Text('Appliquer'),
+              child: Text(l10n.salesFilterDialogApply), 
             ),
           ],
         );
@@ -226,11 +235,13 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
   }
 
   /// Construire le résumé des ventes
-  Widget _buildSalesSummary(SalesLoaded state) {
-    final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
-      decimalDigits: 0,
-    );
+  Widget _buildSalesSummary(SalesLoaded state, String appActiveCurrencyCode) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final currencyService = context.read<CurrencyService>();
+    // Convert appActiveCurrencyCode (String) to Currency enum
+    final Currency activeCurrencyEnum = Currency.values.firstWhere((c) => c.code == appActiveCurrencyCode, orElse: () => Currency.CDF); // Provide a default or handle error
+
+    final double totalInActiveCurrency = currencyService.convertFromCdf(state.totalAmountInCdf, activeCurrencyEnum);
     
     return Container(
       padding: const EdgeInsets.all(WanzoSpacing.md),
@@ -245,11 +256,11 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total des ventes',
+                    l10n.salesSummaryTotal,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
-                    currencyFormat.format(state.totalAmount),
+                    formatCurrency(totalInActiveCurrency, appActiveCurrencyCode), // Display with the string code
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).primaryColor,
@@ -261,7 +272,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Nombre de ventes',
+                    l10n.salesSummaryCount, 
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
@@ -280,32 +291,31 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
   }
 
   /// Construire un élément de la liste des ventes
-  Widget _buildSaleItem(BuildContext context, Sale sale) {
-    final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
-      decimalDigits: 0,
-    );
-    
+  Widget _buildSaleItem(BuildContext context, Sale sale, String appActiveCurrencyCode) {
     Color statusColor;
     String statusText;
-    
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final currencyService = context.read<CurrencyService>();
+    // Convert appActiveCurrencyCode (String) to Currency enum
+    final Currency activeCurrencyEnum = Currency.values.firstWhere((c) => c.code == appActiveCurrencyCode, orElse: () => Currency.CDF); // Provide a default or handle error
+
     // Déterminer la couleur et le texte en fonction du statut
     switch (sale.status) {
       case SaleStatus.pending:
         statusColor = Colors.orange;
-        statusText = 'En attente';
+        statusText = l10n.salesStatusPending; 
         break;
       case SaleStatus.completed:
         statusColor = Colors.green;
-        statusText = 'Terminée';
+        statusText = l10n.salesStatusCompleted; 
         break;
-      case SaleStatus.partiallyPaid: // Added case
+      case SaleStatus.partiallyPaid: 
         statusColor = Colors.blue; 
-        statusText = 'Partiellement payée';
+        statusText = l10n.salesStatusPartiallyPaid; 
         break;
       case SaleStatus.cancelled:
         statusColor = Colors.red;
-        statusText = 'Annulée';
+        statusText = l10n.salesStatusCancelled; 
         break;
     }
     
@@ -329,7 +339,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Vente #${sale.id.substring(0, 8)}',
+                        l10n.salesListItemSaleIdPrefix + sale.id.substring(0, 8),
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -387,7 +397,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   const Icon(Icons.shopping_bag, size: 16, color: Colors.grey),
                   const SizedBox(width: WanzoSpacing.xs),
                   Text(
-                    '${sale.items.length} article${sale.items.length > 1 ? 's' : ''}',
+                    l10n.salesListItemArticles(sale.items.length), 
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -400,36 +410,70 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total:',
+                    l10n.salesListItemTotal, 
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  Text(
-                    currencyFormat.format(sale.totalAmount),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                  RichText(
+                    textAlign: TextAlign.end,
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: formatCurrency(sale.totalAmountInTransactionCurrency, sale.transactionCurrencyCode),
+                        ),
+                        if (sale.transactionCurrencyCode != appActiveCurrencyCode)
+                          TextSpan(
+                            text: '\n(${formatCurrency(currencyService.convertFromCdf(sale.totalAmountInCdf, activeCurrencyEnum), appActiveCurrencyCode)})',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
               
               // Statut de paiement
-              if (!sale.isFullyPaid) ...[
+              // Use isFullyPaid which should be based on transaction currency amounts
+              if ((sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency).abs() > 0.001 && sale.paidAmountInTransactionCurrency < sale.totalAmountInTransactionCurrency) ...[
                 const SizedBox(height: WanzoSpacing.xs),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Reste à payer:',
+                      l10n.salesListItemRemainingToPay, 
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.red,
                       ),
                     ),
-                    Text(
-                      currencyFormat.format(sale.remainingAmount),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                    RichText(
+                      textAlign: TextAlign.end,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: formatCurrency(
+                              sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency,
+                              sale.transactionCurrencyCode
+                            ),
+                          ),
+                          if (sale.transactionCurrencyCode != appActiveCurrencyCode)
+                            TextSpan(
+                              text: '\n(${formatCurrency(currencyService.convertFromCdf(sale.totalAmountInCdf - sale.paidAmountInCdf, activeCurrencyEnum), appActiveCurrencyCode)})',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.red.withOpacity(0.8),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                            ),
+                        ],
                       ),
                     ),
                   ],

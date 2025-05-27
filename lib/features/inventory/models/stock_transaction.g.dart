@@ -24,13 +24,15 @@ class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
       date: fields[4] as DateTime,
       referenceId: fields[5] as String?,
       notes: fields[6] as String?,
+      unitCostInCdf: fields[7] as double,
+      totalValueInCdf: fields[8] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, StockTransaction obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +46,11 @@ class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
       ..writeByte(5)
       ..write(obj.referenceId)
       ..writeByte(6)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(7)
+      ..write(obj.unitCostInCdf)
+      ..writeByte(8)
+      ..write(obj.totalValueInCdf);
   }
 
   @override

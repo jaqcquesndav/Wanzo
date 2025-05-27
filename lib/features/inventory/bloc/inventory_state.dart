@@ -23,19 +23,19 @@ class InventoryLoading extends InventoryState {
 /// État quand les produits sont chargés
 class ProductsLoaded extends InventoryState {
   final List<Product> products;
-  final double totalInventoryValue;
+  final double totalInventoryValueInCdf; // Renamed field
   final int totalProductCount;
   final int lowStockCount;
   
   const ProductsLoaded({
     required this.products,
-    required this.totalInventoryValue,
+    required this.totalInventoryValueInCdf, // Renamed field
     required this.totalProductCount,
     required this.lowStockCount,
   });
   
   @override
-  List<Object?> get props => [products, totalInventoryValue, totalProductCount, lowStockCount];
+  List<Object?> get props => [products, totalInventoryValueInCdf, totalProductCount, lowStockCount];
 }
 
 /// État quand un seul produit est chargé (pour les détails)

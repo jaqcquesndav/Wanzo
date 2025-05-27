@@ -55,6 +55,12 @@ class StockTransaction extends Equatable {
 
   @HiveField(6)
   final String? notes;
+
+  @HiveField(7)
+  final double unitCostInCdf; // Coût unitaire du produit en CDF au moment de la transaction
+
+  @HiveField(8)
+  final double totalValueInCdf; // Valeur totale de la transaction en CDF (quantité * coût unitaire en CDF)
   
   // productName and unitCost are not part of this model as per InventoryRepository
   // If needed, they should be fetched from the Product model using productId
@@ -67,10 +73,12 @@ class StockTransaction extends Equatable {
     required this.date,
     this.referenceId,
     this.notes,
+    required this.unitCostInCdf,
+    required this.totalValueInCdf,
   });
 
   @override
-  List<Object?> get props => [id, productId, type, quantity, date, referenceId, notes];
+  List<Object?> get props => [id, productId, type, quantity, date, referenceId, notes, unitCostInCdf, totalValueInCdf];
 
   StockTransaction copyWith({
     String? id,
@@ -80,6 +88,8 @@ class StockTransaction extends Equatable {
     DateTime? date,
     String? referenceId,
     String? notes,
+    double? unitCostInCdf,
+    double? totalValueInCdf,
   }) {
     return StockTransaction(
       id: id ?? this.id,
@@ -89,6 +99,8 @@ class StockTransaction extends Equatable {
       date: date ?? this.date,
       referenceId: referenceId ?? this.referenceId,
       notes: notes ?? this.notes,
+      unitCostInCdf: unitCostInCdf ?? this.unitCostInCdf,
+      totalValueInCdf: totalValueInCdf ?? this.totalValueInCdf,
     );
   }
 }

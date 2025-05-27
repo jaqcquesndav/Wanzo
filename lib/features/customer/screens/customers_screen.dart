@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart';
+import 'package:wanzo/core/services/currency_service.dart'; 
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
@@ -18,14 +20,18 @@ class CustomersScreen extends StatefulWidget {
 
 class _CustomersScreenState extends State<CustomersScreen> {
   final TextEditingController _searchController = TextEditingController();
-  
+  late CurrencyService _currencyService; 
+
   @override
   void initState() {
     super.initState();
     // Charge la liste des clients au démarrage
     context.read<CustomerBloc>().add(const LoadCustomers());
+    // Initialize CurrencyService
+    _currencyService = CurrencyService(); // Initialize CurrencyService without settingsBloc
+    _currencyService.loadSettings(); // Load currency settings
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -34,6 +40,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final Widget screenContent = Column(
       children: [
         // Barre de recherche
@@ -42,7 +49,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Rechercher un client...',
+              hintText: localizations.searchCustomerHint, 
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
@@ -83,33 +90,36 @@ class _CustomersScreenState extends State<CustomersScreen> {
               if (state is CustomerLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is CustomersLoaded) {
-                return _buildCustomersList(state.customers);
+                return _buildCustomersList(context, state.customers);
               } else if (state is CustomerSearchResults) {
                 return _buildCustomersList(
+                  context, 
                   state.customers,
                   isSearchResult: true,
                   searchTerm: state.searchTerm,
                 );
               } else if (state is TopCustomersLoaded) {
                 return _buildCustomersList(
+                  context, 
                   state.customers,
                   isTopCustomers: true,
                 );
               } else if (state is RecentCustomersLoaded) {
                 return _buildCustomersList(
+                  context, 
                   state.customers,
                   isRecentCustomers: true,
                 );
               } else if (state is CustomerError) {
                 return Center(
                   child: Text(
-                    'Erreur: ${state.message}',
+                    localizations.customerError(state.message), 
                     style: const TextStyle(color: Colors.red),
                   ),
                 );
               }
               
-              return const Center(child: Text('Aucun client à afficher'));
+              return Center(child: Text(localizations.noCustomersToShow)); 
             },
           ),
         ),
@@ -122,17 +132,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clients'),
+        title: Text(localizations.customersTitle), 
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
+            tooltip: localizations.filterCustomersTooltip, 
             onPressed: _showFilterOptions,
           ),
         ],
       ),
-      body: screenContent, // Use the defined screenContent
+      body: screenContent,
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddCustomer(context),
+        tooltip: localizations.addCustomerTooltip, 
         child: const Icon(Icons.add),
       ),
     );
@@ -140,42 +152,44 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   /// Construit la liste des clients
   Widget _buildCustomersList(
+    BuildContext context, 
     List<Customer> customers, {
     bool isSearchResult = false,
     bool isTopCustomers = false,
     bool isRecentCustomers = false,
     String searchTerm = '',
   }) {
+    final localizations = AppLocalizations.of(context)!; 
     if (customers.isEmpty) {
       if (isSearchResult) {
         return Center(
-          child: Text('Aucun résultat pour "$searchTerm"'),
+          child: Text(localizations.noResultsForSearchTerm(searchTerm)), 
         );
       }
-      return const Center(
-        child: Text('Aucun client disponible'),
+      return Center(
+        child: Text(localizations.noCustomersAvailable), 
       );
     }
     
     // Titre spécial pour les listes filtrées
     Widget? header;
     if (isTopCustomers) {
-      header = const Padding(
-        padding: EdgeInsets.all(16.0),
+      header = Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Meilleurs clients par achats',
-          style: TextStyle(
+          localizations.topCustomersByPurchases, 
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
       );
     } else if (isRecentCustomers) {
-      header = const Padding(
-        padding: EdgeInsets.all(16.0),
+      header = Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Clients récemment ajoutés',
-          style: TextStyle(
+          localizations.recentlyAddedCustomers, 
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -185,7 +199,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       header = Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Résultats pour "$searchTerm"',
+          localizations.resultsForSearchTerm(searchTerm), 
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -203,7 +217,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             itemCount: customers.length,
             itemBuilder: (context, index) {
               final customer = customers[index];
-              return _buildCustomerListItem(customer);
+              return _buildCustomerListItem(context, customer); 
             },
           ),
         ),
@@ -212,12 +226,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   /// Construit un élément de la liste des clients
-  Widget _buildCustomerListItem(Customer customer) {
+  Widget _buildCustomerListItem(BuildContext context, Customer customer) { 
+    final localizations = AppLocalizations.of(context)!; 
     final lastPurchaseText = customer.lastPurchaseDate != null
-        ? 'Dernier achat: ${_formatDate(customer.lastPurchaseDate!)}'
-        : 'Pas d\\\'achat récent';
+        ? localizations.lastPurchaseDate(_formatDate(customer.lastPurchaseDate!)) 
+        : localizations.noRecentPurchase; 
     
-    final categoryColor = _getCategoryColor(context, customer.category); // Pass context
+    final categoryColor = _getCategoryColor(context, customer.category);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -235,7 +250,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           children: [
             Text(customer.phoneNumber),
             Text(
-              'Total des achats: ${_formatCurrency(customer.totalPurchases)} FC',
+              localizations.totalPurchasesAmount(_formatCurrency(customer.totalPurchases)), 
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(lastPurchaseText),
@@ -253,17 +268,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
             }
           },
           itemBuilder: (BuildContext context) => [
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>( 
               value: 'details',
-              child: Text('Voir détails'),
+              child: Text(localizations.viewDetails), 
             ),
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>( 
               value: 'edit',
-              child: Text('Modifier'),
+              child: Text(localizations.edit), 
             ),
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>( 
               value: 'delete',
-              child: Text('Supprimer'),
+              child: Text(localizations.delete), 
             ),
           ],
         ),
@@ -274,6 +289,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   /// Affiche les options de filtrage
   void _showFilterOptions() {
+    final localizations = AppLocalizations.of(context)!; 
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -283,7 +299,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.list),
-                title: const Text('Tous les clients'),
+                title: Text(localizations.allCustomers), 
                 onTap: () {
                   Navigator.pop(context);
                   context.read<CustomerBloc>().add(const LoadCustomers());
@@ -291,7 +307,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.star),
-                title: const Text('Meilleurs clients'),
+                title: Text(localizations.topCustomers), 
                 onTap: () {
                   Navigator.pop(context);
                   context.read<CustomerBloc>().add(const LoadTopCustomers());
@@ -299,7 +315,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.history),
-                title: const Text('Clients récents'),
+                title: Text(localizations.recentCustomers), 
                 onTap: () {
                   Navigator.pop(context);
                   context.read<CustomerBloc>().add(const LoadRecentCustomers());
@@ -307,7 +323,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.category),
-                title: const Text('Par catégorie'),
+                title: Text(localizations.byCategory), 
                 onTap: () {
                   Navigator.pop(context);
                   _showCategoriesFilter();
@@ -322,26 +338,27 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   /// Affiche les options de filtrage par catégorie
   void _showCategoriesFilter() {
+    final localizations = AppLocalizations.of(context)!; 
     showDialog(
       context: context,
-      builder: (dialogContext) { // Changed context to dialogContext to avoid conflict
+      builder: (dialogContext) { 
         return AlertDialog(
-          title: const Text('Filtrer par catégorie'),
+          title: Text(localizations.filterByCategory), 
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: CustomerCategory.values.map((category) {
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getCategoryColor(context, category), // Pass context
+                  backgroundColor: _getCategoryColor(context, category), 
                   radius: 12,
-                  child: Text( // Adding a contrasting text for better visibility if needed
-                    _getCategoryName(category)[0],
+                  child: Text( 
+                    _getCategoryName(context, category)[0], 
                     style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
                 ),
-                title: Text(_getCategoryName(category)),
+                title: Text(_getCategoryName(context, category)), 
                 onTap: () {
-                  Navigator.pop(dialogContext); // Use dialogContext
+                  Navigator.pop(dialogContext); 
                   // Ici, on pourrait implémenter un filtre par catégorie
                   // Pour l\'instant, nous revenons simplement à tous les clients
                   context.read<CustomerBloc>().add(const LoadCustomers());
@@ -351,8 +368,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext), // Use dialogContext
-              child: const Text('Annuler'),
+              onPressed: () => Navigator.pop(dialogContext), 
+              child: Text(localizations.cancel), 
             ),
           ],
         );
@@ -362,26 +379,27 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   /// Affiche une boîte de dialogue de confirmation de suppression
   void _showDeleteConfirmation(BuildContext context, Customer customer) {
+    final localizations = AppLocalizations.of(context)!; 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer le client'),
+          title: Text(localizations.deleteCustomerTitle), 
           content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${customer.name} ? Cette action est irréversible.',
+            localizations.deleteCustomerConfirmation(customer.name), 
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(localizations.cancel), 
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 context.read<CustomerBloc>().add(DeleteCustomer(customer.id));
               },
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error), // Use theme color
-              child: const Text('Supprimer'),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              child: Text(localizations.delete), 
             ),
           ],
         );
@@ -436,29 +454,25 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   /// Retourne le nom d\'une catégorie de client
-  String _getCategoryName(CustomerCategory category) {
+  String _getCategoryName(BuildContext context, CustomerCategory category) { 
+    final localizations = AppLocalizations.of(context)!; 
     switch (category) {
       case CustomerCategory.vip:
-        return 'VIP';
+        return localizations.customerCategoryVip; 
       case CustomerCategory.regular:
-        return 'Régulier';
+        return localizations.customerCategoryRegular; 
       case CustomerCategory.new_customer:
-        return 'Nouveau';
+        return localizations.customerCategoryNew; 
       case CustomerCategory.occasional:
-        return 'Occasionnel';
+        return localizations.customerCategoryOccasional; 
       case CustomerCategory.business:
-        return 'Entreprise';
-      default:
-        return 'Inconnu';
+        return localizations.customerCategoryBusiness; 
     }
   }
 
-  /// Formate un montant en devise
   String _formatCurrency(double amount) {
-    return amount.toStringAsFixed(2).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]} ',
-        );
+    // Use CurrencyService to format currency, assuming amount is in CDF
+    return _currencyService.formatAmount(amount); 
   }
 
   /// Formate une date

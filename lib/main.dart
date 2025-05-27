@@ -43,6 +43,10 @@ import 'package:wanzo/features/financing/repositories/financing_repository.dart'
 import 'package:wanzo/features/subscription/repositories/subscription_repository.dart'; // Ensure this import is present
 import 'package:wanzo/features/transactions/repositories/transaction_repository.dart'; // Added
 
+// Core Services for Currency
+import 'package:wanzo/core/services/currency_service.dart';
+import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
+
 // BLoCs
 import 'package:wanzo/features/auth/bloc/auth_bloc.dart';
 import 'package:wanzo/features/inventory/bloc/inventory_bloc.dart';
@@ -147,6 +151,10 @@ Future<void> main() async {
   final transactionRepository = TransactionRepository(); // Added
   await transactionRepository.init(); // Added
 
+  // Initialize CurrencyService
+  final currencyService = CurrencyService();
+  await currencyService.loadSettings();
+
   final subscriptionRepository = SubscriptionRepository(
     expenseRepository: expenseRepository,
     apiService: apiClient,
@@ -164,6 +172,8 @@ Future<void> main() async {
   // Instantiate BLoCs
   final authBloc = AuthBloc(authRepository: authRepository);
   final operationJournalBloc = OperationJournalBloc(repository: operationJournalRepository);
+
+  // CurrencySettingsCubit will be created in MyApp's MultiBlocProvider
 
   final inventoryBloc = InventoryBloc(
     inventoryRepository: inventoryRepository,
@@ -242,8 +252,8 @@ Future<void> main() async {
     transactionRepository: transactionRepository, // Added
     subscriptionRepository: subscriptionRepository,
     // Pass services that might be needed via RepositoryProvider (if any)
-    // For now, focusing on repositories as per RepositoryProvider.of usage.
-    // notificationService: notificationService, // Example if needed
+    currencyService: currencyService, // Added CurrencyService
+    // notificationService: notificationService, // Example
   ));
 }
 
@@ -277,7 +287,9 @@ class MyApp extends StatelessWidget {
   final FinancingRepository financingRepository;
   final SubscriptionRepository subscriptionRepository;
   final TransactionRepository transactionRepository; // Added
-  // final NotificationService notificationService; // Example
+
+  // Services
+  final CurrencyService currencyService; // Added
 
   const MyApp({
     super.key,
@@ -309,6 +321,8 @@ class MyApp extends StatelessWidget {
     required this.financingRepository,
     required this.transactionRepository, // Added
     required this.subscriptionRepository,
+    // Services
+    required this.currencyService, // Added
     // required this.notificationService, // Example
   });
 
@@ -330,7 +344,8 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: transactionRepository), // Added
         RepositoryProvider.value(value: subscriptionRepository),
         // If NotificationService needs to be available via RepositoryProvider.of<NotificationService>(context)
-        // RepositoryProvider.value(value: notificationService), 
+        // RepositoryProvider.value(value: notificationService),
+        RepositoryProvider.value(value: currencyService), // Added CurrencyService
       ],
       child: MultiBlocProvider(
         providers: [
@@ -347,6 +362,7 @@ class MyApp extends StatelessWidget {
           BlocProvider.value(value: subscriptionBloc),
           BlocProvider.value(value: financingBloc),
           BlocProvider.value(value: dashboardBloc), // Added
+          BlocProvider(create: (context) => CurrencySettingsCubit(context.read<CurrencyService>())..loadSettings()), // Added CurrencySettingsCubit
         ],
         child: BlocBuilder<SettingsBloc, settings_bloc_state.SettingsState>(
           builder: (context, settingsState) {

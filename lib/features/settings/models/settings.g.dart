@@ -22,7 +22,6 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       companyPhone: fields[2] as String,
       companyEmail: fields[3] as String,
       companyLogo: fields[4] as String,
-      currency: fields[5] as CurrencyType,
       dateFormat: fields[6] as String,
       themeMode: fields[7] as AppThemeMode,
       language: fields[8] as String,
@@ -44,6 +43,7 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       inAppNotificationsEnabled: fields[24] as bool,
       emailNotificationsEnabled: fields[25] as bool,
       soundNotificationsEnabled: fields[26] as bool,
+      activeCurrency: fields[27] as Currency,
     );
   }
 
@@ -61,8 +61,6 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       ..write(obj.companyEmail)
       ..writeByte(4)
       ..write(obj.companyLogo)
-      ..writeByte(5)
-      ..write(obj.currency)
       ..writeByte(6)
       ..write(obj.dateFormat)
       ..writeByte(7)
@@ -104,7 +102,9 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       ..writeByte(25)
       ..write(obj.emailNotificationsEnabled)
       ..writeByte(26)
-      ..write(obj.soundNotificationsEnabled);
+      ..write(obj.soundNotificationsEnabled)
+      ..writeByte(27)
+      ..write(obj.activeCurrency);
   }
 
   @override
@@ -114,50 +114,6 @@ class SettingsAdapter extends TypeAdapter<Settings> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SettingsAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class CurrencyTypeAdapter extends TypeAdapter<CurrencyType> {
-  @override
-  final int typeId = 30;
-
-  @override
-  CurrencyType read(BinaryReader reader) {
-    switch (reader.readByte()) {
-      case 0:
-        return CurrencyType.fc;
-      case 1:
-        return CurrencyType.cdf;
-      case 2:
-        return CurrencyType.usd;
-      default:
-        return CurrencyType.fc;
-    }
-  }
-
-  @override
-  void write(BinaryWriter writer, CurrencyType obj) {
-    switch (obj) {
-      case CurrencyType.fc:
-        writer.writeByte(0);
-        break;
-      case CurrencyType.cdf:
-        writer.writeByte(1);
-        break;
-      case CurrencyType.usd:
-        writer.writeByte(2);
-        break;
-    }
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CurrencyTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -216,8 +172,6 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       companyPhone: json['companyPhone'] as String? ?? '',
       companyEmail: json['companyEmail'] as String? ?? '',
       companyLogo: json['companyLogo'] as String? ?? '',
-      currency: $enumDecodeNullable(_$CurrencyTypeEnumMap, json['currency']) ??
-          CurrencyType.fc,
       dateFormat: json['dateFormat'] as String? ?? 'DD/MM/YYYY',
       themeMode:
           $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
@@ -249,6 +203,9 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
           json['emailNotificationsEnabled'] as bool? ?? false,
       soundNotificationsEnabled:
           json['soundNotificationsEnabled'] as bool? ?? true,
+      activeCurrency:
+          $enumDecodeNullable(_$CurrencyEnumMap, json['activeCurrency']) ??
+              Currency.CDF,
     );
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -257,7 +214,6 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'companyPhone': instance.companyPhone,
       'companyEmail': instance.companyEmail,
       'companyLogo': instance.companyLogo,
-      'currency': _$CurrencyTypeEnumMap[instance.currency]!,
       'dateFormat': instance.dateFormat,
       'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
       'language': instance.language,
@@ -279,16 +235,17 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'inAppNotificationsEnabled': instance.inAppNotificationsEnabled,
       'emailNotificationsEnabled': instance.emailNotificationsEnabled,
       'soundNotificationsEnabled': instance.soundNotificationsEnabled,
+      'activeCurrency': _$CurrencyEnumMap[instance.activeCurrency]!,
     };
-
-const _$CurrencyTypeEnumMap = {
-  CurrencyType.fc: 'fc',
-  CurrencyType.cdf: 'cdf',
-  CurrencyType.usd: 'usd',
-};
 
 const _$AppThemeModeEnumMap = {
   AppThemeMode.light: 'light',
   AppThemeMode.dark: 'dark',
   AppThemeMode.system: 'system',
+};
+
+const _$CurrencyEnumMap = {
+  Currency.CDF: 'CDF',
+  Currency.USD: 'USD',
+  Currency.FCFA: 'FCFA',
 };

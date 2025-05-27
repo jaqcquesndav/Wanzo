@@ -1,0 +1,789 @@
+{
+  "@@locale": "fr",
+  "invoiceSettingsTitle": "Paramètres de facturation",
+  "saveChanges": "Enregistrer les modifications",
+  "currencySettings": "Paramètres de devise",
+  "activeCurrency": "Devise active",
+  "errorFieldRequired": "Ce champ est requis",
+  "exchangeRateSpecific": "Taux de change {fromCurrency} vers {toCurrency}",
+  "errorInvalidRate": "Veuillez entrer un taux valide supérieur à 0",
+  "invoiceFormatting": "Formatage des factures",
+  "invoiceFormatHint": "Utilisez {YEAR}, {MONTH}, {SEQ} pour année, mois, séquence.",
+  "invoiceNumberFormat": "Format du numéro de facture",
+  "invoicePrefix": "Préfixe de facture",
+  "taxesAndConditions": "Taxes et conditions",
+  "showTaxesOnInvoices": "Afficher les taxes sur les factures",
+  "defaultTaxRatePercentage": "Taux de taxe par défaut (%)",
+  "errorInvalidTaxRate": "Le taux de taxe doit être compris entre 0 et 100",
+  "defaultPaymentTerms": "Conditions de paiement par défaut",
+  "defaultInvoiceNotes": "Notes de facture par défaut",
+  "settingsSavedSuccess": "Paramètres enregistrés avec succès.",
+  "errorUnknown": "Une erreur inconnue s'est produite.",
+  "currencySettingsError": "Erreur des paramètres de devise: {message}",
+  "currencySettingsSavedSuccess": "Paramètres de devise enregistrés avec succès.",
+  "anErrorOccurred": "Une erreur s'est produite",
+  "currencyCDF": "Franc Congolais",
+  "currencyUSD": "Dollar Américain",
+  "currencyFCFA": "Franc CFA",
+
+  "editProductTitle": "Modifier le produit",
+  "addProductTitle": "Ajouter un produit",
+  "productCategoryFood": "Alimentation",
+  "productCategoryDrink": "Boisson",
+  "productCategoryOther": "Autre",
+  "units": "Unités",
+  "notes": "Notes (Facultatif)",
+  "saveProduct": "Enregistrer le produit",
+
+  "inventoryValue": "Valeur de l'inventaire",
+  "products": "Produits",
+  "stockMovements": "Mouvements de stock",
+  "noProducts": "Aucun produit pour le moment.",
+  "noStockMovements": "Aucun mouvement de stock pour le moment.",
+  "searchProducts": "Rechercher des produits...",
+  "totalStock": "Stock total",
+  "valueInCdf": "Valeur (CDF)",
+  "valueIn": "Valeur ({currencyCode})",
+  "@valueIn": {
+    "placeholders": { "currencyCode": { "type": "String", "example": "USD" } }
+  },
+  "lastModified": "Dernière modification",
+  "productDetails": "Détails du produit",
+  "deleteProduct": "Supprimer le produit",
+  "confirmDeleteProductTitle": "Confirmer la suppression",
+  "confirmDeleteProductMessage": "Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "stockIn": "Entrée de stock",
+  "stockOut": "Sortie de stock",
+  "adjustment": "Ajustement",
+  "quantity": "Quantité",
+  "reason": "Raison (Facultatif)",
+  "addStockMovement": "Ajouter un mouvement de stock",
+  "newStock": "Nouveau stock",
+  "value": "Valeur",
+  "type": "Type",
+  "date": "Date",
+  "product": "Produit",
+  "selectProduct": "Sélectionner un produit",
+  "selectCategory": "Sélectionner une catégorie",
+  "selectUnit": "Sélectionner une unité",
+
+  "imagePickingErrorMessage": "Erreur lors de la sélection de l'image : {errorDetails}",
+  "@imagePickingErrorMessage": {
+    "placeholders": { "errorDetails": { "type": "String" } }
+  },
+  "galleryAction": "Galerie",
+  "cameraAction": "Appareil photo",
+  "removeImageAction": "Supprimer l'image",
+  "productImageSectionTitle": "Image du produit",
+  "addImageLabel": "Ajouter une image",
+  "generalInformationSectionTitle": "Informations générales",
+  "productNameLabel": "Nom du produit",
+  "productNameValidationError": "Veuillez saisir le nom du produit.",
+  "productDescriptionLabel": "Description",
+  "productBarcodeLabel": "Code-barres (Facultatif)",
+  "featureComingSoonMessage": "Fonctionnalité bientôt disponible !",
+  "productCategoryLabel": "Catégorie",
+  "productCategoryElectronics": "Électronique",
+  "productCategoryClothing": "Vêtements",
+  "productCategoryHousehold": "Ménager",
+  "productCategoryHygiene": "Hygiène",
+  "productCategoryOffice": "Fournitures de bureau",
+  "pricingSectionTitle": "Prix et Devise",
+  "inputCurrencyLabel": "Devise de saisie",
+  "inputCurrencyValidationError": "Veuillez sélectionner une devise de saisie.",
+  "costPriceLabel": "Prix d'achat",
+  "costPriceValidationError": "Veuillez saisir le prix d'achat.",
+  "negativePriceValidationError": "Le prix ne peut pas être négatif.",
+  "invalidNumberValidationError": "Veuillez saisir un nombre valide.",
+  "sellingPriceLabel": "Prix de vente",
+  "sellingPriceValidationError": "Veuillez saisir le prix de vente.",
+  "stockManagementSectionTitle": "Gestion des stocks",
+  "stockQuantityLabel": "Quantité en stock",
+  "stockQuantityValidationError": "Veuillez saisir la quantité en stock.",
+  "negativeQuantityValidationError": "La quantité ne peut pas être négative.",
+  "productUnitLabel": "Unité",
+  "productUnitPiece": "Pièce(s)",
+  "productUnitKg": "Kilogramme(s) (kg)",
+  "productUnitG": "Gramme(s) (g)",
+  "productUnitL": "Litre(s) (L)",
+  "productUnitMl": "Millilitre(s) (ml)",
+  "productUnitPackage": "Paquet(s)",
+  "productUnitBox": "Boîte(s)",
+  "productUnitOther": "Autre unité",
+  "lowStockThresholdLabel": "Seuil d'alerte de stock bas",
+  "lowStockThresholdHelper": "Recevoir une alerte lorsque le stock atteint ce niveau.",
+  "lowStockThresholdValidationError": "Veuillez saisir un seuil d'alerte valide.",
+  "negativeThresholdValidationError": "Le seuil ne peut pas être négatif.",
+  "saveChangesButton": "Enregistrer les modifications",
+  "addProductButton": "Ajouter le produit",
+  "notesLabelOptional": "Notes (Facultatif)",
+  "addStockDialogTitle": "Ajouter du stock à {productName}",
+  "@addStockDialogTitle": {
+    "placeholders": {
+      "productName": {
+        "type": "String",
+        "example": "Produit A"
+      }
+    }
+  },
+  "currentStockLabel": "Stock actuel",
+  "quantityToAddLabel": "Quantité à ajouter",
+  "quantityValidationError": "Veuillez saisir une quantité.",
+  "positiveQuantityValidationError": "La quantité doit être positive pour un achat.",
+  "addButtonLabel": "Ajouter",
+  "stockAdjustmentDefaultNote": "Ajustement de stock",
+  "stockTransactionTypeOther": "Autre",
+  "@stockTransactionTypeOther": {
+    "description": "Label pour les autres types de transactions de stock"
+  },
+  "productInitialFallback": "P",
+  "@productInitialFallback": {
+    "description": "Lettre initiale de secours pour l'image du produit si le nom est vide ou si l'image ne se charge pas"
+  },
+  "inventoryScreenTitle": "Inventaire",
+  "@inventoryScreenTitle": {
+    "description": "Titre de l'écran d'inventaire"
+  },
+  "allProductsTabLabel": "Tous les produits",
+  "@allProductsTabLabel": {
+    "description": "Étiquette pour l'onglet Tous les produits"
+  },
+  "lowStockTabLabel": "Stock faible",
+  "@lowStockTabLabel": {
+    "description": "Étiquette pour l'onglet Stock faible"
+  },
+  "transactionsTabLabel": "Transactions",
+  "@transactionsTabLabel": {
+    "description": "Étiquette pour l'onglet Transactions"
+  },
+  "noProductsAvailableMessage": "Aucun produit disponible.",
+  "@noProductsAvailableMessage": {
+    "description": "Message affiché lorsqu'il n'y a aucun produit"
+  },
+  "noLowStockProductsMessage": "Aucun produit en stock faible.",
+  "@noLowStockProductsMessage": {
+    "description": "Message affiché lorsqu'aucun produit n'a un stock faible"
+  },
+  "noTransactionsAvailableMessage": "Aucune transaction disponible.",
+  "@noTransactionsAvailableMessage": {
+    "description": "Message affiché lorsqu'il n'y a aucune transaction"
+  },
+  "searchProductDialogTitle": "Rechercher un produit",
+  "@searchProductDialogTitle": {
+    "description": "Titre de la boîte de dialogue de recherche de produit"
+  },
+  "searchProductHintText": "Saisir le nom du produit ou le code-barres...",
+  "@searchProductHintText": {
+    "description": "Texte d'aide pour le champ de recherche de produit"
+  },
+  "cancelButtonLabel": "Annuler",
+  "@cancelButtonLabel": {
+    "description": "Étiquette pour le bouton Annuler"
+  },
+  "searchButtonLabel": "Rechercher",
+  "@searchButtonLabel": {
+    "description": "Étiquette pour le bouton Rechercher"
+  },
+  "filterByCategoryDialogTitle": "Filtrer par catégorie",
+  "@filterByCategoryDialogTitle": {
+    "description": "Titre de la boîte de dialogue de filtrage par catégorie"
+  },
+  "noCategoriesAvailableMessage": "Aucune catégorie disponible pour le filtrage.",
+  "@noCategoriesAvailableMessage": {
+    "description": "Message affiché lorsqu'aucune catégorie n'est disponible pour le filtrage"
+  },
+  "showAllButtonLabel": "Afficher tout",
+  "@showAllButtonLabel": {
+    "description": "Étiquette pour le bouton Afficher tout dans les filtres"
+  },
+  "noProductsInInventoryMessage": "Vous n\\'avez encore ajouté aucun produit à votre inventaire.",
+  "@noProductsInInventoryMessage": {
+    "description": "Message affiché sur l'écran d'inventaire vide"
+  },
+  "priceLabel": "Prix",
+  "@priceLabel": {
+    "description": "Étiquette pour le prix du produit"
+  },
+  "inputPriceLabel": "Saisie",
+  "@inputPriceLabel": {
+    "description": "Étiquette pour le prix de saisie du produit"
+  },
+  "stockLabel": "Stock",
+  "@stockLabel": {
+    "description": "Étiquette pour la quantité en stock du produit"
+  },
+  "unknownProductLabel": "Produit inconnu",
+  "@unknownProductLabel": {
+    "description": "Étiquette pour un produit introuvable"
+  },
+  "quantityLabel": "Quantité",
+  "@quantityLabel": {
+    "description": "Étiquette pour la quantité"
+  },
+  "dateLabel": "Date",
+  "@dateLabel": {
+    "description": "Étiquette pour la date"
+  },
+  "valueLabel": "Valeur",
+  "@valueLabel": {
+    "description": "Étiquette pour la valeur"
+  },
+  "retryButtonLabel": "Réessayer",
+  "@retryButtonLabel": {
+    "description": "Étiquette pour le bouton Réessayer"
+  },
+  "stockTransactionTypePurchase": "Achat",
+  "@stockTransactionTypePurchase": {
+    "description": "Étiquette pour le type de transaction de stock Achat"
+  },
+  "stockTransactionTypeSale": "Vente",
+  "@stockTransactionTypeSale": {
+    "description": "Étiquette pour le type de transaction de stock Vente"
+  },
+  "stockTransactionTypeAdjustment": "Ajustement",
+  "@stockTransactionTypeAdjustment": {
+    "description": "Étiquette pour le type de transaction de stock Ajustement"
+  },
+
+  "salesScreenTitle": "Gestion des ventes",
+  "@salesScreenTitle": {
+    "description": "Titre de l'écran de gestion des ventes"
+  },
+  "salesTabAll": "Toutes",
+  "@salesTabAll": {
+    "description": "Étiquette pour l'onglet Toutes les ventes"
+  },
+  "salesTabPending": "En attente",
+  "@salesTabPending": {
+    "description": "Étiquette pour l'onglet Ventes en attente"
+  },
+  "salesTabCompleted": "Terminées",
+  "@salesTabCompleted": {
+    "description": "Étiquette pour l'onglet Ventes terminées"
+  },
+  "salesFilterDialogTitle": "Filtrer les ventes",
+  "@salesFilterDialogTitle": {
+    "description": "Titre de la boîte de dialogue de filtrage des ventes"
+  },
+  "salesFilterDialogCancel": "Annuler",
+  "@salesFilterDialogCancel": {
+    "description": "Étiquette du bouton Annuler dans la boîte de dialogue de filtrage des ventes"
+  },
+  "salesFilterDialogApply": "Appliquer",
+  "@salesFilterDialogApply": {
+    "description": "Étiquette du bouton Appliquer dans la boîte de dialogue de filtrage des ventes"
+  },
+  "salesSummaryTotal": "Total des ventes",
+  "@salesSummaryTotal": {
+    "description": "Étiquette pour le total des ventes dans le résumé"
+  },
+  "salesSummaryCount": "Nombre de ventes",
+  "@salesSummaryCount": {
+    "description": "Étiquette pour le nombre de ventes dans le résumé"
+  },
+  "salesStatusPending": "En attente",
+  "@salesStatusPending": {
+    "description": "Texte de statut pour les ventes en attente"
+  },
+  "salesStatusCompleted": "Terminée",
+  "@salesStatusCompleted": {
+    "description": "Texte de statut pour les ventes terminées"
+  },
+  "salesStatusPartiallyPaid": "Partiellement payée",
+  "@salesStatusPartiallyPaid": {
+    "description": "Texte de statut pour les ventes partiellement payées"
+  },
+  "salesStatusCancelled": "Annulée",
+  "@salesStatusCancelled": {
+    "description": "Texte de statut pour les ventes annulées"
+  },
+  "salesNoSalesFound": "Aucune vente trouvée",
+  "@salesNoSalesFound": {
+    "description": "Message lorsque aucune vente n'est trouvée"
+  },
+  "salesAddSaleButton": "Ajouter une vente",
+  "@salesAddSaleButton": {
+    "description": "Étiquette pour le bouton Ajouter une vente"
+  },
+  "salesErrorPrefix": "Erreur",
+  "@salesErrorPrefix": {
+    "description": "Préfixe pour les messages d'erreur sur l'écran des ventes"
+  },
+  "salesRetryButton": "Réessayer",
+  "@salesRetryButton": {
+    "description": "Étiquette pour le bouton Réessayer sur l'écran des ventes"
+  },
+  "salesFilterDialogStartDate": "Date de début",
+  "@salesFilterDialogStartDate": {
+    "description": "Étiquette pour la date de début dans la boîte de dialogue de filtrage des ventes"
+  },
+  "salesFilterDialogEndDate": "Date de fin",
+  "@salesFilterDialogEndDate": {
+    "description": "Étiquette pour la date de fin dans la boîte de dialogue de filtrage des ventes"
+  },
+  "salesListItemSaleIdPrefix": "Vente #",
+  "@salesListItemSaleIdPrefix": {
+    "description": "Préfixe pour l'ID de vente dans un élément de la liste des ventes"
+  },
+  "salesListItemArticles": "{count,plural, =1{1 article} other{{count} articles}}",
+  "@salesListItemArticles": {
+    "description": "Texte pour le nombre d'articles dans un élément de vente",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "salesListItemTotal": "Total :",
+  "@salesListItemTotal": {
+    "description": "Étiquette pour le montant total dans un élément de la liste des ventes"
+  },
+  "salesListItemRemainingToPay": "Reste à payer :",
+  "@salesListItemRemainingToPay": {
+    "description": "Étiquette pour le montant restant à payer dans un élément de la liste des ventes"
+  },
+
+  "subscriptionScreenTitle": "Gestion des Abonnements",
+  "subscriptionUnsupportedFileType": "Type de fichier non supporté. Veuillez choisir un fichier JPG ou PNG.",
+  "subscriptionFileTooLarge": "Fichier trop volumineux. La taille maximale est de 5MB.",
+  "subscriptionNoImageSelected": "Aucune image sélectionnée.",
+  "subscriptionRetryButton": "Réessayer",
+  "subscriptionUnhandledState": "État non géré ou initialisation...",
+  "subscriptionSectionOurOffers": "Nos Offres d'Abonnement",
+  "subscriptionSectionCurrentSubscription": "Votre Abonnement Actuel",
+  "subscriptionSectionTokenUsage": "Utilisation des Tokens Adha",
+  "subscriptionSectionInvoiceHistory": "Historique des Factures",
+  "subscriptionSectionPaymentMethods": "Méthodes de Paiement",
+  "subscriptionChangeSubscriptionButton": "Changer d'abonnement",
+  "subscriptionTierFree": "Gratuit",
+  "subscriptionTierUsers": "Utilisateurs : {count}",
+  "@subscriptionTierUsers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionTierAdhaTokens": "Tokens Adha : {count}",
+  "@subscriptionTierAdhaTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionTierFeatures": "Fonctionnalités :",
+  "subscriptionTierCurrentPlanChip": "Plan Actuel",
+  "subscriptionTierChoosePlanButton": "Choisir ce plan",
+  "subscriptionAvailableAdhaTokens": "Tokens Adha disponibles : {count}",
+  "@subscriptionAvailableAdhaTokens": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionTopUpTokensButton": "Recharger des Tokens",
+  "subscriptionNoInvoices": "Aucune facture disponible pour le moment.",
+  "subscriptionInvoiceListTitle": "Facture {id} - {date}",
+  "@subscriptionInvoiceListTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionInvoiceListSubtitle": "Montant : {amount} - Statut : {status}",
+  "@subscriptionInvoiceListSubtitle": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionDownloadInvoiceTooltip": "Télécharger la facture",
+  "subscriptionSimulateDownloadInvoice": "Simulation : Téléchargement de {id} depuis {url}",
+  "@subscriptionSimulateDownloadInvoice": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionSimulateViewInvoiceDetails": "Simulation : Voir détails de la facture {id}",
+  "@subscriptionSimulateViewInvoiceDetails": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionPaymentMethodsNextInvoice": "Méthodes de paiement pour la prochaine facture :",
+  "subscriptionPaymentMethodsRegistered": "Méthodes enregistrées :",
+  "subscriptionPaymentMethodsOtherOptions": "Autres options de paiement :",
+  "subscriptionPaymentMethodNewCard": "Nouvelle Carte Bancaire",
+  "subscriptionPaymentMethodNewMobileMoney": "Nouveau Mobile Money",
+  "subscriptionPaymentMethodManual": "Paiement Manuel (Transfert/Dépôt)",
+  "subscriptionManualPaymentInstructions": "Veuillez effectuer le transfert/dépôt aux coordonnées qui seront fournies et télécharger une preuve de paiement.",
+  "subscriptionUploadProofButton": "Télécharger la preuve",
+  "subscriptionReplaceProofButton": "Remplacer la preuve",
+  "subscriptionConfirmPaymentMethodButton": "Confirmer la méthode de paiement",
+  "subscriptionSimulatePaymentMethodSelected": "Méthode de paiement sélectionnée : {method} (Simulation)",
+  "@subscriptionSimulatePaymentMethodSelected": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionChangeDialogTitle": "Changer d'abonnement",
+  "subscriptionChangeDialogTierSubtitle": "{price} - Tokens : {tokens}",
+  "@subscriptionChangeDialogTierSubtitle": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCancel": "Annuler",
+  "subscriptionTopUpDialogTitle": "Recharger des Tokens Adha",
+  "subscriptionTopUpDialogAmount": "{amount} {currencyCode}",
+
+  "subscriptionUpdateSuccessMessage": "Abonnement mis à jour avec succès.",
+  "subscriptionUpdateFailureMessage": "Échec de la mise à jour de l'abonnement : {error}",
+  "@subscriptionUpdateFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionTokenTopUpSuccessMessage": "Recharge de tokens réussie.",
+  "subscriptionTokenTopUpFailureMessage": "Échec de la recharge de tokens : {error}",
+  "@subscriptionTokenTopUpFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionPaymentProofUploadSuccessMessage": "Preuve de paiement téléchargée avec succès.",
+  "subscriptionPaymentProofUploadFailureMessage": "Échec du téléchargement de la preuve de paiement : {error}",
+  "@subscriptionPaymentProofUploadFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCurrentPlanTitle": "Plan Actuel : {tierName}",
+  "@subscriptionCurrentPlanTitle": {
+    "placeholders": {
+      "tierName": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCurrentPlanPrice": "Prix : {price}",
+  "@subscriptionCurrentPlanPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionProofUploadedLabel": "Preuve Téléchargée : {fileName}",
+  "@subscriptionProofUploadedLabel": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionNoActivePlan": "Vous n'avez pas de plan d'abonnement actif.",
+
+  "contactsScreenTitle": "Contacts",
+  "contactsScreenClientsTab": "Clients",
+  "contactsScreenSuppliersTab": "Fournisseurs",
+  "contactsScreenAddClientTooltip": "Ajouter un client",
+  "contactsScreenAddSupplierTooltip": "Ajouter un fournisseur",
+
+  "searchCustomerHint": "Rechercher un client...",
+  "customerError": "Erreur : {message}",
+  "@customerError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "noCustomersToShow": "Aucun client à afficher",
+  "customersTitle": "Clients",
+  "filterCustomersTooltip": "Filtrer les clients",
+  "addCustomerTooltip": "Ajouter un nouveau client",
+  "noResultsForSearchTerm": "Aucun résultat pour {searchTerm}",
+  "@noResultsForSearchTerm": {
+    "placeholders": {
+      "searchTerm": {
+        "type": "String"
+      }
+    }
+  },
+  "noCustomersAvailable": "Aucun client disponible",
+  "topCustomersByPurchases": "Meilleurs clients par achats",
+  "recentlyAddedCustomers": "Clients récemment ajoutés",
+  "resultsForSearchTerm": "Résultats pour {searchTerm}",
+  "@resultsForSearchTerm": {
+    "placeholders": {
+      "searchTerm": {
+        "type": "String"
+      }
+    }
+  },
+  "lastPurchaseDate": "Dernier achat : {date}",
+  "@lastPurchaseDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noRecentPurchase": "Aucun achat récent",
+  "totalPurchasesAmount": "Total des achats : {amount}",
+  "@totalPurchasesAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "viewDetails": "Voir les détails",
+  "edit": "Modifier",
+
+  "allCustomers": "Tous les clients",
+  "topCustomers": "Meilleurs clients",
+  "recentCustomers": "Clients récents",
+  "byCategory": "Par catégorie",
+  "filterByCategory": "Filtrer par catégorie",
+  "deleteCustomerTitle": "Supprimer le client",
+  "deleteCustomerConfirmation": "Êtes-vous sûr de vouloir supprimer {customerName} ? Cette action est irréversible.",
+  "@deleteCustomerConfirmation": {
+    "placeholders": {
+      "customerName": {
+        "type": "String"
+      }
+    }
+  },
+  "customerCategoryVip": "VIP",
+  "customerCategoryRegular": "Régulier",
+  "customerCategoryNew": "Nouveau",
+  "customerCategoryOccasional": "Occasionnel",
+  "customerCategoryBusiness": "Affaires",
+  "customerCategoryUnknown": "Inconnue",
+
+  "editCustomerTitle": "Modifier le client",
+  "addCustomerTitle": "Ajouter un client",
+  "customerPhoneHint": "+243 999 123 456",
+
+  "customerInformation": "Informations du client",
+  "customerNameLabel": "Nom du client",
+  "customerNameValidationError": "Veuillez saisir le nom du client.",
+  "customerPhoneLabel": "Téléphone du client",
+  "customerPhoneValidationError": "Veuillez saisir le numéro de téléphone du client.",
+  "customerEmailLabel": "Email du client (Facultatif)",
+  "customerEmailLabelOptional": "Email du client",
+  "customerEmailValidationError": "Veuillez saisir une adresse e-mail valide.",
+  "customerAddressLabel": "Adresse du client (Facultatif)",
+  "customerAddressLabelOptional": "Adresse du client",
+  "customerCategoryLabel": "Catégorie de client",
+  "customerNotesLabel": "Notes (Facultatif)",
+  "updateButtonLabel": "Mettre à jour",
+
+  "customerDetailsTitle": "Détails du client",
+  "editCustomerTooltip": "Modifier le client",
+  "customerNotFound": "Client non trouvé",
+  "contactInformationSectionTitle": "Informations de contact",
+  "purchaseStatisticsSectionTitle": "Statistiques d'achat",
+  "totalPurchasesLabel": "Total des achats",
+  "lastPurchaseLabel": "Dernier achat",
+  "noPurchaseRecorded": "Aucun achat enregistré",
+  "customerSinceLabel": "Client depuis",
+  "addSaleButtonLabel": "Ajouter une vente",
+  "callButtonLabel": "Appeler",
+  "deleteButtonLabel": "Supprimer",
+  "callingNumber": "Appel vers {phoneNumber}...",
+  "@callingNumber": {
+    "placeholders": {
+      "phoneNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "emailingTo": "Envoi d'email à {email}...",
+  "@emailingTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "openingMapFor": "Ouverture de la carte pour {address}...",
+  "@openingMapFor": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+
+  "searchSupplierHint": "Rechercher un fournisseur...",
+  "clearSearchTooltip": "Effacer la recherche",
+  "supplierError": "Erreur : {message}",
+  "@supplierError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "noSuppliersToShow": "Aucun fournisseur à afficher",
+  "suppliersTitle": "Fournisseurs",
+  "filterSuppliersTooltip": "Filtrer les fournisseurs",
+  "addSupplierTooltip": "Ajouter un nouveau fournisseur",
+  "noSuppliersAvailable": "Aucun fournisseur disponible",
+  "topSuppliersByPurchases": "Principaux fournisseurs par achats",
+  "recentlyAddedSuppliers": "Fournisseurs récemment ajoutés",
+  "contactPerson": "Contact : {name}",
+  "@contactPerson": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moreOptionsTooltip": "Plus d''options",
+  "allSuppliers": "Tous les fournisseurs",
+  "topSuppliers": "Principaux fournisseurs",
+  "recentSuppliers": "Fournisseurs récents",
+  "deleteSupplierTitle": "Supprimer le fournisseur",
+  "deleteSupplierConfirmation": "Êtes-vous sûr de vouloir supprimer {supplierName} ? Cette action est irréversible.",
+  "@deleteSupplierConfirmation": {
+    "placeholders": {
+      "supplierName": {
+        "type": "String"
+      }
+    }
+  },
+  "supplierCategoryStrategic": "Stratégique",
+  "supplierCategoryRegular": "Régulier",
+  "supplierCategoryNew": "Nouveau",
+  "supplierCategoryOccasional": "Occasionnel",
+  "supplierCategoryInternational": "International",
+  "supplierCategoryUnknown": "Inconnu",
+
+  "addSupplierTitle": "Ajouter un fournisseur",
+  "editSupplierTitle": "Modifier le fournisseur",
+  "supplierInformation": "Informations du fournisseur",
+  "supplierNameLabel": "Nom du fournisseur *",
+  "supplierNameValidationError": "Le nom est obligatoire",
+  "supplierPhoneLabel": "Numéro de téléphone *",
+  "supplierPhoneValidationError": "Le numéro de téléphone est obligatoire",
+  "supplierPhoneHint": "+243 999 123 456",
+  "supplierEmailLabel": "Email",
+  "supplierEmailValidationError": "Veuillez entrer un email valide",
+  "supplierContactPersonLabel": "Personne à contacter",
+  "supplierAddressLabel": "Adresse",
+  "commercialInformation": "Informations commerciales",
+  "deliveryTimeLabel": "Délai de livraison (jours)",
+  "paymentTermsLabel": "Conditions de paiement",
+  "paymentTermsHint": "Ex: Net 30, 50% d'avance, etc.",
+  "supplierCategoryLabel": "Catégorie de fournisseur",
+  "supplierNotesLabel": "Notes",
+  "updateSupplierButton": "Mettre à jour",
+  "addSupplierButton": "Ajouter",
+
+  "supplierDetailsTitle": "Détails du fournisseur",
+  "supplierErrorLoading": "Erreur : {message}",
+  "@supplierErrorLoading": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "supplierNotFound": "Fournisseur non trouvé",
+  "contactInformationSectionTitle": "Informations de contact",
+  "contactLabel": "Contact",
+  "phoneLabel": "Téléphone",
+  "emailLabel": "Email",
+  "addressLabel": "Adresse",
+  "commercialInformationSectionTitle": "Informations commerciales",
+  "totalPurchasesLabel": "Total des achats",
+  "lastPurchaseLabel": "Dernier achat",
+  "noPurchaseRecorded": "Aucun achat enregistré",
+  "deliveryTimeLabel": "Délai de livraison",
+  "deliveryTimeInDays": "{count,plural, =0{Non spécifié} =1{1 jour} other{{count} jours}}",
+  "@deliveryTimeInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentTermsLabel": "Conditions de paiement",
+  "supplierSinceLabel": "Fournisseur depuis",
+  "notesSectionTitle": "Notes",
+  "placeOrderButtonLabel": "Passer commande",
+  "callButtonLabel": "Appeler",
+  "deleteButtonLabel": "Supprimer",
+  "featureToImplement": "Fonctionnalité à implémenter",
+  "callingNumber": "Appel vers {phoneNumber}...",
+  "@callingNumber": {
+    "placeholders": {
+      "phoneNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "emailingTo": "Envoi d'email à {email}...",
+  "@emailingTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "openingMapFor": "Ouverture de la carte pour {address}...",
+  "@openingMapFor": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteSupplierTitle": "Supprimer le fournisseur",
+  "confirmDeleteSupplierMessage": "Êtes-vous sûr de vouloir supprimer {supplierName} ? Cette action est irréversible.",
+  "@confirmDeleteSupplierMessage": {
+    "placeholders": {
+      "supplierName": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelButtonLabel": "Annuler"
+}

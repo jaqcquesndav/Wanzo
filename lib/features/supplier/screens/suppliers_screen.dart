@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart'; // Import AppLocalizations
+import 'package:wanzo/core/services/currency_service.dart'; // Import CurrencyService
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -34,6 +36,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     final Widget screenContent = Column(
       children: [
         // Barre de recherche
@@ -42,10 +45,11 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Rechercher un fournisseur...',
+              hintText: localizations.searchSupplierHint, // Localized
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
+                tooltip: localizations.clearSearchTooltip, // Localized
                 onPressed: () {
                   _searchController.clear();
                   context.read<SupplierBloc>().add(const LoadSuppliers());
@@ -71,11 +75,11 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             listener: (context, state) {
               if (state is SupplierError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
+                  SnackBar(content: Text(localizations.supplierError(message: state.message))), // Localized
                 );
               } else if (state is SupplierOperationSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
+                  SnackBar(content: Text(state.message)), // Keep dynamic message from BLoC
                 );
               }
             },
@@ -83,33 +87,36 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               if (state is SupplierLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is SuppliersLoaded) {
-                return _buildSuppliersList(state.suppliers);
+                return _buildSuppliersList(context, state.suppliers); // Pass context
               } else if (state is SupplierSearchResults) {
                 return _buildSuppliersList(
+                  context, // Pass context
                   state.suppliers,
                   isSearchResult: true,
                   searchTerm: state.searchTerm,
                 );
               } else if (state is TopSuppliersLoaded) {
                 return _buildSuppliersList(
+                  context, // Pass context
                   state.suppliers,
                   isTopSuppliers: true,
                 );
               } else if (state is RecentSuppliersLoaded) {
                 return _buildSuppliersList(
+                  context, // Pass context
                   state.suppliers,
                   isRecentSuppliers: true,
                 );
               } else if (state is SupplierError) {
                 return Center(
                   child: Text(
-                    'Erreur: ${state.message}',
+                    localizations.supplierError(message: state.message), // Localized
                     style: const TextStyle(color: Colors.red),
                   ),
                 );
               }
               
-              return const Center(child: Text('Aucun fournisseur à afficher'));
+              return Center(child: Text(localizations.noSuppliersToShow)); // Localized
             },
           ),
         ),
@@ -122,10 +129,11 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fournisseurs'),
+        title: Text(localizations.suppliersTitle), // Localized
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
+            tooltip: localizations.filterSuppliersTooltip, // Localized
             onPressed: _showFilterOptions,
           ),
         ],
@@ -133,6 +141,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       body: screenContent, // Use the defined screenContent
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddSupplier(context),
+        tooltip: localizations.addSupplierTooltip, // Localized
         child: const Icon(Icons.add),
       ),
     );
@@ -140,42 +149,44 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
   /// Construit la liste des fournisseurs
   Widget _buildSuppliersList(
+    BuildContext context, // Add context
     List<Supplier> suppliers, {
     bool isSearchResult = false,
     bool isTopSuppliers = false,
     bool isRecentSuppliers = false,
-    String searchTerm = '',
+    String searchTerm = '', // Corrected string escaping
   }) {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     if (suppliers.isEmpty) {
       if (isSearchResult) {
         return Center(
-          child: Text('Aucun résultat pour "$searchTerm"'),
+          child: Text(localizations.noResultsForSearchTerm(searchTerm: searchTerm)), // Localized
         );
       }
-      return const Center(
-        child: Text('Aucun fournisseur disponible'),
+      return Center(
+        child: Text(localizations.noSuppliersAvailable), // Localized
       );
     }
     
     // Titre spécial pour les listes filtrées
     Widget? header;
     if (isTopSuppliers) {
-      header = const Padding(
-        padding: EdgeInsets.all(16.0),
+      header = Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Principaux fournisseurs par achats',
-          style: TextStyle(
+          localizations.topSuppliersByPurchases, // Localized
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
       );
     } else if (isRecentSuppliers) {
-      header = const Padding(
-        padding: EdgeInsets.all(16.0),
+      header = Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Fournisseurs récemment ajoutés',
-          style: TextStyle(
+          localizations.recentlyAddedSuppliers, // Localized
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -185,7 +196,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       header = Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          'Résultats pour "$searchTerm"',
+          localizations.resultsForSearchTerm(searchTerm: searchTerm), // Localized
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -203,7 +214,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             itemCount: suppliers.length,
             itemBuilder: (context, index) {
               final supplier = suppliers[index];
-              return _buildSupplierListItem(supplier);
+              return _buildSupplierListItem(context, supplier); // Pass context
             },
           ),
         ),
@@ -212,33 +223,36 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   }
 
   /// Construit un élément de la liste des fournisseurs
-  Widget _buildSupplierListItem(Supplier supplier) {
+  Widget _buildSupplierListItem(BuildContext context, Supplier supplier) { // Add context
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
+    final currencyService = context.read<CurrencyService>(); // Get CurrencyService instance
+
     final lastPurchaseText = supplier.lastPurchaseDate != null
-        ? 'Dernier achat: ${_formatDate(supplier.lastPurchaseDate!)}'
-        : 'Pas d\'achat récent'; // Corrected string
+        ? localizations.lastPurchaseDate(date: _formatDate(supplier.lastPurchaseDate!)) // Localized
+        : localizations.noRecentPurchase; // Localized
     
-    final categoryColor = _getCategoryColor(context, supplier.category); // Pass context
+    final categoryColor = _getCategoryColor(context, supplier.category); 
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: categoryColor, // Use theme color
+          backgroundColor: categoryColor, 
           child: Text(
             supplier.name.isNotEmpty ? supplier.name[0].toUpperCase() : '?',
-            style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer), // Ensure text is visible
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer), 
           ),
         ),
         title: Text(supplier.name),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Added to constrain the Column's height
+          mainAxisSize: MainAxisSize.min, 
           children: [
             Text(supplier.contactPerson.isNotEmpty 
-              ? 'Contact: ${supplier.contactPerson}'
+              ? localizations.contactPerson(name: supplier.contactPerson) // Localized
               : supplier.phoneNumber),
             Text(
-              'Total des achats: ${_formatCurrency(supplier.totalPurchases)} FC',
+              localizations.totalPurchasesAmount(amount: currencyService.formatPrice(supplier.totalPurchases, currencyService.activeCurrency)), // Localized & Use CurrencyService
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(lastPurchaseText),
@@ -246,6 +260,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
+          tooltip: localizations.moreOptionsTooltip, // Localized
           onSelected: (value) {
             if (value == 'details') {
               _navigateToSupplierDetails(context, supplier);
@@ -256,17 +271,17 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             }
           },
           itemBuilder: (BuildContext context) => [
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>(
               value: 'details',
-              child: Text('Voir détails'),
+              child: Text(localizations.viewDetails), // Localized
             ),
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>(
               value: 'edit',
-              child: Text('Modifier'),
+              child: Text(localizations.edit), // Localized
             ),
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>(
               value: 'delete',
-              child: Text('Supprimer'),
+              child: Text(localizations.delete), // Localized
             ),
           ],
         ),
@@ -277,6 +292,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
   /// Affiche les options de filtrage
   void _showFilterOptions() {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -286,7 +302,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.list),
-                title: const Text('Tous les fournisseurs'),
+                title: Text(localizations.allSuppliers), // Localized
                 onTap: () {
                   Navigator.pop(context);
                   context.read<SupplierBloc>().add(const LoadSuppliers());
@@ -294,7 +310,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.star),
-                title: const Text('Principaux fournisseurs'),
+                title: Text(localizations.topSuppliers), // Localized
                 onTap: () {
                   Navigator.pop(context);
                   context.read<SupplierBloc>().add(const LoadTopSuppliers());
@@ -302,7 +318,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.history),
-                title: const Text('Fournisseurs récents'),
+                title: Text(localizations.recentSuppliers), // Localized
                 onTap: () {
                   Navigator.pop(context);
                   context.read<SupplierBloc>().add(const LoadRecentSuppliers());
@@ -310,7 +326,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.category),
-                title: const Text('Par catégorie'),
+                title: Text(localizations.byCategory), // Localized
                 onTap: () {
                   Navigator.pop(context);
                   _showCategoriesFilter();
@@ -325,37 +341,36 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
   /// Affiche les options de filtrage par catégorie
   void _showCategoriesFilter() {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     showDialog(
       context: context,
-      builder: (dialogContext) { // Changed context to dialogContext to avoid conflict
+      builder: (dialogContext) { 
         return AlertDialog(
-          title: const Text('Filtrer par catégorie'),
+          title: Text(localizations.filterByCategory), // Localized
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: SupplierCategory.values.map((category) {
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getCategoryColor(context, category), // Pass context
+                  backgroundColor: _getCategoryColor(context, category), 
                   radius: 12,
-                  child: Text( // Adding a contrasting text for better visibility if needed
-                    _getCategoryName(category)[0],
+                  child: Text( 
+                    _getCategoryName(context, category)[0],
                     style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
                 ),
-                title: Text(_getCategoryName(category)),
+                title: Text(_getCategoryName(context, category)),
                 onTap: () {
-                  Navigator.pop(dialogContext); // Use dialogContext
-                  // Ici, on pourrait implémenter un filtre par catégorie
-                  // Pour l'instant, nous revenons simplement à tous les fournisseurs
-                  context.read<SupplierBloc>().add(const LoadSuppliers());
+                  Navigator.pop(dialogContext); 
+                  context.read<SupplierBloc>().add(FilterSuppliersByCategoryEvent(category)); // Corrected event name
                 },
               );
             }).toList(),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext), // Use dialogContext
-              child: const Text('Annuler'),
+              onPressed: () => Navigator.pop(dialogContext), 
+              child: Text(localizations.cancelButtonLabel), // Localized
             ),
           ],
         );
@@ -365,26 +380,27 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
 
   /// Affiche une boîte de dialogue de confirmation de suppression
   void _showDeleteConfirmation(BuildContext context, Supplier supplier) {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) { // Renamed context to dialogContext
         return AlertDialog(
-          title: const Text('Supprimer le fournisseur'),
+          title: Text(localizations.deleteSupplierTitle), // Localized
           content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${supplier.name} ? Cette action est irréversible.',
+            localizations.deleteSupplierConfirmation(supplierName: supplier.name), // Localized
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              onPressed: () => Navigator.pop(dialogContext), // Use dialogContext
+              child: Text(localizations.cancelButtonLabel), // Localized
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext); // Use dialogContext
                 context.read<SupplierBloc>().add(DeleteSupplier(supplier.id));
               },
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error), // Use theme color
-              child: const Text('Supprimer'),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error), 
+              child: Text(localizations.deleteButtonLabel), // Localized
             ),
           ],
         );
@@ -392,7 +408,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     );
   }
 
-  /// Navigation vers l'écran de détails d'un fournisseur
+  /// Navigation vers l\'écran de détails d\'un fournisseur
   void _navigateToSupplierDetails(BuildContext context, Supplier supplier) {
     Navigator.push(
       context,
@@ -422,7 +438,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     );
   }
   /// Retourne la couleur associée à une catégorie de fournisseur
-  Color _getCategoryColor(BuildContext context, SupplierCategory category) { // Added BuildContext
+  Color _getCategoryColor(BuildContext context, SupplierCategory category) { 
     switch (category) {
       case SupplierCategory.strategic:
         return Theme.of(context).colorScheme.primary;
@@ -434,34 +450,32 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return Theme.of(context).colorScheme.surfaceContainerHighest;
       case SupplierCategory.international:
         return Theme.of(context).colorScheme.primaryContainer;
+      default: // Add default for safety, though all enum values should be covered
+        return Colors.grey;
     }
   }
-  /// Retourne le nom d\'une catégorie de fournisseur
-  String _getCategoryName(SupplierCategory category) {
+  /// Retourne le nom d\\\'une catégorie de fournisseur
+  String _getCategoryName(BuildContext context, SupplierCategory category) { // Add context
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     switch (category) {
       case SupplierCategory.strategic:
-        return 'Stratégique';
+        return localizations.supplierCategoryStrategic;
       case SupplierCategory.regular:
-        return 'Régulier';
+        return localizations.supplierCategoryRegular;
       case SupplierCategory.newSupplier:
-        return 'Nouveau';
+        return localizations.supplierCategoryNew;
       case SupplierCategory.occasional:
-        return 'Occasionnel';
+        return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
-        return 'International';
+        return localizations.supplierCategoryInternational;
+      default: // Add default for safety
+        return localizations.supplierCategoryUnknown;
     }
-  }
-
-  /// Formate un montant en devise
-  String _formatCurrency(double amount) {
-    return amount.toStringAsFixed(2).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]} ',
-        );
   }
 
   /// Formate une date
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    // Consider using DateFormat from intl package for more robust and locale-aware formatting
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'; // Corrected string escaping
   }
 }

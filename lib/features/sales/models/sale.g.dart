@@ -22,18 +22,22 @@ class SaleAdapter extends TypeAdapter<Sale> {
       customerId: fields[2] as String,
       customerName: fields[3] as String,
       items: (fields[4] as List).cast<SaleItem>(),
-      totalAmount: fields[5] as double,
-      paidAmount: fields[6] as double,
+      totalAmountInCdf: fields[5] as double,
+      paidAmountInCdf: fields[6] as double,
       paymentMethod: fields[7] as String,
       status: fields[8] as SaleStatus,
       notes: fields[9] as String,
+      transactionCurrencyCode: fields[10] as String,
+      transactionExchangeRate: fields[11] as double,
+      totalAmountInTransactionCurrency: fields[12] as double,
+      paidAmountInTransactionCurrency: fields[13] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, Sale obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -45,15 +49,23 @@ class SaleAdapter extends TypeAdapter<Sale> {
       ..writeByte(4)
       ..write(obj.items)
       ..writeByte(5)
-      ..write(obj.totalAmount)
+      ..write(obj.totalAmountInCdf)
       ..writeByte(6)
-      ..write(obj.paidAmount)
+      ..write(obj.paidAmountInCdf)
       ..writeByte(7)
       ..write(obj.paymentMethod)
       ..writeByte(8)
       ..write(obj.status)
       ..writeByte(9)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(10)
+      ..write(obj.transactionCurrencyCode)
+      ..writeByte(11)
+      ..write(obj.transactionExchangeRate)
+      ..writeByte(12)
+      ..write(obj.totalAmountInTransactionCurrency)
+      ..writeByte(13)
+      ..write(obj.paidAmountInTransactionCurrency);
   }
 
   @override
@@ -128,11 +140,18 @@ Sale _$SaleFromJson(Map<String, dynamic> json) => Sale(
       items: (json['items'] as List<dynamic>)
           .map((e) => SaleItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      paidAmount: (json['paidAmount'] as num).toDouble(),
+      totalAmountInCdf: (json['totalAmountInCdf'] as num).toDouble(),
+      paidAmountInCdf: (json['paidAmountInCdf'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] as String,
       status: $enumDecode(_$SaleStatusEnumMap, json['status']),
       notes: json['notes'] as String? ?? '',
+      transactionCurrencyCode: json['transactionCurrencyCode'] as String,
+      transactionExchangeRate:
+          (json['transactionExchangeRate'] as num).toDouble(),
+      totalAmountInTransactionCurrency:
+          (json['totalAmountInTransactionCurrency'] as num).toDouble(),
+      paidAmountInTransactionCurrency:
+          (json['paidAmountInTransactionCurrency'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$SaleToJson(Sale instance) => <String, dynamic>{
@@ -141,11 +160,17 @@ Map<String, dynamic> _$SaleToJson(Sale instance) => <String, dynamic>{
       'customerId': instance.customerId,
       'customerName': instance.customerName,
       'items': instance.items.map((e) => e.toJson()).toList(),
-      'totalAmount': instance.totalAmount,
-      'paidAmount': instance.paidAmount,
+      'totalAmountInCdf': instance.totalAmountInCdf,
+      'paidAmountInCdf': instance.paidAmountInCdf,
       'paymentMethod': instance.paymentMethod,
       'status': _$SaleStatusEnumMap[instance.status]!,
       'notes': instance.notes,
+      'transactionCurrencyCode': instance.transactionCurrencyCode,
+      'transactionExchangeRate': instance.transactionExchangeRate,
+      'totalAmountInTransactionCurrency':
+          instance.totalAmountInTransactionCurrency,
+      'paidAmountInTransactionCurrency':
+          instance.paidAmountInTransactionCurrency,
     };
 
 const _$SaleStatusEnumMap = {

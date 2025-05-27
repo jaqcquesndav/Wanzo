@@ -99,11 +99,18 @@ class UpdateSupplierPurchaseTotal extends SupplierEvent {
   /// Montant à ajouter au total
   final double amount;
 
-  const UpdateSupplierPurchaseTotal({
-    required this.supplierId,
-    required this.amount,
-  });
+  const UpdateSupplierPurchaseTotal(this.supplierId, this.amount);
 
   @override
   List<Object?> get props => [supplierId, amount];
+}
+
+/// Event to filter suppliers by category
+class FilterSuppliersByCategoryEvent extends SupplierEvent {
+  final SupplierCategory category;
+
+  const FilterSuppliersByCategoryEvent(this.category);
+
+  @override
+  List<Object?> get props => [category];
 }

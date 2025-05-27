@@ -39,3 +39,24 @@ class UploadPaymentProof extends SubscriptionEvent {
   @override
   List<Object?> get props => [imagePath];
 }
+
+/// Event to submit manual payment details
+class SubmitManualPayment extends SubscriptionEvent {
+  final String transactionReference;
+  // Add other relevant fields like payment proof path if not handled by a separate event
+
+  const SubmitManualPayment(this.transactionReference);
+
+  @override
+  List<Object?> get props => [transactionReference];
+}
+
+/// Event to update the selected payment method
+class UpdatePaymentMethod extends SubscriptionEvent {
+  final String paymentMethodId; // Or an enum, or a more complex object
+
+  const UpdatePaymentMethod(this.paymentMethodId);
+
+  @override
+  List<Object?> get props => [paymentMethodId];
+}

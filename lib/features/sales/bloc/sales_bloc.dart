@@ -40,8 +40,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     emit(const SalesLoading());
     try {
       final sales = await _salesRepository.getAllSales();
-      final totalAmount = sales.fold(0.0, (total, sale) => total + sale.totalAmount);
-      emit(SalesLoaded(sales: sales, totalAmount: totalAmount));
+      final totalAmountInCdf = sales.fold(0.0, (total, sale) => total + sale.totalAmountInCdf);
+      emit(SalesLoaded(sales: sales, totalAmountInCdf: totalAmountInCdf));
     } catch (e) {
       emit(SalesError(e.toString()));
     }
@@ -55,8 +55,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     emit(const SalesLoading());
     try {
       final sales = await _salesRepository.getSalesByStatus(event.status);
-      final totalAmount = sales.fold(0.0, (total, sale) => total + sale.totalAmount);
-      emit(SalesLoaded(sales: sales, totalAmount: totalAmount));
+      final totalAmountInCdf = sales.fold(0.0, (total, sale) => total + sale.totalAmountInCdf);
+      emit(SalesLoaded(sales: sales, totalAmountInCdf: totalAmountInCdf));
     } catch (e) {
       emit(SalesError(e.toString()));
     }
@@ -70,8 +70,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     emit(const SalesLoading());
     try {
       final sales = await _salesRepository.getSalesByCustomer(event.customerId);
-      final totalAmount = sales.fold(0.0, (total, sale) => total + sale.totalAmount);
-      emit(SalesLoaded(sales: sales, totalAmount: totalAmount));
+      final totalAmountInCdf = sales.fold(0.0, (total, sale) => total + sale.totalAmountInCdf);
+      emit(SalesLoaded(sales: sales, totalAmountInCdf: totalAmountInCdf));
     } catch (e) {
       emit(SalesError(e.toString()));
     }
@@ -88,8 +88,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         event.startDate,
         event.endDate,
       );
-      final totalAmount = sales.fold(0.0, (total, sale) => total + sale.totalAmount);
-      emit(SalesLoaded(sales: sales, totalAmount: totalAmount));
+      final totalAmountInCdf = sales.fold(0.0, (total, sale) => total + sale.totalAmountInCdf);
+      emit(SalesLoaded(sales: sales, totalAmountInCdf: totalAmountInCdf));
     } catch (e) {
       emit(SalesError(e.toString()));
     }
@@ -102,7 +102,7 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
   ) async {
     try {
       await _salesRepository.addSale(event.sale);
-      emit(const SalesOperationSuccess('Vente ajoutée avec succès'));
+      emit(SalesOperationSuccess('Vente ajoutée avec succès', saleId: event.sale.id)); // Pass saleId
 
       // Enregistrer les opérations dans le journal
       final List<OperationJournalEntry> journalEntries = [];
@@ -123,18 +123,18 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         date: event.sale.date,
         description: saleDescription,
         type: saleType,
-        amount: event.sale.totalAmount,
+        amount: event.sale.totalAmountInCdf, // Use totalAmountInCdf
         relatedDocumentId: event.sale.id,
       ));
 
       // Si un paiement partiel ou total est effectué au moment de la vente (non crédit pur)
-      if (event.sale.paidAmount > 0 && saleType != OperationType.saleCredit) {
+      if (event.sale.paidAmountInCdf > 0 && saleType != OperationType.saleCredit) { // Use paidAmountInCdf
         journalEntries.add(OperationJournalEntry(
           id: _uuid.v4(),
           date: event.sale.date,
           description: 'Paiement initial - Vente #${event.sale.id.substring(0, 6)}',
           type: OperationType.cashIn,
-          amount: event.sale.paidAmount,
+          amount: event.sale.paidAmountInCdf, // Use paidAmountInCdf
           relatedDocumentId: event.sale.id,
         ));
       }
@@ -199,18 +199,7 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     try {
       final sale = await _salesRepository.getSaleById(event.id);
       if (sale != null) {
-        final updatedSale = Sale(
-          id: sale.id,
-          date: sale.date,
-          customerId: sale.customerId,
-          customerName: sale.customerName,
-          items: sale.items,
-          totalAmount: sale.totalAmount,
-          paidAmount: sale.paidAmount,
-          paymentMethod: sale.paymentMethod,
-          status: event.status,
-          notes: sale.notes,
-        );
+        final updatedSale = sale.copyWith(status: event.status);
 
         await _salesRepository.updateSale(updatedSale);
         emit(const SalesOperationSuccess('Statut de la vente mis à jour avec succès'));

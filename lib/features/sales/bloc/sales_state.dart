@@ -22,15 +22,15 @@ class SalesLoading extends SalesState {
 /// État avec la liste des ventes chargées
 class SalesLoaded extends SalesState {
   final List<Sale> sales;
-  final double totalAmount;
+  final double totalAmountInCdf; // Renamed from totalAmount
   
   const SalesLoaded({
     required this.sales,
-    this.totalAmount = 0.0,
+    this.totalAmountInCdf = 0.0, // Renamed from totalAmount
   });
   
   @override
-  List<Object?> get props => [sales, totalAmount];
+  List<Object?> get props => [sales, totalAmountInCdf]; // Renamed from totalAmount
 }
 
 /// État d'opération réussie

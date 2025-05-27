@@ -1,19 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:wanzo/core/enums/currency_enum.dart'; // Added import
 
 part 'settings.g.dart';
-
-@HiveType(typeId: 30) // Changed typeId from 28 to 30
-@JsonEnum()
-enum CurrencyType {
-  @HiveField(0)
-  fc, // Franc Congolais
-  @HiveField(1)
-  cdf, // Congolese Franc (alternative representation)
-  @HiveField(2)
-  usd, // US Dollar
-}
 
 /// Modèle pour les paramètres de l'application
 @HiveType(typeId: 26) // Existing typeId for Settings
@@ -38,10 +28,6 @@ class Settings extends Equatable {
   /// Logo de l'entreprise (chemin du fichier)
   @HiveField(4)
   final String companyLogo;
-
-  /// Devise utilisée par l'entreprise
-  @HiveField(5)
-  final CurrencyType currency; // Changed from String
 
   /// Format de date préféré
   @HiveField(6)
@@ -127,13 +113,16 @@ class Settings extends Equatable {
   @HiveField(26)
   final bool soundNotificationsEnabled;
 
+  /// Devise active pour l'application
+  @HiveField(27) // New field
+  final Currency activeCurrency;
+
   const Settings({
     this.companyName = '',
     this.companyAddress = '',
     this.companyPhone = '',
     this.companyEmail = '',
     this.companyLogo = '',
-    this.currency = CurrencyType.fc, // Default to FC
     this.dateFormat = 'DD/MM/YYYY',
     this.themeMode = AppThemeMode.system,
     this.language = 'fr',
@@ -155,6 +144,7 @@ class Settings extends Equatable {
     this.inAppNotificationsEnabled = true,
     this.emailNotificationsEnabled = false,
     this.soundNotificationsEnabled = true,
+    this.activeCurrency = Currency.CDF, // Added field with default
   });
 
   factory Settings.fromJson(Map<String, dynamic> json) => _$SettingsFromJson(json);
@@ -166,7 +156,6 @@ class Settings extends Equatable {
     String? companyPhone,
     String? companyEmail,
     String? companyLogo,
-    CurrencyType? currency, // Changed
     String? dateFormat,
     AppThemeMode? themeMode,
     String? language,
@@ -188,6 +177,7 @@ class Settings extends Equatable {
     bool? inAppNotificationsEnabled,
     bool? emailNotificationsEnabled,
     bool? soundNotificationsEnabled,
+    Currency? activeCurrency, // Added field
   }) {
     return Settings(
       companyName: companyName ?? this.companyName,
@@ -195,7 +185,6 @@ class Settings extends Equatable {
       companyPhone: companyPhone ?? this.companyPhone,
       companyEmail: companyEmail ?? this.companyEmail,
       companyLogo: companyLogo ?? this.companyLogo,
-      currency: currency ?? this.currency, // Changed
       dateFormat: dateFormat ?? this.dateFormat,
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
@@ -217,6 +206,7 @@ class Settings extends Equatable {
       inAppNotificationsEnabled: inAppNotificationsEnabled ?? this.inAppNotificationsEnabled,
       emailNotificationsEnabled: emailNotificationsEnabled ?? this.emailNotificationsEnabled,
       soundNotificationsEnabled: soundNotificationsEnabled ?? this.soundNotificationsEnabled,
+      activeCurrency: activeCurrency ?? this.activeCurrency, // Added field
     );
   }
 
@@ -227,7 +217,6 @@ class Settings extends Equatable {
         companyPhone,
         companyEmail,
         companyLogo,
-        currency, // Changed
         dateFormat,
         themeMode,
         language,
@@ -249,6 +238,7 @@ class Settings extends Equatable {
         inAppNotificationsEnabled,
         emailNotificationsEnabled,
         soundNotificationsEnabled,
+        activeCurrency, // Added field
       ];
 }
 

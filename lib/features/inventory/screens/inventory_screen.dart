@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart'; // Replaced with currency_formatter
 import 'dart:io'; // Added for File support
+import 'package:uuid/uuid.dart'; // Added for Uuid
 import '../../../constants/spacing.dart';
 import '../../../constants/typography.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
@@ -11,6 +12,11 @@ import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
 import '../models/stock_transaction.dart'; // Added import
+import 'package:wanzo/core/utils/currency_formatter.dart'; // Added
+import 'package:wanzo/core/enums/currency_enum.dart'; // Added
+import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart'; // Changed
+import 'package:wanzo/core/services/currency_service.dart'; // Added
+import 'package:wanzo/l10n/generated/app_localizations.dart'; // Updated import
 
 /// Écran principal de gestion de l'inventaire
 class InventoryScreen extends StatefulWidget {
@@ -23,6 +29,8 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+  String _activeCurrencyCode = Currency.CDF.code; // Default
+  Map<Currency, double> _exchangeRates = {};
   
   @override
   void initState() {
@@ -30,6 +38,22 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
     _tabController = TabController(length: 3, vsync: this);
     // Chargement initial des produits
     context.read<InventoryBloc>().add(const LoadProducts());
+    _loadCurrencySettings();
+  }
+
+  void _loadCurrencySettings() {
+    final currencyState = context.read<CurrencySettingsCubit>().state;
+    if (currencyState.status == CurrencySettingsStatus.loaded) {
+      setState(() {
+        _activeCurrencyCode = currencyState.settings.activeCurrency.code;
+        // Reconstruct the exchange rates map based on available rates in settings
+        _exchangeRates = {
+          Currency.USD: currencyState.settings.usdToCdfRate,
+          Currency.FCFA: currencyState.settings.fcfaToCdfRate,
+          Currency.CDF: 1.0, // CDF to CDF is always 1.0
+        };
+      });
+    }
   }
   
   @override
@@ -41,19 +65,24 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // Listen to currency setting changes
+    context.watch<CurrencySettingsCubit>();
+    _loadCurrencySettings(); // Ensure settings are up-to-date on rebuild
+
     return WanzoScaffold(
       currentIndex: 2, // Stock a l'index 2
-      title: 'Gestion des produits',
+      title: l10n.inventoryScreenTitle,
       appBarActions: [
         // Bouton de recherche
         IconButton(
           icon: const Icon(Icons.search),
-          onPressed: () => _showSearchDialog(context),
+          onPressed: () => _showSearchDialog(context, l10n),
         ),
         // Filtrer par catégorie
         IconButton(
           icon: const Icon(Icons.filter_list),
-          onPressed: () => _showFilterDialog(context),
+          onPressed: () => _showFilterDialog(context, l10n),
         ),
       ],
       body: Column(
@@ -63,10 +92,10 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             color: Theme.of(context).primaryColor,
             child: TabBar(
               controller: _tabController,
-              tabs: const [
-                Tab(text: 'Tous les produits'),
-                Tab(text: 'Stock faible'),
-                Tab(text: 'Transactions'),
+              tabs: [
+                Tab(text: l10n.allProductsTabLabel),
+                Tab(text: l10n.lowStockTabLabel),
+                Tab(text: l10n.transactionsTabLabel),
               ],
               onTap: (index) {
                 if (index == 0) {
@@ -90,11 +119,11 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                     if (state is InventoryLoading) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is ProductsLoaded) {
-                      return _buildProductsList(context, state);
+                      return _buildProductsList(context, state, l10n);
                     } else if (state is InventoryError) {
-                      return _buildErrorWidget(context, state.message);
+                      return _buildErrorWidget(context, state.message, l10n);
                     } else {
-                      return const Center(child: Text('Aucun produit disponible'));
+                      return Center(child: Text(l10n.noProductsAvailableMessage));
                     }
                   },
                 ),
@@ -104,11 +133,11 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                     if (state is InventoryLoading) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is ProductsLoaded) {
-                      return _buildProductsList(context, state, lowStockOnly: true);
+                      return _buildProductsList(context, state, l10n, lowStockOnly: true);
                     } else if (state is InventoryError) {
-                      return _buildErrorWidget(context, state.message);
+                      return _buildErrorWidget(context, state.message, l10n);
                     } else {
-                      return const Center(child: Text('Aucun produit à stock faible'));
+                      return Center(child: Text(l10n.noLowStockProductsMessage));
                     }
                   },
                 ),
@@ -118,11 +147,11 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                     if (state is InventoryLoading) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is TransactionsLoaded) {
-                      return _buildTransactionsList(context, state.transactions);
+                      return _buildTransactionsList(context, state.transactions, l10n);
                     } else if (state is InventoryError) {
-                      return _buildErrorWidget(context, state.message);
+                      return _buildErrorWidget(context, state.message, l10n);
                     } else {
-                      return const Center(child: Text('Aucune transaction disponible'));
+                      return Center(child: Text(l10n.noTransactionsAvailableMessage));
                     }
                   },
                 ),
@@ -142,17 +171,17 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
   }
 
   /// Afficher la boîte de dialogue de recherche
-  void _showSearchDialog(BuildContext context) {
+  void _showSearchDialog(BuildContext context, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Rechercher un produit'),
+          title: Text(l10n.searchProductDialogTitle),
           content: TextField(
             controller: _searchController,
-            decoration: const InputDecoration(
-              hintText: 'Nom ou référence du produit',
-              prefixIcon: Icon(Icons.search),
+            decoration: InputDecoration(
+              hintText: l10n.searchProductHintText,
+              prefixIcon: const Icon(Icons.search),
             ),
             onSubmitted: (value) {
               Navigator.pop(context);
@@ -164,7 +193,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButtonLabel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -173,7 +202,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                   context.read<InventoryBloc>().add(SearchProducts(_searchController.text));
                 }
               },
-              child: const Text('Rechercher'),
+              child: Text(l10n.searchButtonLabel),
             ),
           ],
         );
@@ -182,26 +211,38 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
   }
   
   /// Afficher la boîte de dialogue de filtre
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog(BuildContext context, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Filtrer par catégorie'),
+          title: Text(l10n.filterByCategoryDialogTitle),
           content: SizedBox(
             width: double.maxFinite,
             height: 300,
             child: BlocBuilder<InventoryBloc, InventoryState>(
               builder: (context, state) {
-                final categories = state is ProductsLoaded
-                    ? state.products
+                // Attempt to get categories from ProductsLoaded state
+                List<ProductCategory> categories = [];
+                if (state is ProductsLoaded) {
+                    categories = state.products
                         .map((p) => p.category)
                         .toSet()
-                        .toList()
-                    : <ProductCategory>[];
+                        .toList();
+                } else {
+                    // If not ProductsLoaded, try to get all products to extract categories
+                    // This is a fallback, ideally the BLoC would provide categories directly or via a separate event/state
+                    final allProductsState = context.watch<InventoryBloc>().state; // Be cautious with watch here
+                    if (allProductsState is ProductsLoaded) {
+                         categories = allProductsState.products
+                            .map((p) => p.category)
+                            .toSet()
+                            .toList();
+                    }
+                }
                 
                 if (categories.isEmpty) {
-                  return const Center(child: Text('Aucune catégorie disponible'));
+                  return Center(child: Text(l10n.noCategoriesAvailableMessage));
                 }
                 
                 return ListView.builder(
@@ -210,7 +251,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                   itemBuilder: (context, index) {
                     final category = categories[index];
                     return ListTile(
-                      title: Text(category.toString().split('.').last),
+                      title: Text(_getCategoryName(category, l10n)), // Use localized category name
                       onTap: () {
                         Navigator.pop(context);
                         context.read<InventoryBloc>().add(LoadProductsByCategory(category));
@@ -224,14 +265,14 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButtonLabel),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 context.read<InventoryBloc>().add(const LoadProducts()); // Réinitialiser le filtre
               },
-              child: const Text('Tout afficher'),
+              child: Text(l10n.showAllButtonLabel),
             ),
           ],
         );
@@ -240,7 +281,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
   }
   
   /// Construire la liste des produits
-  Widget _buildProductsList(BuildContext context, ProductsLoaded state, {bool lowStockOnly = false}) {
+  Widget _buildProductsList(BuildContext context, ProductsLoaded state, AppLocalizations l10n, {bool lowStockOnly = false}) {
     final products = lowStockOnly
         ? state.products.where((p) => p.stockQuantity <= p.alertThreshold).toList()
         : state.products;
@@ -258,8 +299,8 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             const SizedBox(height: 16),
             Text(
               lowStockOnly
-                  ? 'Aucun produit à stock faible'
-                  : 'Aucun produit dans l\'inventaire',
+                  ? l10n.noLowStockProductsMessage
+                  : l10n.noProductsInInventoryMessage,
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
@@ -268,17 +309,14 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               ElevatedButton.icon(
                 onPressed: () => context.push('/inventory/add'),
                 icon: const Icon(Icons.add),
-                label: const Text('Ajouter un produit'),
+                label: Text(l10n.addProductButton),
               ),
           ],
         ),
       );
     }
     
-    final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
-      decimalDigits: 0,
-    );
+    final currencyService = context.read<CurrencyService>();
     
     return ListView.separated(
       padding: const EdgeInsets.all(WanzoSpacing.md),
@@ -287,6 +325,23 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
       itemBuilder: (context, index) {
         final product = products[index];
         final isLowStock = product.stockQuantity <= product.alertThreshold;
+
+        double displaySellingPrice = product.sellingPriceInCdf;
+        String displayCurrencyCode = Currency.CDF.code;
+        final activeAppCurrency = Currency.values.firstWhere((c) => c.code == _activeCurrencyCode, orElse: () => Currency.CDF);
+
+        if (_activeCurrencyCode != Currency.CDF.code) {
+          // Ensure _exchangeRates is available and contains the target currency, or handle appropriately
+          if (_exchangeRates.containsKey(activeAppCurrency)) {
+            displaySellingPrice = currencyService.convertFromCdf(product.sellingPriceInCdf, activeAppCurrency);
+          } else {
+            // Fallback or error handling if exchange rate for activeAppCurrency is not found
+            // For now, defaulting to CDF price if rate is missing
+            displaySellingPrice = product.sellingPriceInCdf;
+            displayCurrencyCode = Currency.CDF.code;
+          }
+          displayCurrencyCode = _activeCurrencyCode;
+        }
         
         Widget? leadingWidget;
         if (product.imagePath != null && product.imagePath!.isNotEmpty) {
@@ -304,7 +359,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
                     radius: 25,
                     backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
                     child: Text(
-                      product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
+                      product.name.isNotEmpty ? product.name[0].toUpperCase() : l10n.productInitialFallback,
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
                     ),
                   );
@@ -318,7 +373,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             radius: 25,
             backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
             child: Text(
-              product.name.isNotEmpty ? product.name[0].toUpperCase() : 'P',
+              product.name.isNotEmpty ? product.name[0].toUpperCase() : l10n.productInitialFallback,
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
             ),
           );
@@ -340,9 +395,9 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: WanzoSpacing.xs),
-              Text('Prix: ${currencyFormat.format(product.sellingPrice)}'),
+              Text('${l10n.priceLabel}: ${formatCurrency(displaySellingPrice, displayCurrencyCode, l10n)} (${l10n.inputPriceLabel}: ${formatCurrency(product.sellingPriceInInputCurrency, product.inputCurrencyCode, l10n)}) '),
               Text(
-                'Stock: ${product.stockQuantity} ${product.unit.toString().split('.').last}',
+                '${l10n.stockLabel}: ${product.stockQuantity} ${_getUnitName(product.unit, l10n)}',
                 style: TextStyle(
                   color: isLowStock ? Theme.of(context).colorScheme.error : null, // Use theme color
                   fontWeight: isLowStock ? WanzoTypography.fontWeightBold : null,
@@ -359,7 +414,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               ),
               IconButton(
                 icon: const Icon(Icons.add_box),
-                onPressed: () => _showAddStockDialog(context, product),
+                onPressed: () => _showAddStockDialog(context, product, l10n),
               ),
             ],
           ),
@@ -370,29 +425,68 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
   }
   
   /// Construire la liste des transactions
-  Widget _buildTransactionsList(BuildContext context, List<StockTransaction> transactions) {
-    // Temporairement, retourner un widget vide car StockTransaction n'est pas encore implémenté
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.history,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()), // Use theme color
+  Widget _buildTransactionsList(BuildContext context, List<StockTransaction> transactions, AppLocalizations l10n) {
+    if (transactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.history,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.noTransactionsAvailableMessage,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final currencyService = context.read<CurrencyService>();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(WanzoSpacing.md),
+      itemCount: transactions.length,
+      itemBuilder: (context, index) {
+        final transaction = transactions[index];
+        // Accessing inventoryRepository through the bloc as it's a private field in the bloc
+        final product = context.read<InventoryBloc>().inventoryRepository.getProductById(transaction.productId); 
+
+        double displayValue = transaction.totalValueInCdf;
+        String displayCurrencyCode = Currency.CDF.code;
+        final activeAppCurrency = Currency.values.firstWhere((c) => c.code == _activeCurrencyCode, orElse: () => Currency.CDF);
+
+        if (_activeCurrencyCode != Currency.CDF.code) {
+          // Ensure _exchangeRates is available and contains the target currency
+           if (_exchangeRates.containsKey(activeAppCurrency)) {
+            displayValue = currencyService.convertFromCdf(transaction.totalValueInCdf, activeAppCurrency);
+          } else {
+            // Fallback or error handling if exchange rate for activeAppCurrency is not found
+            displayValue = transaction.totalValueInCdf; // Default to CDF value
+            displayCurrencyCode = Currency.CDF.code;
+          }
+          displayCurrencyCode = _activeCurrencyCode;
+        }
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: WanzoSpacing.xs),
+          child: ListTile(
+            title: Text("${_getTransactionTypeName(transaction.type, l10n)}: ${product?.name ?? l10n.unknownProductLabel}"),
+            subtitle: Text("${l10n.quantityLabel}: ${transaction.quantity}, ${l10n.dateLabel}: ${formatDate(transaction.date, l10n)}\n${l10n.valueLabel}: ${formatCurrency(displayValue, displayCurrencyCode, l10n)} (${formatCurrency(transaction.totalValueInCdf, Currency.CDF.code, l10n)})" ),
+            leading: Icon(transaction.quantity > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                color: transaction.quantity > 0 ? Colors.green : Colors.red),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Gestion des transactions à venir',
-            style: TextStyle(fontSize: 18),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
   
   /// Construire le widget d'erreur
-  Widget _buildErrorWidget(BuildContext context, String message) {
+  Widget _buildErrorWidget(BuildContext context, String message, AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -422,7 +516,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               }
             },
             icon: const Icon(Icons.refresh),
-            label: const Text('Réessayer'),
+            label: Text(l10n.retryButtonLabel),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.errorContainer, // Use theme color
               foregroundColor: Theme.of(context).colorScheme.onErrorContainer, // Use theme color
@@ -434,39 +528,49 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
   }
 
   /// Afficher la boîte de dialogue pour ajouter du stock
-  void _showAddStockDialog(BuildContext context, Product product) {
+  void _showAddStockDialog(BuildContext context, Product product, AppLocalizations l10n) {
     final quantityController = TextEditingController();
+    final notesController = TextEditingController(); // For optional notes
     final formKey = GlobalKey<FormState>();
+    // Default to purchase, could add a dropdown to select type if needed
+    StockTransactionType transactionType = StockTransactionType.purchase; 
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('Ajouter du stock pour ${product.name}'),
+          title: Text(l10n.addStockDialogTitle(product.name)),
           content: Form(
             key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Stock actuel: ${product.stockQuantity} ${product.unit.toString().split('.').last}'),
+                Text("${l10n.currentStockLabel}: ${product.stockQuantity} ${_getUnitName(product.unit, l10n)}"),
                 TextFormField(
                   controller: quantityController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantité à ajouter',
+                  decoration: InputDecoration(
+                    labelText: l10n.quantityToAddLabel,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer une quantité';
+                      return l10n.quantityValidationError;
                     }
                     if (double.tryParse(value) == null) {
-                      return 'Veuillez entrer un nombre valide';
+                      return l10n.invalidNumberValidationError;
                     }
-                    if (double.parse(value) <= 0) {
-                      return 'La quantité doit être positive';
+                    // For purchase, quantity should be positive. For other types, it might vary.
+                    if (transactionType == StockTransactionType.purchase && double.parse(value) <= 0) {
+                      return l10n.positiveQuantityValidationError;
                     }
                     return null;
                   },
+                ), // Added closing parenthesis for the first TextFormField
+                TextFormField(
+                  controller: notesController,
+                  decoration: InputDecoration(
+                    labelText: l10n.notesLabelOptional,
+                  ),
                 ),
               ],
             ),
@@ -474,29 +578,103 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancelButtonLabel),
             ),
             ElevatedButton(
               onPressed: () {
                 if (formKey.currentState!.validate()) {
                   final quantity = double.parse(quantityController.text);
+                  final notes = notesController.text;
+                  
+                  // Cost for this transaction is the product's current cost price in CDF
+                  final unitCostInCdf = product.costPriceInCdf;
+                  final totalValueInCdf = unitCostInCdf * quantity;
+
                   final transaction = StockTransaction(
-                    id: 'temp_id_${DateTime.now().millisecondsSinceEpoch}', // Generate a temporary ID or handle ID generation in BLoC/Repository
+                    id: const Uuid().v4(), // Generate a unique ID
                     productId: product.id,
-                    type: StockTransactionType.adjustment, // Corrected enum constant
+                    type: transactionType, 
                     quantity: quantity,
                     date: DateTime.now(),
-                    // Optional: Add other fields like reason, relatedDocumentId if needed
+                    notes: notes.isNotEmpty ? notes : l10n.stockAdjustmentDefaultNote,
+                    unitCostInCdf: unitCostInCdf,
+                    totalValueInCdf: totalValueInCdf,
                   );
                   context.read<InventoryBloc>().add(AddStockTransaction(transaction));
                   Navigator.pop(dialogContext);
                 }
               },
-              child: const Text('Ajouter'),
+              child: Text(l10n.addButtonLabel),
             ),
           ],
         );
       },
     );
+  }
+
+  String _getCategoryName(ProductCategory category, AppLocalizations l10n) {
+    switch (category) {
+      case ProductCategory.food:
+        return l10n.productCategoryFood;
+      case ProductCategory.drink:
+        return l10n.productCategoryDrink;
+      case ProductCategory.electronics:
+        return l10n.productCategoryElectronics;
+      case ProductCategory.clothing:
+        return l10n.productCategoryClothing;
+      case ProductCategory.household:
+        return l10n.productCategoryHousehold;
+      case ProductCategory.hygiene:
+        return l10n.productCategoryHygiene;
+      case ProductCategory.office:
+        return l10n.productCategoryOffice;
+      case ProductCategory.other:
+        return l10n.productCategoryOther;
+      // default case removed as all enum members should be covered
+      // If ProductCategory enum expands, this switch must be updated.
+      // Consider adding a default that throws an error or logs if new unhandled cases appear.
+    }
+  }
+
+  String _getUnitName(ProductUnit unit, AppLocalizations l10n) {
+    switch (unit) {
+      case ProductUnit.piece:
+        return l10n.productUnitPiece;
+      case ProductUnit.kg:
+        return l10n.productUnitKg;
+      case ProductUnit.g:
+        return l10n.productUnitG;
+      case ProductUnit.l:
+        return l10n.productUnitL;
+      case ProductUnit.ml:
+        return l10n.productUnitMl;
+      case ProductUnit.package:
+        return l10n.productUnitPackage;
+      case ProductUnit.box:
+        return l10n.productUnitBox;
+      case ProductUnit.other:
+        return l10n.productUnitOther;
+      // default case removed as all enum members should be covered
+      // If ProductUnit enum expands, this switch must be updated.
+    }
+  }
+
+  String _getTransactionTypeName(StockTransactionType type, AppLocalizations l10n) {
+    switch (type) {
+      case StockTransactionType.purchase:
+        return l10n.stockTransactionTypePurchase;
+      case StockTransactionType.sale:
+        return l10n.stockTransactionTypeSale;
+      case StockTransactionType.adjustment:
+        return l10n.stockTransactionTypeAdjustment;
+      // ... other cases ...
+      default:
+        return l10n.stockTransactionTypeOther;
+    }
+  }
+
+  String formatDate(DateTime date, AppLocalizations l10n) {
+    // Simple date formatting, can be expanded with intl package for more complex needs
+    return "${date.day}/${date.month}/${date.year}";
   }
 }

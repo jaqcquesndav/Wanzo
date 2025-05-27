@@ -92,7 +92,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     try {
       final currentSettings = await settingsRepository.getSettings();
       final updatedSettings = currentSettings.copyWith(
-        currency: event.currency,
         invoiceNumberFormat: event.invoiceNumberFormat,
         invoicePrefix: event.invoicePrefix,
         defaultPaymentTerms: event.defaultPaymentTerms,

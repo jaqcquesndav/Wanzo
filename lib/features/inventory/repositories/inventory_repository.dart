@@ -71,13 +71,18 @@ class InventoryRepository {
       description: product.description,
       barcode: product.barcode,
       category: product.category,
-      costPrice: product.costPrice,
-      sellingPrice: product.sellingPrice,
+      costPriceInCdf: product.costPriceInCdf, // Updated field
+      sellingPriceInCdf: product.sellingPriceInCdf, // Updated field
       stockQuantity: product.stockQuantity,
       unit: product.unit,
       alertThreshold: product.alertThreshold,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      imagePath: product.imagePath, // Added field
+      inputCurrencyCode: product.inputCurrencyCode, // Added field
+      inputExchangeRate: product.inputExchangeRate, // Added field
+      costPriceInInputCurrency: product.costPriceInInputCurrency, // Added field
+      sellingPriceInInputCurrency: product.sellingPriceInInputCurrency, // Added field
     );
     
     await _productsBox.put(newProduct.id, newProduct);
@@ -91,6 +96,8 @@ class InventoryRepository {
         quantity: product.stockQuantity,
         date: DateTime.now(),
         notes: 'Stock initial lors de la création du produit',
+        unitCostInCdf: newProduct.costPriceInCdf, // Added field
+        totalValueInCdf: newProduct.costPriceInCdf * product.stockQuantity, // Added field
       ));
     }
     
@@ -122,6 +129,8 @@ class InventoryRepository {
         quantity: adjustmentQuantity,
         date: DateTime.now(),
         notes: 'Ajustement manuel du stock',
+        unitCostInCdf: updatedProduct.costPriceInCdf, // Added field
+        totalValueInCdf: updatedProduct.costPriceInCdf * adjustmentQuantity, // Added field
       ));
     }
     
@@ -155,16 +164,26 @@ class InventoryRepository {
       date: transaction.date,
       referenceId: transaction.referenceId,
       notes: transaction.notes,
+      unitCostInCdf: transaction.unitCostInCdf, // Added field
+      totalValueInCdf: transaction.totalValueInCdf, // Added field
     );
     
     await _transactionsBox.put(newTransaction.id, newTransaction);
     
     // Mettre à jour la quantité en stock du produit
     final newQuantity = product.stockQuantity + transaction.quantity;
-    if (newQuantity < 0) {
-      throw Exception('Stock insuffisant');
+    if (newQuantity < 0 && transaction.type != StockTransactionType.sale) {
+      // Allow negative stock for sales if settings permit, but not for other types of transactions.
+      // For now, we prevent negative stock for all types except sales for simplicity.
+      // A more advanced system might check a global setting.
+      throw Exception('Stock insuffisant pour cette opération.');
+    } else if (newQuantity < 0 && transaction.type == StockTransactionType.sale) {
+        // If it's a sale and stock goes negative, it's allowed (or could be based on a setting)
+        // but the cost of goods sold should still be based on the available stock if possible,
+        // or the last known cost. For simplicity, we use the product's current costPriceInCdf.
     }
-    
+
+    // Update product stock quantity
     final updatedProduct = product.copyWith(
       stockQuantity: newQuantity,
       updatedAt: DateTime.now(),
@@ -205,19 +224,21 @@ class InventoryRepository {
     final reverseTransaction = StockTransaction(
       id: _uuid.v4(),
       productId: transaction.productId,
-      type: transaction.type,
+      type: transaction.type, // Type remains the same, but quantity is reversed
       quantity: -transaction.quantity, // Quantité négative pour annuler
       date: DateTime.now(),
       referenceId: transaction.referenceId,
       notes: 'Annulation de la transaction ${transaction.id}',
+      unitCostInCdf: transaction.unitCostInCdf, // Use the original transaction's unit cost
+      totalValueInCdf: -transaction.totalValueInCdf, // Reverse the total value
     );
     
     await addStockTransaction(reverseTransaction);
   }
   
-  /// Obtenir la valeur totale de l'inventaire
+  /// Obtenir la valeur totale de l'inventaire en CDF
   double getTotalInventoryValue() {
-    return _productsBox.values.fold(0, (total, product) => total + product.stockValue);
+    return _productsBox.values.fold(0, (total, product) => total + product.stockValueInCdf);
   }
   
   /// Obtenir le nombre total de produits

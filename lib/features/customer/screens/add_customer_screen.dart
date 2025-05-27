@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart'; // Importer go_router
+import 'package:go_router/go_router.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
@@ -57,21 +58,23 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Modifier le client' : 'Ajouter un client'),
+        title: Text(_isEditing ? localizations.editCustomerTitle : localizations.addCustomerTitle), // Localized
       ),
       body: BlocListener<CustomerBloc, CustomerState>(
         listener: (context, state) {
           if (state is CustomerOperationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(state.message)), // Keep dynamic message from BLoC
             );
-            context.pop(); // MODIFIÉ: Utiliser context.pop() de go_router
+            context.pop(); 
           } else if (state is CustomerError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(state.message), // Keep dynamic message from BLoC
                 backgroundColor: Colors.red,
               ),
             );
@@ -84,41 +87,38 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Informations principales
-                const Text(
-                  'Informations du client',
-                  style: TextStyle(
+                Text(
+                  localizations.customerInformation, // Localized
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
                 
-                // Nom du client
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du client *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                  decoration: InputDecoration(
+                    labelText: localizations.customerNameLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.person),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Le nom est obligatoire';
+                      return localizations.customerNameValidationError; // Localized
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 
-                // Numéro de téléphone
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro de téléphone *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
-                    hintText: '+243 999 123 456',
+                  decoration: InputDecoration(
+                    labelText: localizations.customerPhoneLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.phone),
+                    hintText: localizations.customerPhoneHint, // Localized
                   ),
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
@@ -126,27 +126,26 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Le numéro de téléphone est obligatoire';
+                      return localizations.customerPhoneValidationError; // Localized
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 
-                // Email
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: localizations.customerEmailLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
                       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                       if (!emailRegex.hasMatch(value)) {
-                        return 'Veuillez entrer un email valide';
+                        return localizations.customerEmailValidationError; // Localized
                       }
                     }
                     return null;
@@ -154,22 +153,20 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Adresse
                 TextFormField(
                   controller: _addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Adresse',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.location_on),
+                  decoration: InputDecoration(
+                    labelText: localizations.customerAddressLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.location_on),
                   ),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),
                 
-                // Catégorie de client
-                const Text(
-                  'Catégorie de client',
-                  style: TextStyle(
+                Text(
+                  localizations.customerCategoryLabel, // Localized
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -195,12 +192,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                  color: _getCategoryColor(category),
+                                  color: _getCategoryColor(category), // Theme colors will be handled in a follow-up if needed
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(_getCategoryName(category)),
+                              Text(_getCategoryName(context, category)), // Pass context
                             ],
                           ),
                         );
@@ -217,25 +214,23 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Notes
                 TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.note),
+                  decoration: InputDecoration(
+                    labelText: localizations.customerNotesLabel, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.note),
                   ),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 24),
                 
-                // Bouton de sauvegarde
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _saveCustomer,
-                    child: Text(_isEditing ? 'Mettre à jour' : 'Ajouter'),
+                    child: Text(_isEditing ? localizations.updateButtonLabel : localizations.addButtonLabel), // Localized
                   ),
                 ),
               ],
@@ -272,6 +267,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   /// Retourne la couleur associée à une catégorie de client
   Color _getCategoryColor(CustomerCategory category) {
+    // This will be updated to use Theme.of(context).colorScheme if not already done in customers_screen
+    // For now, keeping existing colors to avoid breaking changes before full theme integration review
     switch (category) {
       case CustomerCategory.vip:
         return Colors.purple;
@@ -283,26 +280,25 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         return Colors.orange;
       case CustomerCategory.business:
         return Colors.indigo;
-      default:
-        return Colors.grey;
+      // No default needed as CustomerCategory.values are used in dropdown
     }
   }
 
-  /// Retourne le nom d'une catégorie de client
-  String _getCategoryName(CustomerCategory category) {
+  /// Retourne le nom d\'une catégorie de client
+  String _getCategoryName(BuildContext context, CustomerCategory category) { // Add context
+    final localizations = AppLocalizations.of(context)!; // Add localizations instance
     switch (category) {
       case CustomerCategory.vip:
-        return 'VIP';
+        return localizations.customerCategoryVip;
       case CustomerCategory.regular:
-        return 'Régulier';
+        return localizations.customerCategoryRegular;
       case CustomerCategory.new_customer:
-        return 'Nouveau';
+        return localizations.customerCategoryNew;
       case CustomerCategory.occasional:
-        return 'Occasionnel';
+        return localizations.customerCategoryOccasional;
       case CustomerCategory.business:
-        return 'Entreprise';
-      default:
-        return 'Inconnu';
+        return localizations.customerCategoryBusiness;
+      // No default needed as CustomerCategory.values are used in dropdown
     }
   }
 }

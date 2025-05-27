@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/core/enums/currency_enum.dart'; // Corrected: Currency is the enum name
+import 'package:wanzo/core/models/currency_settings_model.dart';
 import 'package:wanzo/core/utils/currency_formatter.dart';
 import 'package:wanzo/features/customer/bloc/customer_bloc.dart';
 import 'package:wanzo/features/customer/bloc/customer_event.dart';
@@ -11,14 +13,15 @@ import 'package:wanzo/features/inventory/bloc/inventory_event.dart';
 import 'package:wanzo/features/inventory/bloc/inventory_state.dart';
 import 'package:wanzo/features/inventory/models/product.dart';
 import 'package:wanzo/features/invoice/services/invoice_service.dart';
-import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
-import 'package:wanzo/features/settings/bloc/settings_event.dart';
-import 'package:wanzo/features/settings/bloc/settings_state.dart';
-import 'package:wanzo/features/settings/models/settings.dart';
+import 'package:wanzo/features/settings/bloc/settings_bloc.dart' as old_settings_bloc;
+import 'package:wanzo/features/settings/bloc/settings_event.dart' as old_settings_event;
+import 'package:wanzo/features/settings/bloc/settings_state.dart' as old_settings_state;
+import 'package:wanzo/features/settings/models/settings.dart' as old_settings_model;
+import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
 import '../../../constants/spacing.dart';
 import '../bloc/sales_bloc.dart';
 import '../models/sale.dart';
-import '../models/sale_item.dart'; // Ensure this import is present
+import '../models/sale_item.dart';
 
 /// Écran d'ajout d'une nouvelle vente
 class AddSaleScreen extends StatefulWidget {
@@ -44,13 +47,59 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   final List<SaleItem> _items = [];
   double _paidAmount = 0.0;
 
+  // Currency related state
+  Currency _defaultCurrency = Currency.CDF; // App default
+  Currency? _selectedTransactionCurrency;
+  double _transactionExchangeRate = 1.0; // Rate of _selectedTransactionCurrency to _defaultCurrency (CDF)
+  Map<Currency, double> _exchangeRates = {}; // Stores rate_to_CDF for each currency
+  List<Currency> _availableCurrencies = Currency.values;
+
+
   @override
   void initState() {
     super.initState();
-    context.read<SettingsBloc>().add(const LoadSettings());
+    context.read<old_settings_bloc.SettingsBloc>().add(const old_settings_event.LoadSettings());
     context.read<InventoryBloc>().add(const LoadProducts());
+    context.read<CustomerBloc>(); 
+    
+    final currencySettingsCubit = context.read<CurrencySettingsCubit>();
+    // Access state directly after cubit is obtained
+    final currentCurrencyState = currencySettingsCubit.state;
+    if (currentCurrencyState.status == CurrencySettingsStatus.loaded) {
+      _initializeCurrencySettings(currentCurrencyState.settings);
+    } else {
+       currencySettingsCubit.loadSettings(); // Trigger load if not already loaded
+    }
   }
 
+  void _initializeCurrencySettings(CurrencySettingsModel settings) {
+    setState(() {
+      _defaultCurrency = settings.defaultCurrency;
+      _selectedTransactionCurrency = settings.defaultCurrency; 
+      _exchangeRates = settings.exchangeRates;
+      // Ensure _exchangeRates has a non-null entry for defaultCurrency for safety
+      _transactionExchangeRate = settings.exchangeRates[settings.defaultCurrency] ?? 1.0;
+      
+      _availableCurrencies = settings.exchangeRates.keys
+          .where((k) => settings.exchangeRates[k] != null && settings.exchangeRates[k]! > 0)
+          .toList();
+      
+      // Ensure default currency is always available if it has a rate
+      if (!_availableCurrencies.contains(settings.defaultCurrency) && 
+          (settings.exchangeRates[settings.defaultCurrency] ?? 0) > 0) {
+          _availableCurrencies.add(settings.defaultCurrency);
+      }
+      // If no currencies are available (e.g. all rates are 0 or null), add default as a fallback
+      if (_availableCurrencies.isEmpty) {
+          _availableCurrencies.add(settings.defaultCurrency);
+      }
+
+      if (_selectedTransactionCurrency == null || !_availableCurrencies.contains(_selectedTransactionCurrency)){
+          _selectedTransactionCurrency = _availableCurrencies.isNotEmpty ? _availableCurrencies.first : settings.defaultCurrency;
+      }
+      _transactionExchangeRate = _exchangeRates[_selectedTransactionCurrency!] ?? 1.0;
+    });
+  }
   @override
   void dispose() {
     _customerNameController.dispose();
@@ -73,13 +122,17 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settingsState = context.watch<SettingsBloc>().state;
-    CurrencyType currentCurrencyType = CurrencyType.cdf; // Default
-    if (settingsState is SettingsLoaded) {
-      currentCurrencyType = settingsState.settings.currency;
-    }
-
-    return Scaffold(
+    return BlocListener<CurrencySettingsCubit, CurrencySettingsState>(
+      listener: (context, state) {
+        if (state.status == CurrencySettingsStatus.loaded) {
+          _initializeCurrencySettings(state.settings);
+        } else if (state.status == CurrencySettingsStatus.error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Erreur chargement devises: ${state.errorMessage}')),
+            );
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Nouvelle vente'),
       ),
@@ -268,7 +321,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                           ),
                         )
                       else
-                        _buildItemsList(),
+                        _buildItemsList(), // Updated to use transaction currency
                     ],
                   ),
                 ),
@@ -295,12 +348,51 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       ),
                       const Divider(),
                       const SizedBox(height: WanzoSpacing.sm),
+
+                      // Currency Selector
+                      if (_availableCurrencies.length > 1) ...[
+                        DropdownButtonFormField<Currency>(
+                          value: _selectedTransactionCurrency,
+                          decoration: const InputDecoration(
+                            labelText: 'Devise de la transaction',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _availableCurrencies.map((Currency currency) {
+                            return DropdownMenuItem<Currency>(
+                              value: currency,
+                              child: Text(currency.displayName(context)), // Use context for potential localization
+                            );
+                          }).toList(),
+                          onChanged: (Currency? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedTransactionCurrency = newValue;
+                                _transactionExchangeRate = _exchangeRates[newValue] ?? 1.0;
+                                if (_paymentMethod != 'Crédit') {
+                                   _paidAmount = _calculateTotalInTransactionCurrency();
+                                }
+                              });
+                            }
+                          },
+                           validator: (value) => value == null ? 'Sélectionnez une devise' : null,
+                        ),
+                        const SizedBox(height: WanzoSpacing.md),
+                        if (_selectedTransactionCurrency != null && _selectedTransactionCurrency != _defaultCurrency)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: WanzoSpacing.sm),
+                            child: Text(
+                              'Taux: 1 ${_selectedTransactionCurrency?.code} = ${formatNumber(_transactionExchangeRate)} ${_defaultCurrency.code}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                      ],
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Montant total'),
                           Text(
-                            formatCurrency(_calculateTotal(), currentCurrencyType),
+                            formatCurrency(_calculateTotalInTransactionCurrency(), _selectedTransactionCurrency?.code ?? _defaultCurrency.code),
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).primaryColor,
@@ -310,7 +402,8 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       ),
                       const SizedBox(height: WanzoSpacing.md),
                       TextFormField(
-                        initialValue: _paidAmount.toStringAsFixed(0),
+                        key: ValueKey(_selectedTransactionCurrency), 
+                        initialValue: _paidAmount.toStringAsFixed(2),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -318,19 +411,13 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                         decoration: InputDecoration(
                           labelText: 'Montant payé',
                           border: const OutlineInputBorder(),
-                          prefixText: '${getCurrencyString(currentCurrencyType)} ',
+                          prefixText: '${_selectedTransactionCurrency?.symbol ?? _defaultCurrency.symbol} ',
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Veuillez entrer le montant payé';
-                          }
+                          if (value == null || value.isEmpty) return 'Veuillez entrer le montant payé';
                           final amount = double.tryParse(value);
-                          if (amount == null) {
-                            return 'Montant invalide';
-                          }
-                          if (amount < 0) {
-                            return 'Le montant ne peut pas être négatif';
-                          }
+                          if (amount == null) return 'Montant invalide';
+                          if (amount < 0) return 'Le montant ne peut pas être négatif';
                           return null;
                         },
                         onChanged: (value) {
@@ -342,38 +429,20 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       const SizedBox(height: WanzoSpacing.md),
                       DropdownButtonFormField<String>(
                         value: _paymentMethod,
-                        decoration: const InputDecoration(
-                          labelText: 'Méthode de paiement',
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: const InputDecoration(labelText: 'Méthode de paiement', border: OutlineInputBorder()),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'Espèces',
-                            child: Text('Espèces'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Mobile Money',
-                            child: Text('Mobile Money'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Carte bancaire',
-                            child: Text('Carte bancaire'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Virement bancaire',
-                            child: Text('Virement bancaire'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Crédit',
-                            child: Text('Crédit'),
-                          ),
+                          DropdownMenuItem(value: 'Espèces', child: Text('Espèces')),
+                          DropdownMenuItem(value: 'Mobile Money', child: Text('Mobile Money')),
+                          DropdownMenuItem(value: 'Carte bancaire', child: Text('Carte bancaire')),
+                          DropdownMenuItem(value: 'Virement bancaire', child: Text('Virement bancaire')),
+                          DropdownMenuItem(value: 'Crédit', child: Text('Crédit')),
                         ],
                         onChanged: (value) {
                           setState(() {
                             _paymentMethod = value!;
                             if (_paymentMethod != 'Crédit') {
-                              _paidAmount = _calculateTotal();
-                            }
+                              _paidAmount = _calculateTotalInTransactionCurrency();
+                            } 
                           });
                         },
                       ),
@@ -381,24 +450,16 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       if (_items.isNotEmpty)
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: WanzoSpacing.sm,
-                            horizontal: WanzoSpacing.md,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm, horizontal: WanzoSpacing.md),
                           decoration: BoxDecoration(
                             color: _getPaymentStatusColor().withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _getPaymentStatusColor(),
-                            ),
+                            border: Border.all(color: _getPaymentStatusColor()),
                           ),
                           child: Text(
                             _getPaymentStatusText(),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: _getPaymentStatusColor(),
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(color: _getPaymentStatusColor(), fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -451,122 +512,100 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             builder: (context, state) {
               bool isLoading = state is SalesLoading;
               return ElevatedButton(
-                onPressed: (_items.isEmpty || isLoading) ? null : _saveSale,
+                onPressed: (_items.isEmpty || isLoading || _selectedTransactionCurrency == null) ? null : _saveSale,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.md),
                   backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 child: isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text(
-                        'Enregistrer la vente',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Enregistrer la vente', style: TextStyle(fontSize: 16)),
               );
             },
           ),
         ),
       ),
-    );
+    ));
   }
 
   Color _getPaymentStatusColor() {
-    final total = _calculateTotal();
+    final total = _calculateTotalInTransactionCurrency();
     if (_paymentMethod == 'Crédit') {
-      if (_paidAmount == 0) {
-        return Colors.orange;
-      } else if (_paidAmount < total) {
-        return Colors.blue;
-      } else {
-        return Colors.green;
-      }
-    } else {
-      if (_isPaidFully()) {
-        return Colors.green;
-      } else {
-        return Colors.red;
-      }
+      if (_paidAmount == 0) return Colors.orange;
+      if (_paidAmount < total) return Colors.blue;
+      return Colors.green;
     }
+    return _isPaidFully() ? Colors.green : Colors.red;
   }
 
   String _getPaymentStatusText() {
-    final settingsState = context.watch<SettingsBloc>().state; // Corrected to watch
-    CurrencyType currencyType = CurrencyType.cdf;
-    if (settingsState is SettingsLoaded) {
-      currencyType = settingsState.settings.currency;
-    } else if (settingsState is SettingsUpdated) { // Added to handle SettingsUpdated
-      currencyType = settingsState.settings.currency;
-    }
-    final total = _calculateTotal();
+    final total = _calculateTotalInTransactionCurrency();
+    final currencyCode = _selectedTransactionCurrency?.code ?? _defaultCurrency.code;
     if (_paymentMethod == 'Crédit') {
-      if (_paidAmount == 0) {
-        return 'Vente à crédit (aucun acompte)';
-      } else if (_paidAmount < total) {
-        return 'Acompte: ${formatCurrency(_paidAmount, currencyType)}, Reste: ${formatCurrency(total - _paidAmount, currencyType)}';
-      } else {
-        return 'Payé (crédit soldé)';
+      if (_paidAmount == 0) return 'Vente à crédit (aucun acompte)';
+      if (_paidAmount < total) {
+        return 'Acompte: ${formatCurrency(_paidAmount, currencyCode)}, Reste: ${formatCurrency(total - _paidAmount, currencyCode)}';
       }
-    } else {
-      if (_isPaidFully()) {
-        return 'Entièrement payé';
-      } else {
-        return 'Reste à payer: ${formatCurrency(total - _paidAmount, currencyType)}';
-      }
+      return 'Payé (crédit soldé)';
     }
+    if (_isPaidFully()) return 'Entièrement payé';
+    return 'Reste à payer: ${formatCurrency(total - _paidAmount, currencyCode)}';
   }
 
   Future<void> _handleSaleSuccess(String saleId) async {
-    final settingsState = context.read<SettingsBloc>().state;
-    Settings? currentSettings;
-    if (settingsState is SettingsLoaded) {
-      currentSettings = settingsState.settings;
-    } else if (settingsState is SettingsUpdated) { // Added to handle SettingsUpdated
-      currentSettings = settingsState.settings;
+    final oldSettingsBlocState = context.read<old_settings_bloc.SettingsBloc>().state;
+    old_settings_model.Settings? currentLegacySettings;
+    if (oldSettingsBlocState is old_settings_state.SettingsLoaded) {
+      currentLegacySettings = oldSettingsBlocState.settings;
+    } else if (oldSettingsBlocState is old_settings_state.SettingsUpdated) {
+      currentLegacySettings = oldSettingsBlocState.settings;
     }
 
-    if (currentSettings == null) {
+    if (currentLegacySettings == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur: Paramètres non chargés pour la génération du document.')),
+        const SnackBar(content: Text('Erreur: Paramètres (anciens) non chargés pour la génération du document.')),
       );
       if (mounted) Navigator.of(context).pop();
       return;
     }
 
-    final savedSale = Sale(
-      id: saleId,
-      date: DateTime.now(),
-      customerId: _linkedCustomerId ??
-          'new_cust_ph_${_customerPhoneController.text.isNotEmpty ? _customerPhoneController.text.replaceAll(RegExp(r'[^0-9]'), '') : DateTime.now().millisecondsSinceEpoch}',
+    final totalInTransactionCurrency = _calculateTotalInTransactionCurrency();
+    final currentRate = _exchangeRates[_selectedTransactionCurrency!] ?? 1.0;
+    final totalInCdf = totalInTransactionCurrency * currentRate;
+    final paidInCdf = _paidAmount * currentRate;
+
+    final saleForPdf = Sale(
+      id: saleId, 
+      date: DateTime.now(), 
+      customerId: _linkedCustomerId ?? 'new_cust_ph_${_customerPhoneController.text.isNotEmpty ? _customerPhoneController.text.replaceAll(RegExp(r'[^0-9]'), '') : DateTime.now().millisecondsSinceEpoch}',
       customerName: _customerNameController.text,
-      items: List<SaleItem>.from(_items),
-      totalAmount: _calculateTotal(),
-      paidAmount: _paidAmount,
+      items: List<SaleItem>.from(_items), 
+      totalAmountInCdf: totalInCdf,
+      paidAmountInCdf: paidInCdf,
+      transactionCurrencyCode: _selectedTransactionCurrency!.code,
+      transactionExchangeRate: currentRate,
+      totalAmountInTransactionCurrency: totalInTransactionCurrency,
+      paidAmountInTransactionCurrency: _paidAmount,
       paymentMethod: _paymentMethod,
       status: _isPaidFully() ? SaleStatus.completed : SaleStatus.pending,
       notes: _notesController.text,
     );
 
     final invoiceService = InvoiceService();
-    final settings = currentSettings; // Use the fetched settings
     String? pdfPath;
-    String documentType = ''; // Initialize documentType
+    String documentType = '';
 
     if (_paymentMethod == 'Crédit' && !_isPaidFully()) {
       documentType = 'Facture';
-      pdfPath = await invoiceService.generateInvoicePdf(savedSale, settings);
+      pdfPath = await invoiceService.generateInvoicePdf(saleForPdf, currentLegacySettings);
     } else {
       documentType = 'Reçu';
-      pdfPath = await invoiceService.generateReceiptPdf(savedSale, settings);
+      pdfPath = await invoiceService.generateReceiptPdf(saleForPdf, currentLegacySettings);
     }
 
-    // ignore: unnecessary_null_comparison
-    if (pdfPath != null && pdfPath.isNotEmpty) {
-      _showDocumentOptions(pdfPath, documentType, savedSale, settings);
+    if (pdfPath.isNotEmpty) { // Simplified from: pdfPath != null && pdfPath.isNotEmpty
+      _showDocumentOptions(pdfPath, documentType, saleForPdf, currentLegacySettings);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Impossible de générer le $documentType. Chemin non valide.')),
@@ -575,7 +614,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     }
   }
 
-  void _showDocumentOptions(String pdfPath, String documentType, Sale sale, Settings settings) {
+  void _showDocumentOptions(String pdfPath, String documentType, Sale sale, old_settings_model.Settings settings) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bc) {
@@ -589,7 +628,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 onTap: () async {
                   Navigator.pop(bc);
                   await invoiceService.previewDocument(pdfPath);
-                  if (mounted) Navigator.of(context).pop();
+                  if (mounted) Navigator.of(context).pop(); 
                 },
               ),
               ListTile(
@@ -598,7 +637,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 onTap: () async {
                   Navigator.pop(bc);
                   await invoiceService.printDocument(pdfPath);
-                  if (mounted) Navigator.of(context).pop();
+                   if (mounted) Navigator.of(context).pop();
                 },
               ),
               ListTile(
@@ -606,12 +645,8 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 title: Text('Partager $documentType'),
                 onTap: () async {
                   Navigator.pop(bc);
-                  await invoiceService.shareInvoice(
-                    sale,
-                    settings,
-                    customerPhoneNumber: _customerPhoneController.text,
-                  );
-                  if (mounted) Navigator.of(context).pop();
+                  await invoiceService.shareInvoice(sale, settings, customerPhoneNumber: _customerPhoneController.text);
+                   if (mounted) Navigator.of(context).pop();
                 },
               ),
               ListTile(
@@ -630,11 +665,8 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   }
 
   Widget _buildItemsList() {
-    final settingsState = context.watch<SettingsBloc>().state;
-    CurrencyType currencyType = CurrencyType.cdf;
-    if (settingsState is SettingsLoaded) {
-      currencyType = settingsState.settings.currency;
-    }
+    final currencyCode = _selectedTransactionCurrency?.code ?? _defaultCurrency.code;
+    final currencySymbol = _selectedTransactionCurrency?.symbol ?? _defaultCurrency.symbol;
 
     return Column(
       children: [
@@ -642,36 +674,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
           padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm),
           child: Row(
             children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Produit',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: Text(
-                  'Qté',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Prix',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.right,
-                ),
-              ),
-              const SizedBox(width: WanzoSpacing.md),
+              Expanded(flex: 3, child: Text('Produit', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))),
+              Expanded(flex: 1, child: Text('Qté', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+              Expanded(flex: 2, child: Text('Prix U. ($currencySymbol)', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+              const SizedBox(width: WanzoSpacing.md), // For delete icon
             ],
           ),
         ),
@@ -685,28 +691,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             final item = _items[index];
             return Row(
               children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(item.productName),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    '${item.quantity.toInt()}',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    formatCurrency(item.totalPrice, currencyType),
-                    textAlign: TextAlign.right,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                  onPressed: () => _removeItem(index),
-                ),
+                Expanded(flex: 3, child: Text(item.productName)),
+                Expanded(flex: 1, child: Text('${item.quantity.toInt()}', textAlign: TextAlign.center)),
+                Expanded(flex: 2, child: Text(formatCurrency(item.unitPrice, item.currencyCode), textAlign: TextAlign.right)),
+                IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _removeItem(index)),
               ],
             );
           },
@@ -717,18 +705,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Text('Total', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               Text(
-                'Total',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              Text(
-                formatCurrency(_calculateTotal(), currencyType),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                formatCurrency(_calculateTotalInTransactionCurrency(), currencyCode),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
               ),
             ],
           ),
@@ -743,229 +723,172 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     final quantityController = TextEditingController(text: '1');
     final unitPriceController = TextEditingController();
     Product? selectedProductForDialog;
+    final GlobalKey<FormState> addItemFormKey = GlobalKey<FormState>();
 
-    final settingsStateDialog = context.read<SettingsBloc>().state;
-    CurrencyType dialogCurrencyType = CurrencyType.cdf;
-    if (settingsStateDialog is SettingsLoaded) {
-      dialogCurrencyType = settingsStateDialog.settings.currency;
+    final dialogCurrency = _selectedTransactionCurrency;
+    if (dialogCurrency == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez d\'abord sélectionner une devise pour la transaction.'), backgroundColor: Colors.red),
+      );
+      return;
     }
+    final dialogCurrencyCode = dialogCurrency.code;
+    final dialogCurrencySymbol = dialogCurrency.symbol;
+    final currentTransactionExchangeRateToCdf = _exchangeRates[dialogCurrency] ?? 1.0;
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            final quantity = int.tryParse(quantityController.text) ?? 0;
-            final unitPrice = double.tryParse(unitPriceController.text) ?? 0;
-            final totalPrice = quantity * unitPrice;
+            double calculatedTotalPrice = 0;
+            final qty = int.tryParse(quantityController.text);
+            final price = double.tryParse(unitPriceController.text);
+            if (qty != null && price != null) calculatedTotalPrice = qty * price;
 
             return AlertDialog(
               title: const Text('Ajouter un article'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BlocBuilder<InventoryBloc, InventoryState>(
-                      builder: (context, state) {
-                        List<Product> productSuggestions = [];
-                        if (state is ProductsLoaded) {
-                          productSuggestions = state.products;
-                        }
-
-                        return Autocomplete<Product>(
-                          displayStringForOption: (Product option) => option.name,
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text.isEmpty) {
-                              return productSuggestions;
-                            }
-                            return productSuggestions.where((Product product) {
-                              return product.name.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                            });
-                          },
-                          onSelected: (Product selection) {
-                            setStateDialog(() {
-                              selectedProductForDialog = selection;
-                              productNameController.text = selection.name;
-                              productIdController.text = selection.id;
-                              unitPriceController.text = selection.sellingPrice.toString();
-                              if (quantityController.text.isEmpty || quantityController.text == '0') {
-                                quantityController.text = '1';
-                              }
-                            });
-                          },
-                          fieldViewBuilder: (BuildContext context, TextEditingController fieldTextEditingController, FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
-                            return TextFormField(
-                              controller: productNameController,
-                              focusNode: fieldFocusNode,
-                              decoration: const InputDecoration(
-                                labelText: 'Nom du produit',
-                                border: OutlineInputBorder(),
-                                hintText: 'Commencez à taper pour rechercher...',
-                              ),
-                              onChanged: (value) {
-                                setStateDialog(() {
+              content: Form(
+                key: addItemFormKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      BlocBuilder<InventoryBloc, InventoryState>(
+                        builder: (context, state) {
+                          List<Product> productSuggestions = state is ProductsLoaded ? state.products : [];
+                          return Autocomplete<Product>(
+                            displayStringForOption: (Product option) => option.name,
+                            optionsBuilder: (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) return const Iterable<Product>.empty();
+                              return productSuggestions.where((Product p) => p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                            },
+                            onSelected: (Product selection) {
+                              setStateDialog(() {
+                                selectedProductForDialog = selection;
+                                productNameController.text = selection.name;
+                                productIdController.text = selection.id;
+                                if (currentTransactionExchangeRateToCdf > 0) {
+                                   unitPriceController.text = (selection.sellingPrice / currentTransactionExchangeRateToCdf).toStringAsFixed(2);
+                                } else {
+                                   unitPriceController.text = selection.sellingPrice.toStringAsFixed(2);
+                                }
+                                if (quantityController.text.isEmpty || quantityController.text == '0') quantityController.text = '1';
+                              });
+                            },
+                            fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
+                              return TextFormField(
+                                controller: productNameController,
+                                focusNode: focusNode,
+                                decoration: const InputDecoration(labelText: 'Nom du produit', border: OutlineInputBorder(), hintText: 'Rechercher...'),
+                                onChanged: (value) {
                                   if (selectedProductForDialog != null && selectedProductForDialog!.name != value) {
-                                    selectedProductForDialog = null;
-                                    productIdController.clear();
+                                      setStateDialog((){
+                                        selectedProductForDialog = null;
+                                        productIdController.clear(); 
+                                      });
                                   }
-                                });
-                              },
-                            );
-                          },
-                          optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<Product> onSelected, Iterable<Product> options) {
-                            return Align(
-                              alignment: Alignment.topLeft,
-                              child: Material(
-                                elevation: 4.0,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(maxHeight: 200),
-                                  child: ListView.builder(
-                                    padding: EdgeInsets.zero,
-                                    shrinkWrap: true,
-                                    itemCount: options.length,
-                                    itemBuilder: (BuildContext context, int index) {
-                                      final Product option = options.elementAt(index);
-                                      return InkWell(
-                                        onTap: () {
-                                          onSelected(option);
-                                        },
-                                        child: ListTile(
-                                          title: Text(option.name),
-                                          subtitle: Text('Stock: ${option.stockQuantity}, Prix: ${formatCurrency(option.sellingPrice, dialogCurrencyType)}'),
-                                        ),
-                                      );
-                                    },
+                                },
+                                validator: (v) => v == null || v.isEmpty ? 'Nom requis' : null,
+                              );
+                            },
+                            optionsViewBuilder: (ctx, onSelected, options) {
+                              return Align(
+                                alignment: Alignment.topLeft,
+                                child: Material(
+                                  elevation: 4.0,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxHeight: 200),
+                                    child: ListView.builder(
+                                      padding: EdgeInsets.zero, shrinkWrap: true, itemCount: options.length,
+                                      itemBuilder: (BuildContext context, int index) {
+                                        final Product option = options.elementAt(index);
+                                        String displayPrice;
+                                        if (currentTransactionExchangeRateToCdf > 0) {
+                                            displayPrice = formatCurrency(option.sellingPrice / currentTransactionExchangeRateToCdf, dialogCurrencyCode);
+                                        } else {
+                                            displayPrice = formatCurrency(option.sellingPrice, _defaultCurrency.code) + " (CDF)";
+                                        }
+                                        return InkWell(onTap: () => onSelected(option), child: ListTile(title: Text(option.name), subtitle: Text('Stock: ${option.stockQuantity}, Prix: $displayPrice')));
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: WanzoSpacing.md),
-                    TextFormField(
-                      controller: quantityController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
-                        labelText: 'Quantité',
-                        border: OutlineInputBorder(),
+                              );
+                            },
+                          );
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Quantité requise';
-                        final q = int.tryParse(value);
-                        if (q == null || q <= 0) return 'Quantité invalide';
-                        if (selectedProductForDialog != null && q > selectedProductForDialog!.stockQuantity) {
-                          return 'Stock insuffisant (${selectedProductForDialog!.stockQuantity} disp.)';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        setStateDialog(() {});
-                      },
-                    ),
-                    const SizedBox(height: WanzoSpacing.md),
-                    TextFormField(
-                      controller: unitPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-                      decoration: InputDecoration(
-                        labelText: 'Prix unitaire',
-                        border: const OutlineInputBorder(),
-                        prefixText: '${getCurrencyString(dialogCurrencyType)} ',
+                      const SizedBox(height: WanzoSpacing.md),
+                      TextFormField(
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(labelText: 'Quantité', border: OutlineInputBorder()),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Quantité requise';
+                          final q = int.tryParse(v);
+                          if (q == null || q <= 0) return 'Quantité invalide';
+                          if (selectedProductForDialog != null && q > selectedProductForDialog!.stockQuantity) return 'Stock insuffisant (${selectedProductForDialog!.stockQuantity})';
+                          return null;
+                        },
+                        onChanged: (_) => setStateDialog(() {}),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Prix requis';
-                        final p = double.tryParse(value);
-                        if (p == null || p <= 0) return 'Prix invalide';
-                        return null;
-                      },
-                      onChanged: (value) {
-                        setStateDialog(() {});
-                      },
-                    ),
-                    const SizedBox(height: WanzoSpacing.md),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Prix total:'),
-                        Text(
-                          formatCurrency(totalPrice, dialogCurrencyType),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      const SizedBox(height: WanzoSpacing.md),
+                      TextFormField(
+                        controller: unitPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                        decoration: InputDecoration(labelText: 'Prix unitaire', border: const OutlineInputBorder(), prefixText: '$dialogCurrencySymbol '),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Prix requis';
+                          final p = double.tryParse(v);
+                          if (p == null || p <= 0) return 'Prix invalide';
+                          return null;
+                        },
+                        onChanged: (_) => setStateDialog(() {}),
+                      ),
+                      const SizedBox(height: WanzoSpacing.md),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Prix total:'),
+                          Text(formatCurrency(calculatedTotalPrice, dialogCurrencyCode), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Annuler'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Annuler')),
                 ElevatedButton(
                   onPressed: () {
-                    final String productName = productNameController.text;
-                    final String quantityStr = quantityController.text;
-                    final String unitPriceStr = unitPriceController.text;
+                    if (addItemFormKey.currentState!.validate()) {
+                      final String productName = productNameController.text;
+                      final int currentQuantity = int.parse(quantityController.text);
+                      final double unitPriceInSelectedCurrency = double.parse(unitPriceController.text);
+                      final String resolvedProductId = selectedProductForDialog?.id ?? productIdController.text.takeIf((it) => it.isNotEmpty) ?? 'manual-${DateTime.now().millisecondsSinceEpoch}';
+                      final totalPriceInSelectedCurrency = currentQuantity * unitPriceInSelectedCurrency;
+                      final unitPriceInCdf = unitPriceInSelectedCurrency * currentTransactionExchangeRateToCdf;
+                      final totalPriceInCdf = totalPriceInSelectedCurrency * currentTransactionExchangeRateToCdf;
 
-                    if (productName.isEmpty || quantityStr.isEmpty || unitPriceStr.isEmpty) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(
-                          content: Text('Veuillez remplir nom, quantité et prix unitaire.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    final currentQuantity = int.tryParse(quantityStr);
-                    final currentUnitPrice = double.tryParse(unitPriceStr);
-
-                    if (currentQuantity == null || currentQuantity <= 0) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(content: Text('Quantité invalide.')),
-                      );
-                      return;
-                    }
-                    if (currentUnitPrice == null || currentUnitPrice <= 0) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(content: Text('Prix unitaire invalide.')),
-                      );
-                      return;
-                    }
-                    if (selectedProductForDialog != null && currentQuantity > selectedProductForDialog!.stockQuantity) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        SnackBar(content: Text('Stock insuffisant. Disponible: ${selectedProductForDialog!.stockQuantity}')),
-                      );
-                      return;
-                    }
-
-                    final String resolvedProductId = selectedProductForDialog?.id ??
-                        (productIdController.text.isNotEmpty
-                            ? productIdController.text
-                            : 'manual-${DateTime.now().millisecondsSinceEpoch}');
-
-                    final currentTotalPrice = currentQuantity * currentUnitPrice;
-
-                    setState(() {
                       _addItem(
                         SaleItem(
                           productId: resolvedProductId,
                           productName: productName,
-                          quantity: currentQuantity, // Ensure this is int, removed .toDouble()
-                          unitPrice: currentUnitPrice,
-                          totalPrice: currentTotalPrice,
+                          quantity: currentQuantity,
+                          unitPrice: unitPriceInSelectedCurrency,
+                          totalPrice: totalPriceInSelectedCurrency,
+                          currencyCode: dialogCurrency.code,
+                          exchangeRate: currentTransactionExchangeRateToCdf,
+                          unitPriceInCdf: unitPriceInCdf,
+                          totalPriceInCdf: totalPriceInCdf,
                         ),
                       );
-                    });
-
-                    Navigator.pop(dialogContext);
+                      Navigator.pop(dialogContext);
+                    }
                   },
                   child: const Text('Ajouter'),
                 ),
@@ -980,91 +903,69 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   void _addItem(SaleItem item) {
     setState(() {
       _items.add(item);
-      if (_paymentMethod != 'Crédit') {
-        _paidAmount = _calculateTotal();
-      }
+      if (_paymentMethod != 'Crédit') _paidAmount = _calculateTotalInTransactionCurrency();
     });
   }
 
   void _removeItem(int index) {
     setState(() {
       _items.removeAt(index);
-      if (_paymentMethod != 'Crédit') {
-        _paidAmount = _calculateTotal();
-      }
+      if (_paymentMethod != 'Crédit') _paidAmount = _calculateTotalInTransactionCurrency();
     });
   }
 
-  double _calculateTotal() {
-    return _items.fold(0, (total, item) => total + item.totalPrice);
+  double _calculateTotalInTransactionCurrency() {
+    return _items.fold(0.0, (total, item) => total + item.totalPrice);
   }
 
   bool _isPaidFully() {
-    return _paidAmount >= (_calculateTotal() - 0.001);
+    final total = _calculateTotalInTransactionCurrency();
+    return (_paidAmount - total).abs() < 0.001 || _paidAmount >= total;
   }
-
+  
   void _saveSale() {
-    if (_formKey.currentState!.validate()) {
-      if (_items.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Veuillez ajouter au moins un article à la vente.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+    if (_formKey.currentState!.validate() && _items.isNotEmpty) {
+      if (_selectedTransactionCurrency == null) {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez sélectionner une devise.'), backgroundColor: Colors.red));
         return;
       }
 
-      if (_paymentMethod != 'Crédit' && !_isPaidFully()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pour les paiements autres que crédit, le montant payé doit couvrir le total.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      if (_paymentMethod == 'Crédit' && _paidAmount > _calculateTotal()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pour les ventes à crédit, le montant payé ne peut excéder le total.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      final String customerIdToSave;
-      if (_linkedCustomerId != null) {
-        customerIdToSave = _linkedCustomerId!;
-      } else {
-        final sanePhone = _customerPhoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
-        customerIdToSave = _customerPhoneController.text.isNotEmpty
-            ? 'new_customer_phone_$sanePhone'
-            : 'new_customer_ts_${DateTime.now().millisecondsSinceEpoch}';
-      }
+      final totalInTransactionCurrency = _calculateTotalInTransactionCurrency();
+      final currentRate = _exchangeRates[_selectedTransactionCurrency!] ?? 1.0;
+      final totalInCdf = totalInTransactionCurrency * currentRate;
+      final paidInCdf = _paidAmount * currentRate;
 
       final sale = Sale(
-        id: '',
+        id: '', 
         date: DateTime.now(),
-        customerId: customerIdToSave,
+        customerId: _linkedCustomerId ?? 'new_cust_ph_${_customerPhoneController.text.isNotEmpty ? _customerPhoneController.text.replaceAll(RegExp(r'[^0-9]'), '') : DateTime.now().millisecondsSinceEpoch}',
         customerName: _customerNameController.text,
-        items: List<SaleItem>.from(_items),
-        totalAmount: _calculateTotal(),
-        paidAmount: _paidAmount,
+        items: List<SaleItem>.from(_items), 
+        totalAmountInCdf: totalInCdf,
+        paidAmountInCdf: paidInCdf,
+        transactionCurrencyCode: _selectedTransactionCurrency!.code,
+        transactionExchangeRate: currentRate,
+        totalAmountInTransactionCurrency: totalInTransactionCurrency,
+        paidAmountInTransactionCurrency: _paidAmount,
         paymentMethod: _paymentMethod,
         status: _isPaidFully() ? SaleStatus.completed : SaleStatus.pending,
         notes: _notesController.text,
       );
-
       context.read<SalesBloc>().add(AddSale(sale));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez corriger les erreurs dans le formulaire.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } else if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez ajouter au moins un article.')));
     }
   }
+
+  String formatNumber(double number, {int decimalDigits = 2}) => number.toStringAsFixed(decimalDigits);
 }
+
+// Extension for String.isNotEmpty
+extension StringExtension on String {
+  String? takeIf(bool Function(String) predicate) {
+    return predicate(this) ? this : null;
+  }
+}
+
+// TODO: Update currency_formatter.dart to use CurrencyEnum instead of old CurrencyType.
+// For now, formatCurrency(double amount, String currencyCodeOrSymbol) is assumed to work.

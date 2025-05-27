@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/l10n/generated/app_localizations.dart';
+import 'package:wanzo/core/services/currency_service.dart';
+import 'package:intl/intl.dart';
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -21,40 +24,43 @@ class SupplierDetailsScreen extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    // Si le fournisseur n'est pas fourni, le charger depuis le repository
+    final localizations = AppLocalizations.of(context)!; 
     if (supplier == null && supplierId.isNotEmpty) {
       context.read<SupplierBloc>().add(LoadSupplier(supplierId));
       
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Détails du fournisseur'),
+          title: Text(localizations.supplierDetailsTitle), 
         ),
         body: BlocBuilder<SupplierBloc, SupplierState>(
           builder: (context, state) {
             if (state is SupplierLoading) {
-              return const Center(child: CircularProgressIndicator());            } else if (state is SupplierLoaded) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is SupplierLoaded) {
               return _buildSupplierDetails(context, state.supplier);
             } else if (state is SupplierError) {
-              return Center(child: Text('Erreur: ${state.message}'));
+              return Center(child: Text(localizations.supplierErrorLoading(state.message))); // Corrected
             }
-            return const Center(child: Text('Fournisseur non trouvé'));
+            return Center(child: Text(localizations.supplierNotFound)); 
           },
         ),
       );
     }
     
-    // Si le fournisseur est déjà fourni, afficher directement les détails
     return _buildSupplierDetails(context, supplier!);
   }
   
-  /// Construit l'écran de détails du fournisseur
   Widget _buildSupplierDetails(BuildContext context, Supplier supplier) {
+    final localizations = AppLocalizations.of(context)!; 
+    final currencyService = context.read<CurrencyService>(); 
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Détails du fournisseur'),
+        title: Text(localizations.supplierDetailsTitle), 
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
+            tooltip: localizations.edit, 
             onPressed: () => _navigateToEditSupplier(context, supplier),
           ),
         ],
@@ -64,7 +70,6 @@ class SupplierDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // En-tête avec avatar et informations principales
             Center(
               child: Column(
                 children: [
@@ -90,16 +95,12 @@ class SupplierDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(                color: Color.fromRGBO(
-                        _getCategoryColor(supplier.category).red.toInt(),
-                        _getCategoryColor(supplier.category).green.toInt(),
-                        _getCategoryColor(supplier.category).blue.toInt(),
-                        0.2,
-                      ),
+                    decoration: BoxDecoration(
+                      color: _getCategoryColor(supplier.category).withOpacity(0.2), // Corrected
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      _getCategoryName(supplier.category),
+                      _getCategoryName(context, supplier.category), 
                       style: TextStyle(
                         color: _getCategoryColor(supplier.category),
                         fontWeight: FontWeight.bold,
@@ -111,7 +112,6 @@ class SupplierDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Carte d'informations de contact
             Card(
               elevation: 2,
               child: Padding(
@@ -119,9 +119,9 @@ class SupplierDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Informations de contact',
-                      style: TextStyle(
+                    Text(
+                      localizations.contactInformationSectionTitle, 
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -129,41 +129,37 @@ class SupplierDetailsScreen extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 8),
                     
-                    // Personne à contacter
                     if (supplier.contactPerson.isNotEmpty) ...[
                       _buildInfoRow(
                         Icons.person,
-                        'Contact',
+                        localizations.contactLabel, 
                         supplier.contactPerson,
                       ),
                       const SizedBox(height: 12),
                     ],
                     
-                    // Téléphone
                     _buildInfoRow(
                       Icons.phone,
-                      'Téléphone',
+                      localizations.phoneLabel, 
                       supplier.phoneNumber,
                       onTap: () => _makePhoneCall(context, supplier.phoneNumber),
                     ),
                     const SizedBox(height: 12),
                     
-                    // Email
                     if (supplier.email.isNotEmpty) ...[
                       _buildInfoRow(
                         Icons.email,
-                        'Email',
+                        localizations.emailLabel, 
                         supplier.email,
                         onTap: () => _sendEmail(context, supplier.email),
                       ),
                       const SizedBox(height: 12),
                     ],
                     
-                    // Adresse
                     if (supplier.address.isNotEmpty) ...[
                       _buildInfoRow(
                         Icons.location_on,
-                        'Adresse',
+                        localizations.addressLabel, 
                         supplier.address,
                         onTap: () => _openMap(context, supplier.address),
                       ),
@@ -175,7 +171,6 @@ class SupplierDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Carte d'informations commerciales
             Card(
               elevation: 2,
               child: Padding(
@@ -183,9 +178,9 @@ class SupplierDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Informations commerciales',
-                      style: TextStyle(
+                    Text(
+                      localizations.commercialInformationSectionTitle, 
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -193,49 +188,42 @@ class SupplierDetailsScreen extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 8),
                     
-                    // Total des achats
                     _buildInfoRow(
                       Icons.attach_money,
-                      'Total des achats',
-                      '${_formatCurrency(supplier.totalPurchases)} FC',
+                      localizations.totalPurchasesLabel, 
+                      currencyService.formatAmount(supplier.totalPurchases), // Corrected
                     ),
                     const SizedBox(height: 12),
                     
-                    // Dernier achat
                     _buildInfoRow(
                       Icons.calendar_today,
-                      'Dernier achat',
+                      localizations.lastPurchaseLabel, 
                       supplier.lastPurchaseDate != null
-                          ? _formatDate(supplier.lastPurchaseDate!)
-                          : 'Aucun achat enregistré',
+                          ? _formatDate(supplier.lastPurchaseDate!, context) 
+                          : localizations.noPurchaseRecorded, 
                     ),
                     const SizedBox(height: 12),
                     
-                    // Délai de livraison
                     _buildInfoRow(
                       Icons.timer,
-                      'Délai de livraison',
-                      supplier.deliveryTimeInDays > 0
-                          ? '${supplier.deliveryTimeInDays} jour(s)'
-                          : 'Non spécifié',
+                      localizations.deliveryTimeLabel, 
+                      localizations.deliveryTimeInDays(supplier.deliveryTimeInDays), // Corrected
                     ),
                     const SizedBox(height: 12),
                     
-                    // Conditions de paiement
                     if (supplier.paymentTerms.isNotEmpty) ...[
                       _buildInfoRow(
                         Icons.payment,
-                        'Conditions de paiement',
+                        localizations.paymentTermsLabel, 
                         supplier.paymentTerms,
                       ),
                       const SizedBox(height: 12),
                     ],
                     
-                    // Fournisseur depuis
                     _buildInfoRow(
                       Icons.access_time,
-                      'Fournisseur depuis',
-                      _formatDate(supplier.createdAt),
+                      localizations.supplierSinceLabel, 
+                      _formatDate(supplier.createdAt, context), 
                     ),
                   ],
                 ),
@@ -243,7 +231,6 @@ class SupplierDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Notes
             if (supplier.notes.isNotEmpty) ...[
               Card(
                 elevation: 2,
@@ -252,9 +239,9 @@ class SupplierDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Notes',
-                        style: TextStyle(
+                      Text(
+                        localizations.notesSectionTitle, 
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -269,28 +256,35 @@ class SupplierDetailsScreen extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             
-            // Boutons d'action
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildActionButton(
-                  context,
-                  Icons.shopping_cart,
-                  'Passer commande',
-                  onPressed: () => _placeOrder(context),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    Icons.shopping_cart,
+                    localizations.placeOrderButtonLabel, 
+                    onPressed: () => _placeOrder(context),
+                  ),
                 ),
-                _buildActionButton(
-                  context,
-                  Icons.phone,
-                  'Appeler',
-                  onPressed: () => _makePhoneCall(context, supplier.phoneNumber),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    Icons.phone,
+                    localizations.callButtonLabel, 
+                    onPressed: () => _makePhoneCall(context, supplier.phoneNumber),
+                  ),
                 ),
-                _buildActionButton(
-                  context,
-                  Icons.delete,
-                  'Supprimer',
-                  color: Colors.red,
-                  onPressed: () => _confirmDelete(context),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    Icons.delete,
+                    localizations.deleteButtonLabel, 
+                    isDestructive: true,
+                    onPressed: () => _confirmDelete(context, supplier), 
+                  ),
                 ),
               ],
             ),
@@ -301,7 +295,6 @@ class SupplierDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Construit une ligne d'information
   Widget _buildInfoRow(
     IconData icon,
     String label,
@@ -338,136 +331,136 @@ class SupplierDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Construit un bouton d'action
   Widget _buildActionButton(
     BuildContext context,
     IconData icon,
     String label, {
     required VoidCallback onPressed,
-    Color? color,
+    bool isDestructive = false,
   }) {
+    final theme = Theme.of(context);
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
-      label: Text(label),
+      label: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)), // Adjusted
       style: ElevatedButton.styleFrom(
-        foregroundColor: color,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        backgroundColor: isDestructive ? Colors.red.withOpacity(0.1) : theme.colorScheme.primaryContainer,
+        foregroundColor: isDestructive ? Colors.red : theme.colorScheme.onPrimaryContainer,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12), 
+        textStyle: const TextStyle(fontSize: 12), 
       ),
     );
   }
-  /// Navigation vers l'écran de modification du fournisseur
   void _navigateToEditSupplier(BuildContext context, Supplier supplier) {
+    final BuildContext currentContext = context; 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddSupplierScreen(supplier: supplier),
       ),    ).then((value) {
-      // Rafraîchir les données si le widget est toujours monté
-      if (context.mounted) {
-        context.read<SupplierBloc>().add(LoadSupplier(supplier.id));
+      if (currentContext.mounted) { 
+        currentContext.read<SupplierBloc>().add(LoadSupplier(supplier.id));
       }
     });
   }
 
-  /// Passe une commande auprès de ce fournisseur
   void _placeOrder(BuildContext context) {
-    // TODO: Implémenter le passage de commande
+    final localizations = AppLocalizations.of(context)!; 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fonctionnalité à implémenter')),
+      SnackBar(content: Text(localizations.featureToImplement)), 
     );
   }
 
-  /// Effectue un appel téléphonique
   void _makePhoneCall(BuildContext context, String phoneNumber) {
-    // TODO: Implémenter l'appel téléphonique
+    final localizations = AppLocalizations.of(context)!; 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Appel vers $phoneNumber')),
+      SnackBar(content: Text(localizations.callingNumber(phoneNumber))), // Corrected
     );
   }
 
-  /// Envoie un email
   void _sendEmail(BuildContext context, String email) {
-    // TODO: Implémenter l'envoi d'email
+    final localizations = AppLocalizations.of(context)!; 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Email vers $email')),
+      SnackBar(content: Text(localizations.emailingTo(email))), // Corrected
     );
   }
 
-  /// Ouvre la carte pour voir l'adresse
   void _openMap(BuildContext context, String address) {
-    // TODO: Implémenter l'ouverture de la carte
+    final localizations = AppLocalizations.of(context)!; 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Ouverture de la carte pour $address')),
+      SnackBar(content: Text(localizations.openingMapFor(address))), // Corrected
     );
-  }  /// Confirme la suppression du fournisseur
-  void _confirmDelete(BuildContext context) {
+  }  
+  void _confirmDelete(BuildContext context, Supplier supplier) { 
+    final localizations = AppLocalizations.of(context)!; 
+    final supplierBloc = BlocProvider.of<SupplierBloc>(context); 
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Supprimer le fournisseur'),
+          title: Text(localizations.confirmDeleteSupplierTitle), 
           content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${supplier!.name} ? Cette action est irréversible.',
+            localizations.confirmDeleteSupplierMessage(supplier.name), // Corrected
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Annuler'),
+              child: Text(localizations.cancelButtonLabel), 
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
-                context.read<SupplierBloc>().add(DeleteSupplier(supplier!.id));
-                Navigator.pop(context); // Retourne à l'écran précédent
+                supplierBloc.add(DeleteSupplier(supplier.id)); 
+                if (Navigator.canPop(context)) { // Check if context is still valid
+                    Navigator.pop(context); 
+                }
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Supprimer'),
+              child: Text(localizations.deleteButtonLabel), 
             ),
           ],
         );
       },
     );
   }
-  /// Retourne la couleur associée à une catégorie de fournisseur
   Color _getCategoryColor(SupplierCategory category) {
     switch (category) {
       case SupplierCategory.strategic:
         return Colors.indigo;
       case SupplierCategory.regular:
-        return Colors.blue;      case SupplierCategory.newSupplier:
+        return Colors.blue;      
+      case SupplierCategory.newSupplier:
         return Colors.green;
       case SupplierCategory.occasional:
         return Colors.orange;
       case SupplierCategory.international:
         return Colors.purple;
+      // No default needed as all enum values are handled by SupplierCategory.values
     }
   }
-  /// Retourne le nom d'une catégorie de fournisseur
-  String _getCategoryName(SupplierCategory category) {
-    switch (category) {
+  String _getCategoryName(BuildContext context, SupplierCategory category) { 
+    final localizations = AppLocalizations.of(context)!; 
+    switch (category) {      
       case SupplierCategory.strategic:
-        return 'Stratégique';
+        return localizations.supplierCategoryStrategic;
       case SupplierCategory.regular:
-        return 'Régulier';      case SupplierCategory.newSupplier:
-        return 'Nouveau';
+        return localizations.supplierCategoryRegular;
+      case SupplierCategory.newSupplier: 
+        return localizations.supplierCategoryNew;
       case SupplierCategory.occasional:
-        return 'Occasionnel';
+        return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
-        return 'International';
+        return localizations.supplierCategoryInternational;
+      // No default needed as all enum values are handled by SupplierCategory.values
+      // default: return localizations.supplierCategoryUnknown;
+      default: // Added default case
+        return localizations.supplierCategoryUnknown;
     }
   }
 
-  /// Formate un montant en devise
-  String _formatCurrency(double amount) {
-    return amount.toStringAsFixed(2).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]} ',
-        );
-  }
-
-  /// Formate une date
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _formatDate(DateTime date, BuildContext context) { 
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMd(locale).format(date);
   }
 }

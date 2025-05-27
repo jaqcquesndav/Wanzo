@@ -13,24 +13,55 @@ class SubscriptionLoading extends SubscriptionState {}
 
 class SubscriptionLoaded extends SubscriptionState {
   final List<SubscriptionTier> tiers;
-  final SubscriptionTier currentTier;
-  final double tokenUsage; // e.g., 0.75 for 75%
+  final SubscriptionTier? currentTier;
+  final int tokenUsage;
   final int availableTokens;
-  final List<Invoice> invoices; // Defined in invoice_model.dart
-  final List<PaymentMethod> paymentMethods; // Defined in payment_method_model.dart
+  final List<Invoice> invoices;
+  final List<PaymentMethod> paymentMethods;
   final bool isUploadingProof;
-  final String? uploadedProofName;
+  final String? uploadedProofName; // To show the name of the uploaded file
+  final bool isSubmittingManualPayment; // Added
+  final bool isUpdatingPaymentMethod; // Added
 
   const SubscriptionLoaded({
     required this.tiers,
-    required this.currentTier,
+    this.currentTier,
     required this.tokenUsage,
     required this.availableTokens,
     required this.invoices,
     required this.paymentMethods,
     this.isUploadingProof = false,
     this.uploadedProofName,
+    this.isSubmittingManualPayment = false, // Added
+    this.isUpdatingPaymentMethod = false, // Added
   });
+
+  SubscriptionLoaded copyWith({
+    List<SubscriptionTier>? tiers,
+    SubscriptionTier? currentTier,
+    int? tokenUsage,
+    int? availableTokens,
+    List<Invoice>? invoices,
+    List<PaymentMethod>? paymentMethods,
+    bool? isUploadingProof,
+    String? uploadedProofName,
+    bool? clearUploadedProofName, // Special flag to nullify the name
+    bool? isSubmittingManualPayment, // Added
+    bool? isUpdatingPaymentMethod, // Added
+  }) {
+    return SubscriptionLoaded(
+      tiers: tiers ?? this.tiers,
+      currentTier: currentTier ?? this.currentTier,
+      tokenUsage: tokenUsage ?? this.tokenUsage,
+      availableTokens: availableTokens ?? this.availableTokens,
+      invoices: invoices ?? this.invoices,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
+      isUploadingProof: isUploadingProof ?? this.isUploadingProof,
+      uploadedProofName: clearUploadedProofName == true ? null : uploadedProofName ?? this.uploadedProofName,
+      isSubmittingManualPayment: isSubmittingManualPayment ?? this.isSubmittingManualPayment, // Added
+      isUpdatingPaymentMethod: isUpdatingPaymentMethod ?? this.isUpdatingPaymentMethod, // Added
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -42,32 +73,9 @@ class SubscriptionLoaded extends SubscriptionState {
         paymentMethods,
         isUploadingProof,
         uploadedProofName,
+        isSubmittingManualPayment, // Added
+        isUpdatingPaymentMethod, // Added
       ];
-
-  SubscriptionLoaded copyWith({
-    List<SubscriptionTier>? tiers,
-    SubscriptionTier? currentTier,
-    double? tokenUsage,
-    int? availableTokens,
-    List<Invoice>? invoices,
-    List<PaymentMethod>? paymentMethods,
-    bool? isUploadingProof,
-    String? uploadedProofName,
-    bool clearUploadedProofName = false,
-  }) {
-    return SubscriptionLoaded(
-      tiers: tiers ?? this.tiers,
-      currentTier: currentTier ?? this.currentTier,
-      tokenUsage: tokenUsage ?? this.tokenUsage,
-      availableTokens: availableTokens ?? this.availableTokens,
-      invoices: invoices ?? this.invoices,
-      paymentMethods: paymentMethods ?? this.paymentMethods,
-      isUploadingProof: isUploadingProof ?? this.isUploadingProof,
-      uploadedProofName: clearUploadedProofName
-          ? null
-          : (uploadedProofName ?? this.uploadedProofName),
-    );
-  }
 }
 
 class SubscriptionUpdateSuccess extends SubscriptionState {
@@ -101,6 +109,32 @@ class PaymentProofUploadSuccess extends SubscriptionState {
 class PaymentProofUploadFailure extends SubscriptionState {
   final String error;
   const PaymentProofUploadFailure({required this.error});
+  @override List<Object> get props => [error];
+}
+
+// States for Manual Payment Submission
+class ManualPaymentSubmissionSuccess extends SubscriptionState {
+  final String message;
+  const ManualPaymentSubmissionSuccess({required this.message});
+  @override List<Object> get props => [message];
+}
+
+class ManualPaymentSubmissionFailure extends SubscriptionState {
+  final String error;
+  const ManualPaymentSubmissionFailure({required this.error});
+  @override List<Object> get props => [error];
+}
+
+// States for Payment Method Update
+class PaymentMethodUpdateSuccess extends SubscriptionState {
+  final String message;
+  const PaymentMethodUpdateSuccess({required this.message});
+  @override List<Object> get props => [message];
+}
+
+class PaymentMethodUpdateFailure extends SubscriptionState {
+  final String error;
+  const PaymentMethodUpdateFailure({required this.error});
   @override List<Object> get props => [error];
 }
 

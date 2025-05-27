@@ -42,15 +42,15 @@ class Sale extends Equatable {
   
   /// Liste des produits vendus
   @HiveField(4)
-  final List<SaleItem> items; // This will now refer to the SaleItem from sale_item.dart
+  final List<SaleItem> items;
   
-  /// Montant total de la vente
+  /// Montant total de la vente en CDF
   @HiveField(5)
-  final double totalAmount;
+  final double totalAmountInCdf;
   
-  /// Montant payé
+  /// Montant payé en CDF
   @HiveField(6)
-  final double paidAmount;
+  final double paidAmountInCdf;
   
   /// Mode de paiement
   @HiveField(7)
@@ -64,6 +64,23 @@ class Sale extends Equatable {
   @HiveField(9)
   final String notes;
 
+  /// Code de la devise de la transaction (par exemple, "USD", "CDF")
+  @HiveField(10)
+  final String transactionCurrencyCode;
+
+  /// Taux de change vers CDF au moment de la transaction
+  /// (Si transactionCurrencyCode est "CDF", exchangeRate est 1.0)
+  @HiveField(11)
+  final double transactionExchangeRate;
+
+  /// Montant total dans la devise de la transaction
+  @HiveField(12)
+  final double totalAmountInTransactionCurrency;
+
+  /// Montant payé dans la devise de la transaction
+  @HiveField(13)
+  final double paidAmountInTransactionCurrency;
+
   /// Constructeur
   const Sale({
     required this.id,
@@ -71,21 +88,25 @@ class Sale extends Equatable {
     required this.customerId,
     required this.customerName,
     required this.items,
-    required this.totalAmount,
-    required this.paidAmount,
+    required this.totalAmountInCdf,
+    required this.paidAmountInCdf,
     required this.paymentMethod,
     required this.status,
     this.notes = '',
+    required this.transactionCurrencyCode,
+    required this.transactionExchangeRate,
+    required this.totalAmountInTransactionCurrency,
+    required this.paidAmountInTransactionCurrency,
   });
 
   factory Sale.fromJson(Map<String, dynamic> json) => _$SaleFromJson(json);
   Map<String, dynamic> toJson() => _$SaleToJson(this);
 
-  /// Vérifier si la vente est entièrement payée
-  bool get isFullyPaid => paidAmount >= totalAmount;
+  /// Vérifier si la vente est entièrement payée (basé sur les montants en CDF)
+  bool get isFullyPaid => paidAmountInCdf >= totalAmountInCdf;
   
-  /// Montant restant à payer
-  double get remainingAmount => totalAmount - paidAmount;
+  /// Montant restant à payer (en CDF)
+  double get remainingAmountInCdf => totalAmountInCdf - paidAmountInCdf;
 
   /// Crée une copie de cette vente avec les données fournies remplaçant les données existantes
   Sale copyWith({
@@ -94,11 +115,15 @@ class Sale extends Equatable {
     String? customerId,
     String? customerName,
     List<SaleItem>? items,
-    double? totalAmount,
-    double? paidAmount,
+    double? totalAmountInCdf,
+    double? paidAmountInCdf,
     String? paymentMethod,
     SaleStatus? status,
     String? notes,
+    String? transactionCurrencyCode,
+    double? transactionExchangeRate,
+    double? totalAmountInTransactionCurrency,
+    double? paidAmountInTransactionCurrency,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -106,11 +131,15 @@ class Sale extends Equatable {
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       items: items ?? this.items,
-      totalAmount: totalAmount ?? this.totalAmount,
-      paidAmount: paidAmount ?? this.paidAmount,
+      totalAmountInCdf: totalAmountInCdf ?? this.totalAmountInCdf,
+      paidAmountInCdf: paidAmountInCdf ?? this.paidAmountInCdf,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      transactionCurrencyCode: transactionCurrencyCode ?? this.transactionCurrencyCode,
+      transactionExchangeRate: transactionExchangeRate ?? this.transactionExchangeRate,
+      totalAmountInTransactionCurrency: totalAmountInTransactionCurrency ?? this.totalAmountInTransactionCurrency,
+      paidAmountInTransactionCurrency: paidAmountInTransactionCurrency ?? this.paidAmountInTransactionCurrency,
     );
   }
 
@@ -121,11 +150,15 @@ class Sale extends Equatable {
     customerId, 
     customerName, 
     items, 
-    totalAmount, 
-    paidAmount,
+    totalAmountInCdf, 
+    paidAmountInCdf,
     paymentMethod,
     status,
     notes,
+    transactionCurrencyCode,
+    transactionExchangeRate,
+    totalAmountInTransactionCurrency,
+    paidAmountInTransactionCurrency,
   ];
 }
 
