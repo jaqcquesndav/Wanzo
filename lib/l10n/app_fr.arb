@@ -6,6 +6,19 @@
   "activeCurrency": "Devise active",
   "errorFieldRequired": "Ce champ est requis",
   "exchangeRateSpecific": "Taux de change {fromCurrency} vers {toCurrency}",
+  "@exchangeRateSpecific": {
+    "description": "Label for exchange rate input field",
+    "placeholders": {
+      "fromCurrency": {
+        "type": "String",
+        "example": "USD"
+      },
+      "toCurrency": {
+        "type": "String",
+        "example": "CDF"
+      }
+    }
+  },
   "errorInvalidRate": "Veuillez entrer un taux valide supérieur à 0",
   "invoiceFormatting": "Formatage des factures",
   "invoiceFormatHint": "Utilisez {YEAR}, {MONTH}, {SEQ} pour année, mois, séquence.",
@@ -20,6 +33,13 @@
   "settingsSavedSuccess": "Paramètres enregistrés avec succès.",
   "errorUnknown": "Une erreur inconnue s'est produite.",
   "currencySettingsError": "Erreur des paramètres de devise: {message}",
+  "@currencySettingsError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "currencySettingsSavedSuccess": "Paramètres de devise enregistrés avec succès.",
   "anErrorOccurred": "Une erreur s'est produite",
   "currencyCDF": "Franc Congolais",
@@ -198,7 +218,7 @@
   "@showAllButtonLabel": {
     "description": "Étiquette pour le bouton Afficher tout dans les filtres"
   },
-  "noProductsInInventoryMessage": "Vous n\\'avez encore ajouté aucun produit à votre inventaire.",
+  "noProductsInInventoryMessage": "Vous n'avez encore ajouté aucun produit à votre inventaire.",
   "@noProductsInInventoryMessage": {
     "description": "Message affiché sur l'écran d'inventaire vide"
   },
@@ -350,6 +370,33 @@
   "subscriptionUnsupportedFileType": "Type de fichier non supporté. Veuillez choisir un fichier JPG ou PNG.",
   "subscriptionFileTooLarge": "Fichier trop volumineux. La taille maximale est de 5MB.",
   "subscriptionNoImageSelected": "Aucune image sélectionnée.",
+  "subscriptionUpdateSuccessMessage": "Abonnement mis à jour avec succès.",
+  "subscriptionUpdateFailureMessage": "Échec de la mise à jour de l'abonnement : {error}",
+  "@subscriptionUpdateFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionTokenTopUpSuccessMessage": "Recharge de tokens réussie.",
+  "subscriptionTokenTopUpFailureMessage": "Échec de la recharge de tokens : {error}",
+  "@subscriptionTokenTopUpFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionPaymentProofUploadSuccessMessage": "Preuve de paiement téléchargée avec succès.",
+  "subscriptionPaymentProofUploadFailureMessage": "Échec du téléchargement de la preuve de paiement : {error}",
+  "@subscriptionPaymentProofUploadFailureMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "subscriptionRetryButton": "Réessayer",
   "subscriptionUnhandledState": "État non géré ou initialisation...",
   "subscriptionSectionOurOffers": "Nos Offres d'Abonnement",
@@ -378,6 +425,22 @@
   "subscriptionTierFeatures": "Fonctionnalités :",
   "subscriptionTierCurrentPlanChip": "Plan Actuel",
   "subscriptionTierChoosePlanButton": "Choisir ce plan",
+  "subscriptionCurrentPlanTitle": "Plan Actuel : {tierName}",
+  "@subscriptionCurrentPlanTitle": {
+    "placeholders": {
+      "tierName": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionCurrentPlanPrice": "Prix : {price}",
+  "@subscriptionCurrentPlanPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "subscriptionAvailableAdhaTokens": "Tokens Adha disponibles : {count}",
   "@subscriptionAvailableAdhaTokens": {
     "placeholders": {
@@ -437,6 +500,14 @@
   "subscriptionPaymentMethodNewMobileMoney": "Nouveau Mobile Money",
   "subscriptionPaymentMethodManual": "Paiement Manuel (Transfert/Dépôt)",
   "subscriptionManualPaymentInstructions": "Veuillez effectuer le transfert/dépôt aux coordonnées qui seront fournies et télécharger une preuve de paiement.",
+  "subscriptionProofUploadedLabel": "Preuve Téléchargée : {fileName}",
+  "@subscriptionProofUploadedLabel": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
   "subscriptionUploadProofButton": "Télécharger la preuve",
   "subscriptionReplaceProofButton": "Remplacer la preuve",
   "subscriptionConfirmPaymentMethodButton": "Confirmer la méthode de paiement",
@@ -463,54 +534,12 @@
   "commonCancel": "Annuler",
   "subscriptionTopUpDialogTitle": "Recharger des Tokens Adha",
   "subscriptionTopUpDialogAmount": "{amount} {currencyCode}",
-
-  "subscriptionUpdateSuccessMessage": "Abonnement mis à jour avec succès.",
-  "subscriptionUpdateFailureMessage": "Échec de la mise à jour de l'abonnement : {error}",
-  "@subscriptionUpdateFailureMessage": {
+  "@subscriptionTopUpDialogAmount": {
     "placeholders": {
-      "error": {
+      "amount": {
         "type": "String"
-      }
-    }
-  },
-  "subscriptionTokenTopUpSuccessMessage": "Recharge de tokens réussie.",
-  "subscriptionTokenTopUpFailureMessage": "Échec de la recharge de tokens : {error}",
-  "@subscriptionTokenTopUpFailureMessage": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "subscriptionPaymentProofUploadSuccessMessage": "Preuve de paiement téléchargée avec succès.",
-  "subscriptionPaymentProofUploadFailureMessage": "Échec du téléchargement de la preuve de paiement : {error}",
-  "@subscriptionPaymentProofUploadFailureMessage": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "subscriptionCurrentPlanTitle": "Plan Actuel : {tierName}",
-  "@subscriptionCurrentPlanTitle": {
-    "placeholders": {
-      "tierName": {
-        "type": "String"
-      }
-    }
-  },
-  "subscriptionCurrentPlanPrice": "Prix : {price}",
-  "@subscriptionCurrentPlanPrice": {
-    "placeholders": {
-      "price": {
-        "type": "String"
-      }
-    }
-  },
-  "subscriptionProofUploadedLabel": "Preuve Téléchargée : {fileName}",
-  "@subscriptionProofUploadedLabel": {
-    "placeholders": {
-      "fileName": {
+      },
+      "currencyCode": {
         "type": "String"
       }
     }
@@ -574,7 +603,7 @@
   },
   "viewDetails": "Voir les détails",
   "edit": "Modifier",
-
+  "delete": "Supprimer",
   "allCustomers": "Tous les clients",
   "topCustomers": "Meilleurs clients",
   "recentCustomers": "Clients récents",
@@ -676,7 +705,7 @@
       }
     }
   },
-  "moreOptionsTooltip": "Plus d''options",
+  "moreOptionsTooltip": "Plus d'options",
   "allSuppliers": "Tous les fournisseurs",
   "topSuppliers": "Principaux fournisseurs",
   "recentSuppliers": "Fournisseurs récents",
@@ -752,30 +781,6 @@
   "callButtonLabel": "Appeler",
   "deleteButtonLabel": "Supprimer",
   "featureToImplement": "Fonctionnalité à implémenter",
-  "callingNumber": "Appel vers {phoneNumber}...",
-  "@callingNumber": {
-    "placeholders": {
-      "phoneNumber": {
-        "type": "String"
-      }
-    }
-  },
-  "emailingTo": "Envoi d'email à {email}...",
-  "@emailingTo": {
-    "placeholders": {
-      "email": {
-        "type": "String"
-      }
-    }
-  },
-  "openingMapFor": "Ouverture de la carte pour {address}...",
-  "@openingMapFor": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      }
-    }
-  },
   "confirmDeleteSupplierTitle": "Supprimer le fournisseur",
   "confirmDeleteSupplierMessage": "Êtes-vous sûr de vouloir supprimer {supplierName} ? Cette action est irréversible.",
   "@confirmDeleteSupplierMessage": {
@@ -785,5 +790,50 @@
       }
     }
   },
-  "cancelButtonLabel": "Annuler"
+
+  "commonConfirm": "Confirmer",
+  "commonToday": "Aujourd'hui",
+  "commonThisMonth": "Ce Mois-ci",
+  "commonThisYear": "Cette Année",
+  "commonCustom": "Personnalisé",
+  "commonAnonymousClient": "Client Anonyme",
+  "commonAnonymousClientInitial": "A",
+  "commonErrorDataUnavailable": "Données indisponibles",
+  "commonNoData": "Aucune donnée disponible",
+  "commonLoading": "Chargement...",
+  "commonError": "Erreur",
+  "commonRetry": "Réessayer",
+  "commonApply": "Appliquer",
+
+  "dashboardScreenTitle": "Tableau de Bord",
+  "dashboardHeaderSalesToday": "Ventes Aujourd'hui",
+  "dashboardHeaderClientsServed": "Clients Servis",
+  "dashboardHeaderReceivables": "Créances",
+  "dashboardHeaderTransactions": "Transactions",
+  "dashboardCardViewDetails": "Voir Détails",
+  "dashboardSalesChartTitle": "Aperçu des Ventes",
+  "dashboardSalesChartNoData": "Aucune donnée de vente à afficher.",
+  "dashboardRecentSalesTitle": "Ventes Récentes",
+  "dashboardRecentSalesViewAll": "Voir Tout",
+  "dashboardRecentSalesNoData": "Aucune vente récente.",
+  "dashboardOperationsJournalTitle": "Journal des Opérations",
+  "dashboardOperationsJournalViewAll": "Voir Tout",
+  "dashboardOperationsJournalNoData": "Aucune opération récente.",
+  "dashboardOperationsJournalBalanceLabel": "Solde",
+  "dashboardJournalExportSelectDateRangeTitle": "Sélectionner la plage de dates",
+  "dashboardJournalExportExportButton": "Exporter en PDF",
+  "dashboardJournalExportPrintButton": "Imprimer le Journal",
+  "dashboardJournalExportSuccessMessage": "Journal exporté avec succès.",
+  "dashboardJournalExportFailureMessage": "Échec de l'exportation du journal.",
+  "dashboardJournalExportNoDataForPeriod": "Aucune donnée disponible pour la période sélectionnée.",
+  "dashboardJournalExportPrintingMessage": "Préparation du journal pour l'impression...",
+  "dashboardQuickActionsTitle": "Actions Rapides",
+  "dashboardQuickActionsNewSale": "Nouvelle Vente",
+  "dashboardQuickActionsNewExpense": "Nouvelle Dépense",
+  "dashboardQuickActionsNewProduct": "Nouveau Produit",
+  "dashboardQuickActionsNewService": "Nouveau Service",
+  "dashboardQuickActionsNewClient": "Nouveau Client",
+  "dashboardQuickActionsNewSupplier": "Nouveau Fournisseur",
+  "dashboardQuickActionsCashRegister": "Caisse",
+  "dashboardQuickActionsSettings": "Paramètres"
 }

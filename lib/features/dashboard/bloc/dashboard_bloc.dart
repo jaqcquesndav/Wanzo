@@ -34,7 +34,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final todayStart = DateTime(event.date.year, event.date.month, event.date.day);
       final todayEnd = DateTime(event.date.year, event.date.month, event.date.day, 23, 59, 59);
       final sales = await _salesRepository.getSalesByDateRange(todayStart, todayEnd);
-      final double salesToday = sales.fold(0.0, (sum, sale) => sum + sale.totalAmount);
+      final double salesToday = sales.fold(0.0, (sum, sale) => sum + sale.totalAmountInCdf); // Changed totalAmount to totalAmountInCdf
 
       // Clients Served Today - This is a placeholder. 
       // You'll need a way to count unique customers from today's sales or a separate metric.

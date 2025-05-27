@@ -18,7 +18,7 @@ import 'app_localizations_fr.dart';
 /// `supportedLocales` list. For example:
 ///
 /// ```dart
-/// import 'generated/app_localizations.dart';
+/// import 'l10n/app_localizations.dart';
 ///
 /// return MaterialApp(
 ///   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -377,11 +377,11 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete this product? This action cannot be undone.'**
   String get confirmDeleteProductMessage;
 
-  /// No description provided for @cancel.
+  /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
-  String get cancel;
+  String get commonCancel;
 
   /// No description provided for @delete.
   ///
@@ -1391,12 +1391,6 @@ abstract class AppLocalizations {
   /// **'{price} - Tokens: {tokens}'**
   String subscriptionChangeDialogTierSubtitle(String price, String tokens);
 
-  /// No description provided for @commonCancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get commonCancel;
-
   /// No description provided for @subscriptionTopUpDialogTitle.
   ///
   /// In en, this message translates to:
@@ -2152,6 +2146,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete {supplierName}? This action is irreversible.'**
   String confirmDeleteSupplierMessage(String supplierName);
+
+  /// No description provided for @commonConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get commonConfirm;
+
+  /// No description provided for @commonError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get commonError;
+
+  /// No description provided for @commonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get commonToday;
+
+  /// No description provided for @commonThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get commonThisMonth;
+
+  /// No description provided for @commonThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This Year'**
+  String get commonThisYear;
+
+  /// No description provided for @commonCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get commonCustom;
+
+  /// No description provided for @commonAnonymousClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous Client'**
+  String get commonAnonymousClient;
+
+  /// No description provided for @commonAnonymousClientInitial.
+  ///
+  /// In en, this message translates to:
+  /// **'A'**
+  String get commonAnonymousClientInitial;
+
+  /// No description provided for @commonErrorDataUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Data unavailable'**
+  String get commonErrorDataUnavailable;
+
+  /// No description provided for @commonNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get commonNoData;
+
+  /// No description provided for @dashboardScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardScreenTitle;
+
+  /// No description provided for @dashboardHeaderSalesToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Today'**
+  String get dashboardHeaderSalesToday;
+
+  /// No description provided for @dashboardHeaderClientsServed.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients Served'**
+  String get dashboardHeaderClientsServed;
+
+  /// No description provided for @dashboardHeaderReceivables.
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables'**
+  String get dashboardHeaderReceivables;
+
+  /// No description provided for @dashboardHeaderTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get dashboardHeaderTransactions;
+
+  /// No description provided for @dashboardCardViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get dashboardCardViewDetails;
+
+  /// No description provided for @dashboardSalesChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Overview'**
+  String get dashboardSalesChartTitle;
+
+  /// No description provided for @dashboardSalesChartNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales data to display for the chart.'**
+  String get dashboardSalesChartNoData;
+
+  /// No description provided for @dashboardRecentSalesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Sales'**
+  String get dashboardRecentSalesTitle;
+
+  /// No description provided for @dashboardRecentSalesViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get dashboardRecentSalesViewAll;
+
+  /// No description provided for @dashboardRecentSalesNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent sales.'**
+  String get dashboardRecentSalesNoData;
+
+  /// No description provided for @dashboardOperationsJournalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations Journal'**
+  String get dashboardOperationsJournalTitle;
+
+  /// No description provided for @dashboardOperationsJournalViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get dashboardOperationsJournalViewAll;
+
+  /// No description provided for @dashboardOperationsJournalNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent operations.'**
+  String get dashboardOperationsJournalNoData;
+
+  /// No description provided for @dashboardOperationsJournalBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get dashboardOperationsJournalBalanceLabel;
+
+  /// No description provided for @dashboardJournalExportSelectDateRangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date Range'**
+  String get dashboardJournalExportSelectDateRangeTitle;
+
+  /// No description provided for @dashboardJournalExportExportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to PDF'**
+  String get dashboardJournalExportExportButton;
+
+  /// No description provided for @dashboardJournalExportPrintButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Print Journal'**
+  String get dashboardJournalExportPrintButton;
+
+  /// No description provided for @dashboardJournalExportSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal exported successfully.'**
+  String get dashboardJournalExportSuccessMessage;
+
+  /// No description provided for @dashboardJournalExportFailureMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export journal.'**
+  String get dashboardJournalExportFailureMessage;
+
+  /// No description provided for @dashboardJournalExportNoDataForPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available for the selected period to export.'**
+  String get dashboardJournalExportNoDataForPeriod;
+
+  /// No description provided for @dashboardJournalExportPrintingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing journal for printing...'**
+  String get dashboardJournalExportPrintingMessage;
+
+  /// No description provided for @dashboardQuickActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get dashboardQuickActionsTitle;
+
+  /// No description provided for @dashboardQuickActionsNewSale.
+  ///
+  /// In en, this message translates to:
+  /// **'New Sale'**
+  String get dashboardQuickActionsNewSale;
+
+  /// No description provided for @dashboardQuickActionsNewExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'New Expense'**
+  String get dashboardQuickActionsNewExpense;
+
+  /// No description provided for @dashboardQuickActionsNewProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'New Product'**
+  String get dashboardQuickActionsNewProduct;
+
+  /// No description provided for @dashboardQuickActionsNewService.
+  ///
+  /// In en, this message translates to:
+  /// **'New Service'**
+  String get dashboardQuickActionsNewService;
+
+  /// No description provided for @dashboardQuickActionsNewClient.
+  ///
+  /// In en, this message translates to:
+  /// **'New Client'**
+  String get dashboardQuickActionsNewClient;
+
+  /// No description provided for @dashboardQuickActionsNewSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'New Supplier'**
+  String get dashboardQuickActionsNewSupplier;
+
+  /// No description provided for @dashboardQuickActionsCashRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Register'**
+  String get dashboardQuickActionsCashRegister;
+
+  /// No description provided for @dashboardQuickActionsSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get dashboardQuickActionsSettings;
+
+  /// No description provided for @commonLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get commonLoading;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

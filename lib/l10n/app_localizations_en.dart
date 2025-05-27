@@ -158,7 +158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDeleteProductMessage => 'Are you sure you want to delete this product? This action cannot be undone.';
 
   @override
-  String get cancel => 'Cancel';
+  String get commonCancel => 'Cancel';
 
   @override
   String get delete => 'Delete';
@@ -707,9 +707,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get commonCancel => 'Cancel';
-
-  @override
   String get subscriptionTopUpDialogTitle => 'Top-up Adha Tokens';
 
   @override
@@ -1125,4 +1122,130 @@ class AppLocalizationsEn extends AppLocalizations {
   String confirmDeleteSupplierMessage(String supplierName) {
     return 'Are you sure you want to delete $supplierName? This action is irreversible.';
   }
+
+  @override
+  String get commonConfirm => 'Confirm';
+
+  @override
+  String get commonError => 'Error';
+
+  @override
+  String get commonToday => 'Today';
+
+  @override
+  String get commonThisMonth => 'This Month';
+
+  @override
+  String get commonThisYear => 'This Year';
+
+  @override
+  String get commonCustom => 'Custom';
+
+  @override
+  String get commonAnonymousClient => 'Anonymous Client';
+
+  @override
+  String get commonAnonymousClientInitial => 'A';
+
+  @override
+  String get commonErrorDataUnavailable => 'Data unavailable';
+
+  @override
+  String get commonNoData => 'No data available';
+
+  @override
+  String get dashboardScreenTitle => 'Dashboard';
+
+  @override
+  String get dashboardHeaderSalesToday => 'Sales Today';
+
+  @override
+  String get dashboardHeaderClientsServed => 'Clients Served';
+
+  @override
+  String get dashboardHeaderReceivables => 'Receivables';
+
+  @override
+  String get dashboardHeaderTransactions => 'Transactions';
+
+  @override
+  String get dashboardCardViewDetails => 'View Details';
+
+  @override
+  String get dashboardSalesChartTitle => 'Sales Overview';
+
+  @override
+  String get dashboardSalesChartNoData => 'No sales data to display for the chart.';
+
+  @override
+  String get dashboardRecentSalesTitle => 'Recent Sales';
+
+  @override
+  String get dashboardRecentSalesViewAll => 'View All';
+
+  @override
+  String get dashboardRecentSalesNoData => 'No recent sales.';
+
+  @override
+  String get dashboardOperationsJournalTitle => 'Operations Journal';
+
+  @override
+  String get dashboardOperationsJournalViewAll => 'View All';
+
+  @override
+  String get dashboardOperationsJournalNoData => 'No recent operations.';
+
+  @override
+  String get dashboardOperationsJournalBalanceLabel => 'Balance';
+
+  @override
+  String get dashboardJournalExportSelectDateRangeTitle => 'Select Date Range';
+
+  @override
+  String get dashboardJournalExportExportButton => 'Export to PDF';
+
+  @override
+  String get dashboardJournalExportPrintButton => 'Print Journal';
+
+  @override
+  String get dashboardJournalExportSuccessMessage => 'Journal exported successfully.';
+
+  @override
+  String get dashboardJournalExportFailureMessage => 'Failed to export journal.';
+
+  @override
+  String get dashboardJournalExportNoDataForPeriod => 'No data available for the selected period to export.';
+
+  @override
+  String get dashboardJournalExportPrintingMessage => 'Preparing journal for printing...';
+
+  @override
+  String get dashboardQuickActionsTitle => 'Quick Actions';
+
+  @override
+  String get dashboardQuickActionsNewSale => 'New Sale';
+
+  @override
+  String get dashboardQuickActionsNewExpense => 'New Expense';
+
+  @override
+  String get dashboardQuickActionsNewProduct => 'New Product';
+
+  @override
+  String get dashboardQuickActionsNewService => 'New Service';
+
+  @override
+  String get dashboardQuickActionsNewClient => 'New Client';
+
+  @override
+  String get dashboardQuickActionsNewSupplier => 'New Supplier';
+
+  @override
+  String get dashboardQuickActionsCashRegister => 'Cash Register';
+
+  @override
+  String get dashboardQuickActionsSettings => 'Settings';
+
+  @override
+  String get commonLoading => 'Loading...';
 }

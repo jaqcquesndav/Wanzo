@@ -4,7 +4,7 @@ import '../../features/notifications/models/notification_model.dart';
 // Import Adha models
 import '../../features/adha/models/adha_adapters.dart'; // Uncommented import
 import '../../features/sales/models/sale.dart'; // Corrected: Import main model file
-import '../../features/sales/models/sale_adapter.dart'; // Added import for SaleItemAdapter
+import '../../features/sales/models/sale_item.dart'; // Ensure SaleItemAdapter is available if defined separately or via sale_item.g.dart
 import '../../features/financing/models/financing_request.dart'; // Corrected: Import main model file
 import '../../features/customer/models/customer.dart'; // Added import for Customer model
 import '../../features/supplier/models/supplier.dart'; // Added import for Supplier model
@@ -15,99 +15,98 @@ import '../../features/inventory/models/stock_transaction.dart';
 /// Enregistre tous les adaptateurs Hive nécessaires
 void registerHiveAdapters() {
   // User models
-  if (!Hive.isAdapterRegistered(0)) {
+  if (!Hive.isAdapterRegistered(UserAdapter().typeId)) { // Use .typeId for consistency
     Hive.registerAdapter(UserAdapter());
   }
-  if (!Hive.isAdapterRegistered(103)) { // IdStatusAdapter - Ensure this matches the typeId in user.g.dart
+  if (!Hive.isAdapterRegistered(IdStatusAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(IdStatusAdapter());
   }
 
   // Sale models
-  if (!Hive.isAdapterRegistered(1)) { // typeId for Sale
-    Hive.registerAdapter(SaleAdapter());
+  // Assuming SaleAdapter and SaleStatusAdapter are generated in sale.g.dart and accessible via sale.dart
+  // The typeId for Sale is 7 as per sale.dart
+  // The typeId for SaleStatus is 6 as per sale.dart
+  if (!Hive.isAdapterRegistered(7)) { // typeId for Sale from sale.dart
+    Hive.registerAdapter(SaleAdapter()); // This should now refer to the generated adapter
   }
-  if (!Hive.isAdapterRegistered(2)) { // typeId for SaleItem
+  if (!Hive.isAdapterRegistered(2)) { // typeId for SaleItem (assuming it's 2 from sale_item.dart or its .g.dart file)
     Hive.registerAdapter(SaleItemAdapter());
   }
-  // Note: SaleStatus was typeId 3, Customer is now 3, CustomerCategory is 4.
-  // FinancingRequest was 4, now 8
-  // FinancingType was 5, now 16
-  // FinancialInstitution was 6, now 9
-
+  
   // Customer models
-  if (!Hive.isAdapterRegistered(3)) { // typeId for Customer
+  if (!Hive.isAdapterRegistered(CustomerAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(CustomerAdapter());
   }
-  if (!Hive.isAdapterRegistered(4)) { // typeId for CustomerCategory
+  if (!Hive.isAdapterRegistered(CustomerCategoryAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(CustomerCategoryAdapter());
   }
   
-  // SaleStatus is now 5
-  if (!Hive.isAdapterRegistered(5)) { // typeId for SaleStatus
-    Hive.registerAdapter(SaleStatusAdapter());
+  // SaleStatus is typeId 6 from sale.dart
+  if (!Hive.isAdapterRegistered(6)) { // typeId for SaleStatus from sale.dart
+    Hive.registerAdapter(SaleStatusAdapter()); // This should now refer to the generated adapter
   }
 
   // Financing models - Adjusted TypeIDs
-  if (!Hive.isAdapterRegistered(8)) { // Corrected: typeId for FinancingRequest is 8
+  if (!Hive.isAdapterRegistered(FinancingRequestAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(FinancingRequestAdapter());
   }
-  if (!Hive.isAdapterRegistered(16)) { // typeId for FinancingType
+  if (!Hive.isAdapterRegistered(FinancingTypeAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(FinancingTypeAdapter());
   }
-  if (!Hive.isAdapterRegistered(9)) { // typeId for FinancialInstitution
+  if (!Hive.isAdapterRegistered(FinancialInstitutionAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(FinancialInstitutionAdapter());
   }
 
   // Notification models - Adjusted TypeIDs
-  if (!Hive.isAdapterRegistered(10)) { // typeId for NotificationModel
+  if (!Hive.isAdapterRegistered(NotificationModelAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(NotificationModelAdapter());
   }
   
-  if (!Hive.isAdapterRegistered(11)) { // typeId for NotificationType
+  if (!Hive.isAdapterRegistered(NotificationTypeAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(NotificationTypeAdapter());
   }
 
   // Adha models
-  if (!Hive.isAdapterRegistered(100)) { // typeId for AdhaMessageAdapter
+  if (!Hive.isAdapterRegistered(AdhaMessageAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(AdhaMessageAdapter());
   }
-  if (!Hive.isAdapterRegistered(101)) { // typeId for AdhaMessageTypeAdapter
+  if (!Hive.isAdapterRegistered(AdhaMessageTypeAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(AdhaMessageTypeAdapter());
   }
-  if (!Hive.isAdapterRegistered(102)) { // typeId for AdhaConversationAdapter
+  if (!Hive.isAdapterRegistered(AdhaConversationAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(AdhaConversationAdapter());
   }
 
   // Supplier models
-  if (!Hive.isAdapterRegistered(12)) { // typeId for Supplier
+  if (!Hive.isAdapterRegistered(SupplierAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(SupplierAdapter());
   }
-  if (!Hive.isAdapterRegistered(13)) { // typeId for SupplierCategory
+  if (!Hive.isAdapterRegistered(SupplierCategoryAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(SupplierCategoryAdapter());
   }
   
   // Settings models
-  if (!Hive.isAdapterRegistered(14)) { // typeId for Settings
+  if (!Hive.isAdapterRegistered(SettingsAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(SettingsAdapter());
   }
-  if (!Hive.isAdapterRegistered(15)) { // typeId for AppThemeMode
+  if (!Hive.isAdapterRegistered(AppThemeModeAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(AppThemeModeAdapter());
   }
 
   // Inventory models
-  if (!Hive.isAdapterRegistered(20)) { // typeId for ProductCategory
+  if (!Hive.isAdapterRegistered(ProductCategoryAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(ProductCategoryAdapter());
   }
-  if (!Hive.isAdapterRegistered(21)) { // typeId for ProductUnit
+  if (!Hive.isAdapterRegistered(ProductUnitAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(ProductUnitAdapter());
   }
-  if (!Hive.isAdapterRegistered(22)) { // typeId for Product
+  if (!Hive.isAdapterRegistered(ProductAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(ProductAdapter());
   }
-  if (!Hive.isAdapterRegistered(23)) { // typeId for StockTransactionType
+  if (!Hive.isAdapterRegistered(StockTransactionTypeAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(StockTransactionTypeAdapter());
   }
-  if (!Hive.isAdapterRegistered(24)) { // typeId for StockTransaction
+  if (!Hive.isAdapterRegistered(StockTransactionAdapter().typeId)) { // Use .typeId
     Hive.registerAdapter(StockTransactionAdapter());
   }
   

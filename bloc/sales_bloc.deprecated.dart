@@ -56,7 +56,7 @@ class SalesLoaded extends SalesState {
   
   /// Calcule le montant total des ventes
   double get totalAmount {
-    return sales.fold<double>(0, (total, sale) => total + sale.totalAmount);
+    return sales.fold<double>(0, (total, sale) => total + sale.totalAmountInCdf); // Changed to totalAmountInCdf
   }
   
   @override

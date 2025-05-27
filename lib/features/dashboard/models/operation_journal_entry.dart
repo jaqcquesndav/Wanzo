@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; // Added for IconData
 
 enum OperationType {
   saleCash,
@@ -60,6 +61,35 @@ extension OperationTypeExtension on OperationType {
         return 'Autre'; // Cas 'other' explicite
     }
   }
+
+  IconData get icon {
+    switch (this) {
+      case OperationType.saleCash:
+      case OperationType.saleCredit:
+      case OperationType.saleInstallment:
+        return Icons.shopping_cart_checkout;
+      case OperationType.stockIn:
+        return Icons.inventory_2_outlined; // More specific for stock in
+      case OperationType.stockOut:
+        return Icons.outbox_outlined; // More specific for stock out
+      case OperationType.cashIn:
+        return Icons.attach_money;
+      case OperationType.cashOut:
+        return Icons.money_off_csred_outlined;
+      case OperationType.customerPayment:
+        return Icons.person_pin_circle_outlined; 
+      case OperationType.supplierPayment:
+        return Icons.store_mall_directory_outlined;
+      case OperationType.financingRequest:
+        return Icons.post_add_outlined;
+      case OperationType.financingApproved:
+        return Icons.check_circle_outline;
+      case OperationType.financingRepayment:
+        return Icons.assignment_returned_outlined;
+      case OperationType.other:
+        return Icons.receipt_long_outlined;
+    }
+  }
 }
 
 @immutable
@@ -75,6 +105,9 @@ class OperationJournalEntry {
   final String? productName; // Nom du produit pour les mouvements de stock
   final String? paymentMethod; // Méthode de paiement pour les transactions financières
   final String? currencyCode; // Code de la devise pour le montant
+  final bool isDebit;
+  final bool isCredit;
+  final double balanceAfter;
 
   const OperationJournalEntry({
     required this.id,
@@ -88,6 +121,9 @@ class OperationJournalEntry {
     this.productName,
     this.paymentMethod,
     this.currencyCode, // Added to constructor
+    required this.isDebit,
+    required this.isCredit,
+    required this.balanceAfter,
   });
 
   Map<String, dynamic> toJson() {
@@ -102,7 +138,10 @@ class OperationJournalEntry {
       if (productId != null) 'productId': productId,
       if (productName != null) 'productName': productName,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
-      if (currencyCode != null) 'currencyCode': currencyCode, // Added to toJson
+      if (currencyCode != null) 'currencyCode': currencyCode,
+      'isDebit': isDebit,
+      'isCredit': isCredit,
+      'balanceAfter': balanceAfter,
     };
   }
 
@@ -119,6 +158,43 @@ class OperationJournalEntry {
       productName: json['productName'] as String?,
       paymentMethod: json['paymentMethod'] as String?,
       currencyCode: json['currencyCode'] as String?, // Added to fromJson
+      isDebit: json['isDebit'] as bool? ?? false, // Provide default if null
+      isCredit: json['isCredit'] as bool? ?? false, // Provide default if null
+      balanceAfter: (json['balanceAfter'] as num?)?.toDouble() ?? 0.0, // Provide default if null
+    );
+  }
+
+  OperationJournalEntry copyWith({
+    String? id,
+    DateTime? date,
+    String? description,
+    OperationType? type,
+    double? amount,
+    String? relatedDocumentId,
+    double? quantity,
+    String? productId,
+    String? productName,
+    String? paymentMethod,
+    String? currencyCode,
+    bool? isDebit,
+    bool? isCredit,
+    double? balanceAfter,
+  }) {
+    return OperationJournalEntry(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      relatedDocumentId: relatedDocumentId ?? this.relatedDocumentId,
+      quantity: quantity ?? this.quantity,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      currencyCode: currencyCode ?? this.currencyCode,
+      isDebit: isDebit ?? this.isDebit,
+      isCredit: isCredit ?? this.isCredit,
+      balanceAfter: balanceAfter ?? this.balanceAfter,
     );
   }
 

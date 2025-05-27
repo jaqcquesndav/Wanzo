@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import '../models/operation_journal_entry.dart';
 import '../repositories/operation_journal_repository.dart';
-import 'package:collection/collection.dart'; // For groupBy
+import 'package:collection/collection.dart'; // For sortBy and groupBy
 
 part 'operation_journal_event.dart';
 part 'operation_journal_state.dart';
@@ -27,18 +27,43 @@ class OperationJournalBloc
   ) async {
     emit(const OperationJournalLoading());
     try {
-      final operations = await _repository.getOperations(event.startDate, event.endDate);
+      // 1. Fetch raw operations and opening balance
+      final rawOperations = await _repository.getOperations(event.startDate, event.endDate);
       final openingBalance = await _repository.getOpeningBalance(event.startDate);
-      final grouped = _groupOperationsByDay(operations);
+
+      // 2. Sort operations by date
+      final sortedOperations = List<OperationJournalEntry>.from(rawOperations);
+      sortedOperations.sort((a, b) => a.date.compareTo(b.date));
+
+      // 3. Calculate isDebit, isCredit, and running balanceAfter
+      final processedOperations = <OperationJournalEntry>[];
+      double currentBalance = openingBalance;
+
+      for (final op in sortedOperations) {
+        final bool calculatedIsDebit = op.amount < 0;
+        final bool calculatedIsCredit = op.amount > 0;
+        currentBalance += op.amount; // Amount is already signed
+        
+        processedOperations.add(op.copyWith(
+          isDebit: calculatedIsDebit,
+          isCredit: calculatedIsCredit,
+          balanceAfter: currentBalance,
+        ));
+      }
+
+      // 4. Group processed operations by day
+      final grouped = _groupOperationsByDay(processedOperations);
+
+      // 5. Emit the loaded state with processed data
       emit(OperationJournalLoaded(
-        operations: operations,
+        operations: processedOperations, // Use processed operations
         startDate: event.startDate,
         endDate: event.endDate,
         groupedOperations: grouped,
-        openingBalance: openingBalance, // Pass opening balance to state
+        openingBalance: openingBalance, 
       ));
     } catch (e) {
-      emit(OperationJournalError('Erreur de chargement des opérations: $e'));
+      emit(OperationJournalError('Erreur de chargement des opérations: ${e.toString()}'));
     }
   }
 
@@ -126,6 +151,7 @@ class OperationJournalBloc
 
   Map<DateTime, List<OperationJournalEntry>> _groupOperationsByDay(
       List<OperationJournalEntry> operations) {
+    // Group by the date part only (year, month, day)
     return groupBy(operations, (OperationJournalEntry op) {
       return DateTime(op.date.year, op.date.month, op.date.day);
     });

@@ -22,6 +22,7 @@ import '../../features/supplier/models/supplier.dart';
 
 // Settings models
 import '../../features/settings/models/settings.dart';
+import '../enums/currency_enum.dart'; // Import for CurrencyAdapter
 
 // Notifications models
 import '../../features/notifications/models/notification_model.dart';
@@ -73,7 +74,7 @@ Future<void> initializeHiveAdapters() async {
   // Settings
   _registerAdapterIfNotExists(SettingsAdapter());
   _registerAdapterIfNotExists(AppThemeModeAdapter());
-  _registerAdapterIfNotExists(CurrencyTypeAdapter()); 
+  _registerAdapterIfNotExists(CurrencyAdapter()); // Changed from CurrencyTypeAdapter 
 
   // Notifications
   _registerAdapterIfNotExists(NotificationModelAdapter());
