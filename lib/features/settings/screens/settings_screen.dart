@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wanzo/l10n/app_localizations.dart'; // Corrected import
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -30,31 +31,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Paramètres'),
+        title: Text(l10n.settingsTitle), // Localized
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            context.pop(); // Use GoRouter's context.pop() directly
+            context.pop();
           },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: l10n.searchSettings, // Localized
+            onPressed: () {
+              // TODO: Implement search functionality
+            },
+          ),
+        ],
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
         listener: (context, state) {
           if (state is SettingsError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(state.message)), // Potentially localize if message is generic
             );
           } else if (state is SettingsUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+             ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.changesSaved)), // Localized
             );
           }
         },
         builder: (context, state) {
           if (state is SettingsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: Text(l10n.loadingSettings)); // Localized
           } else if (state is SettingsLoaded || state is SettingsUpdated) {
             final settings = state is SettingsLoaded
                 ? state.settings
@@ -65,7 +77,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Logo Wanzo en haut de l'écran des paramètres
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Column(
@@ -74,9 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'assets/images/logo_with_text.png',
                           height: 60,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Text(
-                              'WANZO',
-                              style: TextStyle(
+                            return Text(
+                              l10n.wanzoFallbackText, // Localized
+                              style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blueGrey,
@@ -86,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Version 1.0.0',
+                          l10n.appVersion, // Corrected: appVersion is a direct string
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 14,
@@ -95,68 +106,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  
-                  // Liste des sections de paramètres
-                  _buildSettingsList(settings),
+                  _buildSettingsList(settings, l10n),
                 ],
               ),
             );
           }
-          
-          return const Center(child: Text('Chargement des paramètres...'));
+          return Center(child: Text(l10n.loadingSettings)); // Localized
         },
       ),
     );
   }
 
-  /// Construit la liste des paramètres
-  Widget _buildSettingsList(Settings settings) {
+  Widget _buildSettingsList(Settings settings, AppLocalizations l10n) {
     return ListView(
-      shrinkWrap: true, // Add this to make ListView take space of its children
-      physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this ListView
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       children: [
         _buildSettingsCard(
           icon: Icons.business,
-          title: 'Informations de l\'entreprise',
-          subtitle: 'Nom, adresse, logo, informations fiscales',
+          title: l10n.companyInformation, // Localized
+          subtitle: l10n.companyInformationSubtitle, // Localized
           onTap: () => _navigateToCompanySettings(settings),
         ),
         _buildSettingsCard(
           icon: Icons.receipt_long,
-          title: 'Paramètres de facturation',
-          subtitle: 'Devise, format de facture, taxes',
+          title: l10n.invoiceSettings, // Localized
+          subtitle: l10n.invoiceSettingsSubtitle, // Localized
           onTap: () => _navigateToInvoiceSettings(settings),
         ),
         _buildSettingsCard(
           icon: Icons.palette,
-          title: 'Apparence et affichage',
-          subtitle: 'Thème, langue, format de date',
+          title: l10n.appearanceAndDisplay, // Localized
+          subtitle: l10n.appearanceAndDisplaySubtitle, // Localized
           onTap: () => _navigateToDisplaySettings(settings),
         ),
         _buildSettingsCard(
           icon: Icons.inventory_2,
-          title: 'Paramètres d\'inventaire',
-          subtitle: 'Catégories par défaut, alertes de stock bas',
+          title: l10n.inventorySettings, // Localized
+          subtitle: l10n.inventorySettingsSubtitle, // Localized
           onTap: () => _navigateToInventorySettings(settings),
-        ),        _buildSettingsCard(
+        ),
+        _buildSettingsCard(
           icon: Icons.backup,
-          title: 'Sauvegarde et rapports',
-          subtitle: 'Paramètres de sauvegarde, exportation, emails',
+          title: l10n.backupAndReports, // Localized
+          subtitle: l10n.backupAndReportsSubtitle, // Localized
           onTap: () => _navigateToBackupSettings(settings),
         ),
         _buildSettingsCard(
           icon: Icons.notifications,
-          title: 'Notifications',
-          subtitle: 'Paramètres des notifications push, in-app et email',
+          title: l10n.notifications, // Localized
+          subtitle: l10n.notificationsSubtitle, // Localized
           onTap: () => _navigateToNotificationSettings(settings),
         ),
         const SizedBox(height: 16),
-        _buildResetButton(),
+        _buildResetButton(l10n),
       ],
     );
   }
 
-  /// Construit une carte pour un groupe de paramètres
   Widget _buildSettingsCard({
     required IconData icon,
     required String title,
@@ -190,12 +197,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Construit le bouton de réinitialisation des paramètres
-  Widget _buildResetButton() {
+  Widget _buildResetButton(AppLocalizations l10n) {
     return ElevatedButton.icon(
-      onPressed: _confirmReset,
+      onPressed: () => _confirmReset(l10n),
       icon: const Icon(Icons.restore),
-      label: const Text('Réinitialiser les paramètres'),
+      label: Text(l10n.resetSettings), // Localized
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
@@ -204,20 +210,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Affiche une boîte de dialogue de confirmation pour la réinitialisation
-  void _confirmReset() {
+  void _confirmReset(AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Réinitialiser les paramètres'),
-          content: const Text(
-            'Êtes-vous sûr de vouloir réinitialiser tous les paramètres aux valeurs par défaut ? Cette action est irréversible.',
-          ),
+          title: Text(l10n.resetSettings), // Localized
+          content: Text(l10n.confirmResetSettings), // Localized
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancel), // Localized
             ),
             TextButton(
               onPressed: () {
@@ -225,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context.read<SettingsBloc>().add(const ResetSettings());
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Réinitialiser'),
+              child: Text(l10n.reset), // Localized
             ),
           ],
         );
@@ -233,7 +236,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Navigation vers les paramètres de l'entreprise
   void _navigateToCompanySettings(Settings settings) {
     Navigator.push(
       context,
@@ -243,7 +245,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Navigation vers les paramètres de facturation
   void _navigateToInvoiceSettings(Settings settings) {
     Navigator.push(
       context,
@@ -253,7 +254,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Navigation vers les paramètres d'affichage
   void _navigateToDisplaySettings(Settings settings) {
     Navigator.push(
       context,
@@ -263,7 +263,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Navigation vers les paramètres d'inventaire
   void _navigateToInventorySettings(Settings settings) {
     Navigator.push(
       context,
@@ -273,7 +272,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Navigation vers les paramètres de sauvegarde
   void _navigateToBackupSettings(Settings settings) {
     Navigator.push(
       context,
@@ -282,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  /// Navigue vers les paramètres de notification
+
   void _navigateToNotificationSettings(Settings settings) {
     Navigator.push(
       context,

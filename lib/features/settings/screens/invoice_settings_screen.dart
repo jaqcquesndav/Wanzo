@@ -113,6 +113,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
   }
   
   void _saveSettings() {
+    final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       
@@ -157,6 +158,9 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
         setState(() {
           _hasChanges = false;
         });
+         ScaffoldMessenger.of(context).showSnackBar( // Show generic success message
+          SnackBar(content: Text(l10n.settingsSavedSuccess)),
+        );
       }
     }
   }
@@ -170,10 +174,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
         BlocListener<SettingsBloc, old_settings_state.SettingsState>(
           listener: (context, state) {
             if (state is old_settings_state.SettingsUpdated) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message.isNotEmpty ? state.message : l10n.settingsSavedSuccess)),
-              );
-              _onFieldChanged(); // Re-evaluate changes, though _saveSettings already sets _hasChanges to false
+              // Message is now shown in _saveSettings after both saves attempt
             } else if (state is old_settings_state.SettingsError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message.isNotEmpty ? state.message : l10n.anErrorOccurred), backgroundColor: Colors.red),
@@ -188,10 +189,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                 SnackBar(content: Text(l10n.currencySettingsError(state.errorMessage ?? l10n.errorUnknown)), backgroundColor: Colors.red),
               );
             } else if (state.status == CurrencySettingsStatus.saved) { 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.currencySettingsSavedSuccess)),
-              );
-              // Update UI fields and initial values if they were changed by the save operation (e.g. if cubit modifies data)
+              // Message is now shown in _saveSettings after both saves attempt
                _tempActiveCurrency = state.settings.activeCurrency;
                _usdToCdfRateController.text = state.settings.usdToCdfRate.toString();
                _fcfaToCdfRateController.text = state.settings.fcfaToCdfRate.toString();
@@ -207,13 +205,13 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.invoiceSettingsTitle),
+          title: Text(l10n.invoiceSettingsTitle), // Localized
           actions: [
             if (_hasChanges)
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: _saveSettings,
-                tooltip: l10n.saveChanges,
+                tooltip: l10n.saveChanges, // Localized
               ),
           ],
         ),
@@ -221,8 +219,6 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
             builder: (context, currencyState) {
           // Potentially show loading indicator based on currencyState.status
           if (currencyState.status == CurrencySettingsStatus.loading || currencyState.status == CurrencySettingsStatus.initial) {
-             // If currency settings are crucial for the form, show loading.
-             // Otherwise, can allow form to build with defaults / last known values.
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -246,7 +242,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- Currency Settings Section ---
-                  Text(l10n.currencySettings, style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.currencySettings, style: Theme.of(context).textTheme.titleLarge), // Localized
                   const SizedBox(height: 8),
                   Card(
                     elevation: 1,
@@ -258,14 +254,14 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                         children: [
                           DropdownButtonFormField<Currency>(
                             decoration: InputDecoration(
-                              labelText: l10n.activeCurrency,
+                              labelText: l10n.activeCurrency, // Localized
                               border: const OutlineInputBorder(),
                             ),
                             value: _tempActiveCurrency,
                             items: Currency.values.map((Currency currency) {
                               return DropdownMenuItem<Currency>(
                                 value: currency,
-                                child: Text(currency.displayName(context)), // Uses extension method
+                                child: Text(currency.displayName(context)), 
                               );
                             }).toList(),
                             onChanged: (Currency? newValue) {
@@ -276,20 +272,20 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                                 });
                               }
                             },
-                            validator: (value) => value == null ? l10n.errorFieldRequired : null,
+                            validator: (value) => value == null ? l10n.errorFieldRequired : null, // Localized
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _usdToCdfRateController,
                             decoration: InputDecoration(
-                              labelText: l10n.exchangeRateSpecific('USD', 'CDF'),
+                              labelText: l10n.exchangeRateSpecific('USD', 'CDF'), // Localized
                               border: const OutlineInputBorder(),
-                              hintText: '1 USD = ? CDF',
+                              hintText: l10n.exchangeRateHint('USD', 'CDF'), // Localized
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return l10n.errorFieldRequired;
-                              if (double.tryParse(value) == null || double.parse(value) <= 0) return l10n.errorInvalidRate;
+                              if (value == null || value.isEmpty) return l10n.errorFieldRequired; // Localized
+                              if (double.tryParse(value) == null || double.parse(value) <= 0) return l10n.errorInvalidRate; // Localized
                               return null;
                             },
                             onChanged: (_) => _onFieldChanged(),
@@ -298,14 +294,14 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                           TextFormField(
                             controller: _fcfaToCdfRateController,
                             decoration: InputDecoration(
-                              labelText: l10n.exchangeRateSpecific('FCFA', 'CDF'),
+                              labelText: l10n.exchangeRateSpecific('FCFA', 'CDF'), // Localized
                               border: const OutlineInputBorder(),
-                              hintText: '1 FCFA = ? CDF',
+                              hintText: l10n.exchangeRateHint('FCFA', 'CDF'), // Localized
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return l10n.errorFieldRequired;
-                              if (double.tryParse(value) == null || double.parse(value) <= 0) return l10n.errorInvalidRate;
+                              if (value == null || value.isEmpty) return l10n.errorFieldRequired; // Localized
+                              if (double.tryParse(value) == null || double.parse(value) <= 0) return l10n.errorInvalidRate; // Localized
                               return null;
                             },
                             onChanged: (_) => _onFieldChanged(),
@@ -317,9 +313,9 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Invoice Formatting Section ---
-                  Text(l10n.invoiceFormatting, style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.invoiceFormatting, style: Theme.of(context).textTheme.titleLarge), // Localized
                   const SizedBox(height: 4),
-                  Text(l10n.invoiceFormatHint('YEAR', 'MONTH', 'SEQ'), style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.invoiceFormatHint('YEAR', 'MONTH', 'SEQ'), style: Theme.of(context).textTheme.bodySmall), // Localized
                   const SizedBox(height: 8),
                   Card(
                     elevation: 1,
@@ -330,13 +326,13 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                         children: [
                           TextFormField(
                             controller: _invoiceNumberFormatController,
-                            decoration: InputDecoration(labelText: l10n.invoiceNumberFormat, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.invoiceNumberFormat, border: const OutlineInputBorder()), // Localized
                             onChanged: (_) => _onFieldChanged(),
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _invoicePrefixController,
-                            decoration: InputDecoration(labelText: l10n.invoicePrefix, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.invoicePrefix, border: const OutlineInputBorder()), // Localized
                             onChanged: (_) => _onFieldChanged(),
                           ),
                         ], 
@@ -346,7 +342,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Taxes and Conditions Section ---
-                  Text(l10n.taxesAndConditions, style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.taxesAndConditions, style: Theme.of(context).textTheme.titleLarge), // Localized
                   const SizedBox(height: 8),
                   Card(
                     elevation: 1,
@@ -356,7 +352,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                       child: Column(
                         children: [
                           SwitchListTile(
-                            title: Text(l10n.showTaxesOnInvoices),
+                            title: Text(l10n.showTaxesOnInvoices), // Localized
                             value: _showTaxes,
                             onChanged: (value) {
                               setState(() {
@@ -368,14 +364,14 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _taxRateController,
-                            decoration: InputDecoration(labelText: l10n.defaultTaxRatePercentage, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.defaultTaxRatePercentage, border: const OutlineInputBorder()), // Localized
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             enabled: _showTaxes,
                             validator: (value) {
                               if (_showTaxes) {
-                                if (value == null || value.isEmpty) return l10n.errorFieldRequired;
+                                if (value == null || value.isEmpty) return l10n.errorFieldRequired; // Localized
                                 final rate = double.tryParse(value);
-                                if (rate == null || rate < 0 || rate > 100) return l10n.errorInvalidTaxRate;
+                                if (rate == null || rate < 0 || rate > 100) return l10n.errorInvalidTaxRate; // Localized
                               }
                               return null;
                             },
@@ -384,14 +380,14 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _paymentTermsController,
-                            decoration: InputDecoration(labelText: l10n.defaultPaymentTerms, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.defaultPaymentTerms, border: const OutlineInputBorder()), // Localized
                             maxLines: 2,
                             onChanged: (_) => _onFieldChanged(),
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _invoiceNotesController,
-                            decoration: InputDecoration(labelText: l10n.defaultInvoiceNotes, border: const OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.defaultInvoiceNotes, border: const OutlineInputBorder()), // Localized
                             maxLines: 3,
                             onChanged: (_) => _onFieldChanged(),
                           ),
@@ -409,10 +405,8 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                         onPressed: _saveSettings,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          // backgroundColor: Theme.of(context).primaryColor, // Example: theming
-                          // foregroundColor: Colors.white, // Example: theming
                         ),
-                        child: Text(l10n.saveChanges),
+                        child: Text(l10n.saveChanges), // Localized
                       ),
                     ),
                   const SizedBox(height: 20), // For bottom padding

@@ -724,6 +724,14 @@
   "supplierCategoryOccasional": "Occasionnel",
   "supplierCategoryInternational": "International",
   "supplierCategoryUnknown": "Inconnu",
+  "supplierCategoryLocal": "Local",
+  "@supplierCategoryLocal": {
+    "description": "Catégorie de fournisseur : Local"
+  },
+  "supplierCategoryOnline": "En ligne",
+  "@supplierCategoryOnline": {
+    "description": "Catégorie de fournisseur : En ligne"
+  },
 
   "addSupplierTitle": "Ajouter un fournisseur",
   "editSupplierTitle": "Modifier le fournisseur",
@@ -836,5 +844,216 @@
   "dashboardQuickActionsNewSupplier": "Nouveau Fournisseur",
   "dashboardQuickActionsCashRegister": "Caisse",
   "dashboardQuickActionsSettings": "Paramètres",
-  "cancel": "Annuler"
+  "cancel": "Annuler",
+  "supplierCategoryLocal": "Local",
+  "@supplierCategoryLocal": {
+    "description": "Catégorie de fournisseur : Local"
+  },
+  "journalPdf_title": "Journal des Opérations",
+  "journalPdf_footer_pageInfo": "Page {currentPage} sur {totalPages}",
+  "@journalPdf_footer_pageInfo": {
+    "description": "Pied de page pour PDF, affiche les pages actuelle et totale",
+    "placeholders": {
+      "currentPage": {
+        "type": "int",
+        "example": "1"
+      },
+      "totalPages": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "journalPdf_period": "Période : {startDate} - {endDate}",
+  "@journalPdf_period": {
+    "description": "Indique la période couverte par le journal",
+    "placeholders": {
+      "startDate": {
+        "type": "String",
+        "example": "01/01/2023"
+      },
+      "endDate": {
+        "type": "String",
+        "example": "31/01/2023"
+      }
+    }
+  },
+  "journalPdf_tableHeader_date": "Date",
+  "journalPdf_tableHeader_time": "Heure",
+  "journalPdf_tableHeader_description": "Description",
+  "journalPdf_tableHeader_debit": "Débit",
+  "journalPdf_tableHeader_credit": "Crédit",
+  "journalPdf_tableHeader_balance": "Solde",
+  "journalPdf_openingBalance": "Solde d\\'ouverture",
+  "journalPdf_closingBalance": "Solde de clôture",
+  "journalPdf_footer_generatedBy": "Généré par Wanzo",
+
+  "adhaHomePageTitle": "Adha - Assistant IA",
+  "adhaHomePageDescription": "Adha, votre assistant d'entreprise intelligent",
+  "adhaHomePageBody": "Posez-moi des questions sur votre entreprise et je vous aiderai à prendre les meilleures décisions grâce à des analyses et des conseils personnalisés.",
+  "startConversationButton": "Commencer une conversation",
+  "viewConversationsButton": "Voir mes conversations",
+  "salesAnalysisFeatureTitle": "Analyses de ventes",
+  "salesAnalysisFeatureDescription": "Obtenez des insights sur vos performances commerciales",
+  "inventoryManagementFeatureTitle": "Gestion de stock",
+  "inventoryManagementFeatureDescription": "Suivez et optimisez votre inventaire",
+  "customerRelationsFeatureTitle": "Relations clients",
+  "customerRelationsFeatureDescription": "Conseils pour fidéliser vos clients",
+  "financialCalculationsFeatureTitle": "Calculs financiers",
+  "financialCalculationsFeatureDescription": "Projections et analyses financières",
+
+  "loginButton": "Se connecter",
+  "registerButton": "S'inscrire",
+  "emailLabel": "E-mail",
+  "passwordLabel": "Mot de passe",
+
+  "settings": "Paramètres",
+  "settingsTitle": "Paramètres",
+  "settingsDescription": "Gérez les paramètres de votre application.",
+  "wanzoFallbackText": "Texte de secours Wanzo",
+  "appVersion": "Version de l'application",
+  "loadingSettings": "Chargement des paramètres...",
+  "companyInformation": "Informations sur l'entreprise",
+  "companyInformationSubtitle": "Gérez les détails de votre entreprise",
+  "appearanceAndDisplay": "Apparence et Affichage",
+  "appearanceAndDisplaySubtitle": "Personnalisez l'apparence et le ressenti",
+  "theme": "Thème",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "themeSystem": "Système",
+  "language": "Langue",
+  "languageEnglish": "Anglais",
+  "languageFrench": "Français",
+  "languageSwahili": "Swahili",
+  "dateFormat": "Format de date",
+  "dateFormatDDMMYYYY": "JJ/MM/AAAA",
+  "dateFormatMMDDYYYY": "MM/JJ/AAAA",
+  "dateFormatYYYYMMDD": "AAAA/MM/JJ",
+  "dateFormatDDMMMYYYY": "JJ MMM AAAA",
+  "monthJan": "Janvier",
+  "monthFeb": "Février",
+  "monthMar": "Mars",
+  "monthApr": "Avril",
+  "monthMay": "Mai",
+  "monthJun": "Juin",
+  "monthJul": "Juillet",
+  "monthAug": "Août",
+  "monthSep": "Septembre",
+  "monthOct": "Octobre",
+  "monthNov": "Novembre",
+  "monthDec": "Décembre",
+  "changeLogo": "Changer le logo",
+  "companyName": "Nom de l'entreprise",
+  "companyNameRequired": "Le nom de l'entreprise est requis",
+  "email": "E-mail",
+  "invalidEmail": "Adresse e-mail invalide",
+  "phoneNumber": "Numéro de téléphone",
+  "address": "Adresse",
+  "rccm": "RCCM",
+  "rccmHelperText": "Registre du Commerce et du Crédit Mobilier",
+  "taxId": "NIF",
+  "taxIdHelperText": "Numéro d'Identification Fiscale",
+  "website": "Site Web",
+  "invoiceSettings": "Paramètres de facturation",
+  "invoiceSettingsSubtitle": "Gérez vos préférences de facturation",
+  "defaultInvoiceFooter": "Pied de page de facture par défaut",
+  "defaultInvoiceFooterHint": "ex: Merci pour votre confiance !",
+  "showTotalInWords": "Afficher le total en lettres",
+  "exchangeRate": "Taux de change (USD vers Local)",
+  "exchangeRateHint": "ex: 650 pour 1 USD = 650 FCFA",
+  "inventorySettings": "Paramètres d'inventaire",
+  "inventorySettingsSubtitle": "Gérez vos préférences d'inventaire",
+  "generalSettings": "Paramètres généraux",
+  "defaultCategory": "Catégorie par défaut",
+  "defaultCategoryRequired": "La catégorie par défaut est requise",
+  "lowStockAlert": "Alerte de stock bas",
+  "lowStockAlertHint": "Quantité à laquelle déclencher l'alerte",
+  "trackInventory": "Suivre l'inventaire",
+  "allowNegativeStock": "Autoriser le stock négatif",
+  "saveChanges": "Enregistrer les modifications",
+  "save": "Enregistrer",
+  "changesSaved": "Modifications enregistrées avec succès !",
+  "errorSavingChanges": "Erreur lors de l'enregistrement des modifications",
+  "selectTheme": "Sélectionner un thème",
+  "selectLanguage": "Sélectionner la langue",
+  "selectDateFormat": "Sélectionner le format de date",
+  "displaySettings": "Paramètres d'affichage",
+  "displaySettingsDescription": "Gérer les paramètres d'affichage.",
+  "companySettings": "Paramètres de l'entreprise",
+  "companySettingsDescription": "Gérer les paramètres de l'entreprise.",
+  "invoiceSettingsDescription": "Gérer les paramètres de facturation.",
+  "inventorySettingsDescription": "Gérer les paramètres d'inventaire.",
+  "minValue": "Valeur min : {minValue}",
+  "@minValue": {
+    "placeholders": {
+      "minValue": {
+        "type": "double"
+      }
+    }
+  },
+  "maxValue": "Valeur max : {maxValue}",
+  "@maxValue": {
+    "placeholders": {
+      "maxValue": {
+        "type": "double"
+      }
+    }
+  },
+  "valueMustBeNumber": "La valeur doit être un nombre",
+  "valueMustBePositive": "La valeur doit être positive",
+  "fieldRequired": "Ce champ est requis",
+  "settingsGeneral": "Général",
+  "settingsCompany": "Entreprise",
+  "settingsInvoice": "Facture",
+  "settingsInventory": "Inventaire",
+  "settingsAppearance": "Apparence",
+  "searchSettings": "Rechercher des paramètres...",
+  "backupAndReports": "Sauvegarde et Rapports",
+  "backupAndReportsSubtitle": "Gérer la sauvegarde des données et générer des rapports",
+  "notifications": "Notifications",
+  "notificationsSubtitle": "Gérer les notifications de l'application",
+  "resetSettings": "Réinitialiser les paramètres",
+  "confirmResetSettings": "Êtes-vous sûr de vouloir réinitialiser tous les paramètres à leurs valeurs par défaut ? Cette action est irréversible.",
+  "reset": "Réinitialiser",
+  "taxIdentificationNumber": "Numéro d'Identification Fiscale",
+  "rccmNumber": "Numéro RCCM",
+  "idNatNumber": "Numéro ID National",
+  "idNatHelperText": "Numéro d'Identification Nationale",
+  "selectImageSource": "Sélectionner la source de l'image",
+  "gallery": "Galerie",
+  "camera": "Appareil photo",
+  "deleteCurrentLogo": "Supprimer le logo actuel",
+  "logoDeleted": "Logo supprimé.",
+  "logoUpdatedSuccessfully": "Logo mis à jour avec succès.",
+  "errorSelectingLogo": "Erreur lors de la sélection du logo : {errorDetails}",
+  "@errorSelectingLogo": {
+    "placeholders": {
+      "errorDetails": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultProductCategory": "Catégorie de produit par défaut",
+  "stockAlerts": "Alertes de stock",
+  "lowStockAlertDays": "Jours d'alerte de stock bas",
+  "days": "Jours",
+  "enterValidNumber": "Veuillez entrer un nombre valide.",
+  "lowStockAlertDescription": "Recevoir des alertes lorsque le stock d'un produit est bas pendant un nombre de jours spécifié.",
+  "productCategories": "Catégories de produits",
+  "manageYourProductCategories": "Gérez vos catégories de produits.",
+  "addCategory": "Ajouter une catégorie",
+  "editCategory": "Modifier la catégorie",
+  "deleteCategory": "Supprimer la catégorie",
+  "categoryName": "Nom de la catégorie",
+  "categoryNameCannotBeEmpty": "Le nom de la catégorie ne peut pas être vide.",
+  "categoryAdded": "Catégorie ajoutée",
+  "categoryUpdated": "Catégorie mise à jour",
+  "categoryDeleted": "Catégorie supprimée",
+  "confirmDeleteCategory": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
+  "deleteCategoryMessage": "Cette action est irréversible.",
+  "errorAddingCategory": "Erreur lors de l'ajout de la catégorie : {error}",
+  "errorUpdatingCategory": "Erreur lors de la mise à jour de la catégorie : {error}",
+  "errorDeletingCategory": "Erreur lors de la suppression de la catégorie : {error}",
+  "errorFetchingCategories": "Erreur lors de la récupération des catégories : {error}",
+  "noCategoriesFound": "Aucune catégorie trouvée. Ajoutez-en une pour commencer !"
 }

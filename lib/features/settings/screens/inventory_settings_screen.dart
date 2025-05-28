@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -60,15 +61,17 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get AppLocalizations instance
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Paramètres d\'inventaire'),
+        title: Text(l10n.inventorySettings), // Localized string
         actions: [
           if (_hasChanges)
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveSettings,
-              tooltip: 'Enregistrer',
+              tooltip: l10n.saveChanges, // Corrected: Localized string for "Save Changes"
             ),
         ],
       ),
@@ -76,15 +79,17 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
         listener: (context, state) {
           if (state is SettingsUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(l10n.settingsUpdatedSuccessfully)), // Localized success message
             );
-            setState(() {
-              _hasChanges = false;
-            });
+            if (mounted) { // Add mounted check
+              setState(() {
+                _hasChanges = false;
+              });
+            }
           } else if (state is SettingsError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(l10n.errorUpdatingSettings), // Localized error message
                 backgroundColor: Colors.red,
               ),
             );
@@ -97,9 +102,9 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Paramètres généraux',
-                  style: TextStyle(
+                Text(
+                  l10n.generalSettings, // Localized string
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -109,14 +114,14 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                 // Catégorie par défaut
                 TextFormField(
                   controller: _defaultCategoryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Catégorie de produit par défaut',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.category),
+                  decoration: InputDecoration(
+                    labelText: l10n.defaultProductCategory, // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.category),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'La catégorie par défaut est obligatoire';
+                      return l10n.defaultCategoryRequired; // Localized string
                     }
                     return null;
                   },
@@ -126,9 +131,9 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                 const Divider(),
                 const SizedBox(height: 16),
                 
-                const Text(
-                  'Alertes de stock',
-                  style: TextStyle(
+                Text(
+                  l10n.stockAlerts, // Localized string
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -138,12 +143,12 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                 // Jours pour alerte de stock bas
                 TextFormField(
                   controller: _lowStockDaysController,
-                  decoration: const InputDecoration(
-                    labelText: 'Jours pour les alertes de stock bas',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.warning),
-                    hintText: 'Ex: 7 jours',
-                    suffixText: 'jours',
+                  decoration: InputDecoration(
+                    labelText: l10n.lowStockAlertDays, // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.warning),
+                    hintText: l10n.lowStockAlertHint, // Localized string
+                    suffixText: l10n.days, // Localized string
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -151,18 +156,18 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Ce champ est obligatoire';
+                      return l10n.fieldRequired; // Localized string
                     }
                     try {
                       final days = int.parse(value);
                       if (days < 1) {
-                        return 'Minimum 1 jour requis';
+                        return l10n.minValue(1); // Localized string
                       }
                       if (days > 90) {
-                        return 'Maximum 90 jours autorisés';
+                        return l10n.maxValue(90); // Localized string
                       }
                     } catch (_) {
-                      return 'Veuillez entrer un nombre valide';
+                      return l10n.enterValidNumber; // Localized string
                     }
                     return null;
                   },
@@ -172,7 +177,7 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    'Cette valeur définit combien de jours à l\'avance vous souhaitez être alerté lorsque le stock d\'un produit est sur le point d\'être épuisé.',
+                    l10n.lowStockAlertDescription, // Localized string
                     style: TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
@@ -190,7 +195,7 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _saveSettings,
-                      child: const Text('Enregistrer les modifications'),
+                      child: Text(l10n.saveChanges), // Localized string
                     ),
                   ),
               ],
@@ -208,7 +213,7 @@ class _InventorySettingsScreenState extends State<InventorySettingsScreen> {
       try {
         lowStockDays = int.parse(_lowStockDaysController.text);
       } catch (_) {
-        lowStockDays = widget.settings.lowStockAlertDays;
+        lowStockDays = widget.settings.lowStockAlertDays; 
       }
       
       context.read<SettingsBloc>().add(UpdateInventorySettings(

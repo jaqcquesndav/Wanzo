@@ -4,3 +4,4 @@ output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 synthetic-package: false
 output-dir: lib/l10n
+untranslated-messages-file: untranslated_messages.txt

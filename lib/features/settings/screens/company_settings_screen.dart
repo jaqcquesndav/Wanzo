@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -91,15 +92,17 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Informations de l\'entreprise'),
+        title: Text(l10n.companyInformation), // Localized
         actions: [
           if (_hasChanges)
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveSettings,
-              tooltip: 'Enregistrer',
+              tooltip: l10n.saveChanges, // Corrected: was l10n.save
             ),
         ],
       ),
@@ -107,7 +110,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         listener: (context, state) {
           if (state is SettingsUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(l10n.changesSaved)), // Localized
             );
             setState(() {
               _hasChanges = false;
@@ -115,7 +118,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           } else if (state is SettingsError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(l10n.errorSavingChanges), // Localized
                 backgroundColor: Colors.red,
               ),
             );
@@ -155,9 +158,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
-                        onPressed: _selectLogo,
+                        onPressed: () => _selectLogo(l10n), // Pass l10n
                         icon: const Icon(Icons.add_photo_alternate),
-                        label: const Text('Changer le logo'),
+                        label: Text(l10n.changeLogo), // Localized string
                       ),
                     ],
                   ),
@@ -167,14 +170,14 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Nom de l'entreprise
                 TextFormField(
                   controller: _companyNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom de l\'entreprise *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.business),
+                  decoration: InputDecoration(
+                    labelText: '${l10n.companyName} *', // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.business),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Le nom de l\'entreprise est obligatoire';
+                      return l10n.companyNameRequired; // Localized string
                     }
                     return null;
                   },
@@ -184,10 +187,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Adresse
                 TextFormField(
                   controller: _companyAddressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Adresse',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.location_on),
+                  decoration: InputDecoration(
+                    labelText: l10n.address, // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.location_on),
                   ),
                   maxLines: 2,
                 ),
@@ -196,10 +199,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Téléphone
                 TextFormField(
                   controller: _companyPhoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro de téléphone',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
+                  decoration: InputDecoration(
+                    labelText: l10n.phoneNumber, // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.phone),
                   ),
                   keyboardType: TextInputType.phone,
                 ),
@@ -208,17 +211,17 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Email
                 TextFormField(
                   controller: _companyEmailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: l10n.email, // Localized string
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
                       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                       if (!emailRegex.hasMatch(value)) {
-                        return 'Veuillez entrer un email valide';
+                        return l10n.invalidEmail; // Localized string
                       }
                     }
                     return null;
@@ -229,10 +232,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Numéro d'identification fiscale
                 TextFormField(
                   controller: _taxNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro d\'identification fiscale',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.receipt),
+                  decoration: InputDecoration(
+                    labelText: l10n.taxIdentificationNumber, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.receipt),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -240,11 +243,11 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Numéro RCCM
                 TextFormField(
                   controller: _rccmNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro RCCM',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.book),
-                    helperText: 'Registre du Commerce et du Crédit Mobilier',
+                  decoration: InputDecoration(
+                    labelText: l10n.rccmNumber, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.book),
+                    helperText: l10n.rccmHelperText, // Localized
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -252,11 +255,11 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 // Numéro ID NAT
                 TextFormField(
                   controller: _idNatNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numéro ID NAT',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.assignment_ind),
-                    helperText: 'Identification Nationale',
+                  decoration: InputDecoration(
+                    labelText: l10n.idNatNumber, // Localized
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.assignment_ind),
+                    helperText: l10n.idNatHelperText, // Localized
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -268,7 +271,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _saveSettings,
-                      child: const Text('Enregistrer les modifications'),
+                      child: Text(l10n.saveChanges), // Localized
                     ),
                   ),
               ],
@@ -289,28 +292,27 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   }
 
   /// Sélectionne un logo depuis la galerie ou la caméra
-  Future<void> _selectLogo() async {
+  Future<void> _selectLogo(AppLocalizations l10n) async {
     try {
-      // Afficher un dialogue pour choisir la source de l'image
       final ImageSource? source = await showDialog<ImageSource>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Sélectionner une source'),
+            title: Text(l10n.selectImageSource), // Localized
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
                     leading: const Icon(Icons.photo_library),
-                    title: const Text('Galerie'),
+                    title: Text(l10n.gallery), // Localized
                     onTap: () {
                       Navigator.of(context).pop(ImageSource.gallery);
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.camera_alt),
-                    title: const Text('Caméra'),
+                    title: Text(l10n.camera), // Localized
                     onTap: () {
                       Navigator.of(context).pop(ImageSource.camera);
                     },
@@ -318,9 +320,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   if (_companyLogo != null && _companyLogo!.isNotEmpty)
                     ListTile(
                       leading: const Icon(Icons.delete, color: Colors.red),
-                      title: const Text('Supprimer le logo actuel'),
+                      title: Text(l10n.deleteCurrentLogo), // Localized
                       onTap: () {
-                        Navigator.of(context).pop(null);
+                        Navigator.of(context).pop(null); 
                       },
                     ),
                 ],
@@ -330,19 +332,23 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         },
       );
       
-      // Si l'utilisateur a choisi de supprimer le logo
-      if (source == null) {
+      if (!mounted) return; // Add mounted check
+
+      if (source == null && (_companyLogo != null && _companyLogo!.isNotEmpty)) {
         setState(() {
           _companyLogo = '';
           _hasChanges = true;
         });
+        _onFieldChanged();
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logo supprimé')),
+           SnackBar(content: Text(l10n.logoDeleted)), // Localized
         );
         return;
       }
       
+      if (source == null) return;
+
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: source,
@@ -352,34 +358,33 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       );
       
       if (pickedFile == null) return;
+      if (!mounted) return; // Add mounted check
       
-      // Obtenir le répertoire des documents de l'application
       final appDir = await getApplicationDocumentsDirectory();
-      final companyLogosDir = Directory('${appDir.path}/company_logos');
+      final companyLogosDir = Directory(path.join(appDir.path, 'company_logos'));
       
-      // Créer le répertoire s'il n'existe pas
       if (!await companyLogosDir.exists()) {
         await companyLogosDir.create(recursive: true);
       }
       
-      // Générer un nom de fichier unique basé sur l'horodatage
       final fileName = 'company_logo_${DateTime.now().millisecondsSinceEpoch}.png';
       final savedImagePath = path.join(companyLogosDir.path, fileName);
       
-      // Copier l'image sélectionnée vers le répertoire de l'application
       await File(pickedFile.path).copy(savedImagePath);
       
       setState(() {
         _companyLogo = savedImagePath;
         _hasChanges = true;
       });
+       _onFieldChanged();
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logo mis à jour avec succès')),
+         SnackBar(content: Text(l10n.logoUpdatedSuccessfully)), // Localized
       );
     } catch (e) {
+      if (!mounted) return; // Add mounted check
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sélection du logo: $e')),
+        SnackBar(content: Text(l10n.errorSelectingLogo(e.toString()))), // Localized
       );
     }
   }

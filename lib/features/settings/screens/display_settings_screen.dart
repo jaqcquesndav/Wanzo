@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wanzo/l10n/app_localizations.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -48,15 +49,17 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apparence et affichage'),
+        title: Text(l10n.appearanceAndDisplay), // Localized
         actions: [
           if (_hasChanges)
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveSettings,
-              tooltip: 'Enregistrer',
+              tooltip: l10n.saveChanges, // Corrected to saveChanges
             ),
         ],
       ),
@@ -64,7 +67,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
         listener: (context, state) {
           if (state is SettingsUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(l10n.changesSaved)), // Localized
             );
             setState(() {
               _hasChanges = false;
@@ -72,7 +75,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
           } else if (state is SettingsError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(l10n.errorSavingChanges), // Localized
                 backgroundColor: Colors.red,
               ),
             );
@@ -83,9 +86,9 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Thème',
-                style: TextStyle(
+              Text(
+                l10n.theme, // Localized
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -97,7 +100,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                 child: Column(
                   children: [
                     RadioListTile<AppThemeMode>(
-                      title: const Text('Clair'),
+                      title: Text(l10n.themeLight), // Localized
                       value: AppThemeMode.light,
                       groupValue: _themeMode,
                       onChanged: (value) {
@@ -109,7 +112,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       secondary: const Icon(Icons.light_mode),
                     ),
                     RadioListTile<AppThemeMode>(
-                      title: const Text('Sombre'),
+                      title: Text(l10n.themeDark), // Localized
                       value: AppThemeMode.dark,
                       groupValue: _themeMode,
                       onChanged: (value) {
@@ -121,7 +124,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       secondary: const Icon(Icons.dark_mode),
                     ),
                     RadioListTile<AppThemeMode>(
-                      title: const Text('Système'),
+                      title: Text(l10n.themeSystem), // Localized
                       value: AppThemeMode.system,
                       groupValue: _themeMode,
                       onChanged: (value) {
@@ -137,9 +140,9 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
               ),
               const SizedBox(height: 24),
               
-              const Text(
-                'Langue',
-                style: TextStyle(
+              Text(
+                l10n.language, // Localized
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -151,7 +154,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                 child: Column(
                   children: [
                     RadioListTile<String>(
-                      title: const Text('Français'),
+                      title: Text(l10n.languageFrench), // Localized
                       value: 'fr',
                       groupValue: _language,
                       onChanged: (value) {
@@ -162,7 +165,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       },
                     ),
                     RadioListTile<String>(
-                      title: const Text('Anglais'),
+                      title: Text(l10n.languageEnglish), // Localized
                       value: 'en',
                       groupValue: _language,
                       onChanged: (value) {
@@ -173,7 +176,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       },
                     ),
                     RadioListTile<String>(
-                      title: const Text('Swahili'),
+                      title: Text(l10n.languageSwahili), // Localized
                       value: 'sw',
                       groupValue: _language,
                       onChanged: (value) {
@@ -188,9 +191,9 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
               ),
               const SizedBox(height: 24),
               
-              const Text(
-                'Format de date',
-                style: TextStyle(
+              Text(
+                l10n.dateFormat, // Localized
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -202,8 +205,8 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                 child: Column(
                   children: [
                     RadioListTile<String>(
-                      title: const Text('DD/MM/YYYY'),
-                      subtitle: Text(_getFormattedDateExample('DD/MM/YYYY')),
+                      title: Text(l10n.dateFormatDDMMYYYY), // Localized
+                      subtitle: Text(_getFormattedDateExample('DD/MM/YYYY', l10n)),
                       value: 'DD/MM/YYYY',
                       groupValue: _dateFormat,
                       onChanged: (value) {
@@ -214,8 +217,8 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       },
                     ),
                     RadioListTile<String>(
-                      title: const Text('MM/DD/YYYY'),
-                      subtitle: Text(_getFormattedDateExample('MM/DD/YYYY')),
+                      title: Text(l10n.dateFormatMMDDYYYY), // Localized
+                      subtitle: Text(_getFormattedDateExample('MM/DD/YYYY', l10n)),
                       value: 'MM/DD/YYYY',
                       groupValue: _dateFormat,
                       onChanged: (value) {
@@ -226,8 +229,8 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       },
                     ),
                     RadioListTile<String>(
-                      title: const Text('YYYY-MM-DD'),
-                      subtitle: Text(_getFormattedDateExample('YYYY-MM-DD')),
+                      title: Text(l10n.dateFormatYYYYMMDD), // Localized
+                      subtitle: Text(_getFormattedDateExample('YYYY-MM-DD', l10n)),
                       value: 'YYYY-MM-DD',
                       groupValue: _dateFormat,
                       onChanged: (value) {
@@ -238,8 +241,8 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                       },
                     ),
                     RadioListTile<String>(
-                      title: const Text('DD MMM YYYY'),
-                      subtitle: Text(_getFormattedDateExample('DD MMM YYYY')),
+                      title: Text(l10n.dateFormatDDMMMYYYY), // Localized
+                      subtitle: Text(_getFormattedDateExample('DD MMM YYYY', l10n)),
                       value: 'DD MMM YYYY',
                       groupValue: _dateFormat,
                       onChanged: (value) {
@@ -261,7 +264,7 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _saveSettings,
-                    child: const Text('Enregistrer les modifications'),
+                    child: Text(l10n.saveChanges), // Localized
                   ),
                 ),
             ],
@@ -272,9 +275,16 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
   }
 
   /// Obtient un exemple de date formatée
-  String _getFormattedDateExample(String format) {
+  String _getFormattedDateExample(String format, AppLocalizations l10n) {
     final now = DateTime.now();
     
+    final months = [
+      '', 
+      l10n.monthJan, l10n.monthFeb, l10n.monthMar, l10n.monthApr, 
+      l10n.monthMay, l10n.monthJun, l10n.monthJul, l10n.monthAug, 
+      l10n.monthSep, l10n.monthOct, l10n.monthNov, l10n.monthDec
+    ];
+
     switch (format) {
       case 'DD/MM/YYYY':
         return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
@@ -283,10 +293,6 @@ class _DisplaySettingsScreenState extends State<DisplaySettingsScreen> {
       case 'YYYY-MM-DD':
         return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       case 'DD MMM YYYY':
-        final months = [
-          '', 'Jan', 'Fév', 'Mars', 'Avr', 'Mai', 'Juin',
-          'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'
-        ];
         return '${now.day.toString().padLeft(2, '0')} ${months[now.month]} ${now.year}';
       default:
         return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';

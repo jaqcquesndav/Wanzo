@@ -348,6 +348,10 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
         return Colors.orange;
       case SupplierCategory.international:
         return Colors.purple;
+      case SupplierCategory.local:
+        return Colors.teal;
+      case SupplierCategory.online: // Add case for online
+        return Colors.cyan; // Or any color you prefer
     }
   }
 
@@ -365,6 +369,10 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
         return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
         return localizations.supplierCategoryInternational;
+      case SupplierCategory.local:
+        return localizations.supplierCategoryLocal;
+      case SupplierCategory.online: // Add case for online
+        return localizations.supplierCategoryOnline;
     }
   }
 }
