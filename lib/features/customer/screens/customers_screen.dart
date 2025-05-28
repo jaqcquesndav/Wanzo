@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:wanzo/l10n/generated/app_localizations.dart';
+import 'package:wanzo/l10n/app_localizations.dart';
 import 'package:wanzo/core/services/currency_service.dart'; 
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';

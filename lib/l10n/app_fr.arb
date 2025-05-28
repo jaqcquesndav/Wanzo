@@ -835,5 +835,6 @@
   "dashboardQuickActionsNewClient": "Nouveau Client",
   "dashboardQuickActionsNewSupplier": "Nouveau Fournisseur",
   "dashboardQuickActionsCashRegister": "Caisse",
-  "dashboardQuickActionsSettings": "Paramètres"
+  "dashboardQuickActionsSettings": "Paramètres",
+  "cancel": "Annuler"
 }

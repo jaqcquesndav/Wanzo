@@ -8,7 +8,7 @@ import 'package:wanzo/features/supplier/bloc/supplier_bloc.dart';
 import 'package:wanzo/features/supplier/bloc/supplier_event.dart';
 import 'package:wanzo/features/supplier/screens/suppliers_screen.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wanzo/l10n/generated/app_localizations.dart';
+import 'package:wanzo/l10n/app_localizations.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});

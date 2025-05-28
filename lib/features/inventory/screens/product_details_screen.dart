@@ -11,10 +11,10 @@ import '../bloc/inventory_event.dart';
 import '../bloc/inventory_state.dart';
 import '../models/product.dart';
 import '../models/stock_transaction.dart';
-import 'package:wanzo/core/utils/currency_formatter.dart';
-import 'package:wanzo/features/settings/models/settings.dart';
 import 'package:wanzo/features/settings/bloc/settings_bloc.dart';
 import 'package:wanzo/features/settings/bloc/settings_state.dart';
+import 'package:wanzo/core/enums/currency_enum.dart';
+import 'package:wanzo/core/utils/currency_formatter.dart' as currency_util; // Added import for currency_formatter
 
 /// Écran de détails d'un produit
 class ProductDetailsScreen extends StatefulWidget {
@@ -156,14 +156,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
   /// Construire les détails du produit
   Widget _buildProductDetails(BuildContext context, Product product) {
     final settingsState = context.watch<SettingsBloc>().state;
-    CurrencyType currency = CurrencyType.usd; // Default currency
+    Currency currency = Currency.USD; // Changed CurrencyType to Currency and default value
 
     if (settingsState is SettingsLoaded) {
-      currency = settingsState.settings.currency;
+      currency = settingsState.settings.activeCurrency; // Changed to activeCurrency
     } else if (settingsState is SettingsUpdated) {
-      currency = settingsState.settings.currency;
+      currency = settingsState.settings.activeCurrency; // Changed to activeCurrency
     }
-    // If settings are not loaded, it will use the default USD. 
+    // If settings are not loaded, it will use the default USD.
     // Consider showing a loading indicator or an error if settings are crucial and not loaded.
 
     return Column(
@@ -228,27 +228,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               _buildInfoRow(
                 context,
                 label: 'Prix d\'achat',
-                value: formatCurrency(product.costPrice, currency),
+                value: currency_util.formatCurrency(product.costPriceInCdf, currency.code),
               ),
               const Divider(),
               _buildInfoRow(
                 context,
                 label: 'Prix de vente',
-                value: formatCurrency(product.sellingPrice, currency),
+                value: currency_util.formatCurrency(product.sellingPriceInCdf, currency.code),
               ),
               const Divider(),
               _buildInfoRow(
                 context,
                 label: 'Marge bénéficiaire',
-                value: formatCurrency(product.profitMargin, currency),
-                valueColor: product.profitMargin > 0 ? Colors.green : Colors.red,
+                value: currency_util.formatCurrency(product.profitMarginInCdf, currency.code),
+                valueColor: product.profitMarginInCdf > 0 ? Colors.green : Colors.red,
               ),
               const Divider(),
               _buildInfoRow(
                 context,
                 label: 'Marge (%)',
-                value: '${product.profitPercentage.toStringAsFixed(2)}%',
-                valueColor: product.profitPercentage > 0 ? Colors.green : Colors.red,
+                value: '${product.profitPercentageInCdf.toStringAsFixed(2)}%', // Corrected field name
+                valueColor: product.profitPercentageInCdf > 0 ? Colors.green : Colors.red, // Corrected field name
               ),
             ],
           ),
@@ -278,7 +278,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               _buildInfoRow(
                 context,
                 label: 'Valeur du stock',
-                value: formatCurrency(product.stockValue, currency),
+                value: currency_util.formatCurrency(product.stockValueInCdf, currency.code),
               ),
             ],
           ),
@@ -342,7 +342,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                color: statusColor.withAlpha((255 * 0.1).round()), // Used withAlpha instead of withOpacity
                 borderRadius: BorderRadius.circular(35),
                 border: Border.all(color: statusColor),
               ),
@@ -583,6 +583,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                     notes: isAddition
                         ? 'Ajout manuel de stock'
                         : 'Retrait manuel de stock',
+                    unitCostInCdf: product.costPriceInCdf, // Added required parameter
+                    totalValueInCdf: product.costPriceInCdf * adjustedQuantity, // Added required parameter
                   );
 
                   context.read<InventoryBloc>().add(AddStockTransaction(transaction));
@@ -724,6 +726,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
                       quantity: adjustedQuantity,
                       date: DateTime.now(),
                       notes: notesController.text,
+                      unitCostInCdf: product.costPriceInCdf, // Added required parameter
+                      totalValueInCdf: product.costPriceInCdf * adjustedQuantity, // Added required parameter
                     );
 
                     context.read<InventoryBloc>().add(AddStockTransaction(transaction));
@@ -738,92 +742,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
     );
   }
 
-  /// Afficher les détails d'une transaction
-  void _showTransactionDetailsDialog(BuildContext context, StockTransaction transaction) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(_getTransactionTypeName(transaction.type)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTransactionDetailRow(
-                context,
-                label: 'Date',
-                value: DateFormat('dd/MM/yyyy HH:mm').format(transaction.date),
-              ),
-              const SizedBox(height: WanzoSpacing.sm),
-              _buildTransactionDetailRow(
-                context,
-                label: 'Quantité',
-                value: '${transaction.quantity > 0 ? '+' : ''}${transaction.quantity.abs()}',
-                valueColor: transaction.quantity > 0 ? Colors.green : Colors.red,
-                isBold: true,
-              ),
-              if (transaction.referenceId != null && transaction.referenceId!.isNotEmpty) ...[
-                const SizedBox(height: WanzoSpacing.sm),
-                _buildTransactionDetailRow(
-                  context,
-                  label: 'Référence',
-                  value: transaction.referenceId!,
-                ),
-              ],
-              if (transaction.notes != null && transaction.notes!.isNotEmpty) ...[
-                const SizedBox(height: WanzoSpacing.sm),
-                const Text(
-                  'Notes:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: WanzoSpacing.xs),
-                Text(transaction.notes!),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Construire une ligne de détail de transaction
-  Widget _buildTransactionDetailRow(
-    BuildContext context, {
-    required String label,
-    required String value,
-    Color? valueColor,
-    bool isBold = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          '$label:',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontWeight: isBold ? FontWeight.bold : null,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Naviguer vers l'écran d'édition de produit
+  /// Naviguer vers l'écran de modification du produit
   void _navigateToEditProduct(BuildContext context, Product product) {
-    context.push('/inventory/edit/${product.id}', extra: product);
+    context.push('/inventory/edit-product/${product.id}', extra: product);
   }
 
-  /// Obtenir le nom d'une catégorie
+  /// Obtenir le nom de la catégorie
   String _getCategoryName(ProductCategory category) {
     switch (category) {
       case ProductCategory.food:
@@ -845,7 +769,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
     }
   }
 
-  /// Obtenir le nom d'une unité
+  /// Obtenir le nom de l'unité
   String _getUnitName(ProductUnit unit) {
     switch (unit) {
       case ProductUnit.piece:
@@ -867,13 +791,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
     }
   }
 
-  /// Obtenir le nom d'un type de transaction
+  /// Obtenir le nom du type de transaction
   String _getTransactionTypeName(StockTransactionType type) {
     switch (type) {
       case StockTransactionType.purchase:
-        return 'Achat';
+        return 'Achat (Entrée)';
       case StockTransactionType.sale:
-        return 'Vente';
+        return 'Vente (Sortie)';
       case StockTransactionType.adjustment:
         return 'Ajustement';
       case StockTransactionType.transferIn:
@@ -881,13 +805,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
       case StockTransactionType.transferOut:
         return 'Transfert (Sortie)';
       case StockTransactionType.returned:
-        return 'Retour Client';
+        return 'Retour client (Entrée)';
       case StockTransactionType.damaged:
-        return 'Endommagé';
+        return 'Endommagé (Sortie)';
       case StockTransactionType.lost:
-        return 'Perte';
+        return 'Perdu (Sortie)';
       case StockTransactionType.initialStock:
-        return 'Stock Initial';
+        return 'Stock initial';
     }
   }
 }

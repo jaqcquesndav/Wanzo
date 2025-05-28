@@ -16,7 +16,7 @@ import '../models/product.dart';
 import 'package:wanzo/core/enums/currency_enum.dart'; // Added
 import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart'; // Changed
 import 'package:wanzo/core/services/currency_service.dart'; // Added
-import 'package:wanzo/l10n/generated/app_localizations.dart'; // Updated import
+import 'package:wanzo/l10n/app_localizations.dart'; // Updated import
 
 /// Écran d'ajout de produit
 class AddProductScreen extends StatefulWidget {

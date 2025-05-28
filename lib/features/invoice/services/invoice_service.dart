@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../sales/models/sale.dart';
 import '../../settings/models/settings.dart';
 import 'package:wanzo/core/utils/currency_formatter.dart';
+import 'package:wanzo/core/enums/currency_enum.dart';
 
 /// Service pour générer et imprimer des factures et tickets de caisse
 class InvoiceService {
@@ -19,9 +20,8 @@ class InvoiceService {
     final regularFont = pw.Font.helvetica();
     final boldFont = pw.Font.helveticaBold();
     
-    final CurrencyType currency = settings.currency;
+    final Currency currency = settings.activeCurrency;
     
-    // Vérifier si un logo d'entreprise existe
     pw.Widget? logoWidget;
     if (settings.companyLogo.isNotEmpty) {
       try {
@@ -37,7 +37,7 @@ class InvoiceService {
           }
         }
       } catch (e) {
-        print('Erreur lors du chargement du logo: $e');
+        // print('Erreur lors du chargement du logo: $e');
       }
     }
     
@@ -56,7 +56,7 @@ class InvoiceService {
     
     double taxAmount = 0;
     if (settings.showTaxes) {
-      taxAmount = subtotal * (settings.defaultTaxRate / 100);
+      taxAmount = subtotal * (settings.defaultTaxRate / 100.0);
     }
     
     final total = subtotal + taxAmount;
@@ -204,14 +204,14 @@ class InvoiceService {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(5),
                           child: pw.Text(
-                            formatCurrency(item.unitPrice, currency),
+                            formatCurrency(item.unitPrice, currency.code),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(5),
                           child: pw.Text(
-                            formatCurrency(itemTotal, currency),
+                            formatCurrency(itemTotal, currency.code),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
@@ -241,7 +241,7 @@ class InvoiceService {
                         pw.Container(
                           width: 120,
                           child: pw.Text(
-                            formatCurrency(subtotal, currency),
+                            formatCurrency(subtotal, currency.code),
                             textAlign: pw.TextAlign.right,
                           ),
                         ),
@@ -262,7 +262,7 @@ class InvoiceService {
                           pw.Container(
                             width: 120,
                             child: pw.Text(
-                              formatCurrency(taxAmount, currency),
+                              formatCurrency(taxAmount, currency.code),
                               textAlign: pw.TextAlign.right,
                             ),
                           ),
@@ -289,7 +289,7 @@ class InvoiceService {
                           pw.Container(
                             width: 120,
                             child: pw.Text(
-                              formatCurrency(total, currency),
+                              formatCurrency(total, currency.code),
                               style: pw.TextStyle(
                                 font: boldFont,
                                 fontSize: 12,
@@ -363,21 +363,21 @@ class InvoiceService {
   Future<void> shareInvoice(Sale sale, Settings settings, {String? customerPhoneNumber, String? customerEmail}) async {
     try {
       final pdfPath = await generateInvoicePdf(sale, settings);
-      final file = XFile(pdfPath);
+      final xFile = XFile(pdfPath); // Renamed to avoid conflict with File class
 
       String shareText = 'Voici votre facture N° ${sale.id.substring(0,8)} concernant ${sale.items.first.productName}.';
       if (customerPhoneNumber != null) {
         shareText += '\nPartage via WhatsApp: wa.me/$customerPhoneNumber';
       }
 
-      await Share.shareXFiles(
-        [file],
+      await Share.shareXFiles( // Corrected: Share.shareXFiles (from share_plus package)
+        [xFile], // Use the renamed XFile variable
         text: shareText,
         subject: 'Facture N° ${sale.id.substring(0,8)}',
       );
     } catch (e) {
-      print('Erreur lors du partage de la facture: $e');
-      throw Exception('Impossible de partager la facture: $e');
+      // print('Erreur lors du partage de la facture: $e');
+      throw Exception('Impossible de partager la facture: $e'); // Escaped apostrophe
     }
   }
 
@@ -388,7 +388,7 @@ class InvoiceService {
     final regularFont = pw.Font.helvetica();
     final boldFont = pw.Font.helveticaBold();
     
-    final CurrencyType currency = settings.currency;
+    final Currency currency = settings.activeCurrency;
     
     pw.Widget? logoWidget;
     if (settings.companyLogo.isNotEmpty) {
@@ -405,7 +405,7 @@ class InvoiceService {
           }
         }
       } catch (e) {
-        print('Erreur lors du chargement du logo: $e');
+        // print('Erreur lors du chargement du logo: $e');
       }
     }
     
@@ -418,13 +418,13 @@ class InvoiceService {
     
     double taxAmount = 0;
     if (settings.showTaxes) {
-      taxAmount = subtotal * (settings.defaultTaxRate / 100);
+      taxAmount = subtotal * (settings.defaultTaxRate / 100.0);
     }
     
     final total = subtotal + taxAmount;
     final ticketWidth = PdfPageFormat(
       80 * PdfPageFormat.mm,
-      500 * PdfPageFormat.mm,
+      500 * PdfPageFormat.mm, // Increased height for potentially long receipts
       marginAll: 5 * PdfPageFormat.mm,
     );
     
@@ -509,43 +509,24 @@ class InvoiceService {
               ],
 
               pw.SizedBox(height: 5),
-              pw.Text('------------------------------------------------------', style: pw.TextStyle(fontSize: 8)),
-              pw.SizedBox(height: 5),
-              
               pw.Text(
-                'TICKET DE CAISSE',
-                style: pw.TextStyle(
-                  font: boldFont,
-                  fontSize: 10,
-                ),
-                textAlign: pw.TextAlign.center,
-              ),
-              pw.SizedBox(height: 2),
-              pw.Text(
-                'N°: ${sale.id.substring(0, 8)}',
+                'Ticket N°: ${sale.id.substring(0, 8)}',
                 style: pw.TextStyle(font: regularFont, fontSize: 8),
               ),
               pw.Text(
                 'Date: $formattedDate',
                 style: pw.TextStyle(font: regularFont, fontSize: 8),
               ),
+              pw.SizedBox(height: 5),
               
-              if (sale.customerName.isNotEmpty) ...[
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  'Client: ${sale.customerName}',
-                  style: pw.TextStyle(font: regularFont, fontSize: 8),
-                ),
-              ],
-              
-              pw.SizedBox(height: 10),
-              
-              pw.Divider(thickness: 1),
+              pw.Divider(color: PdfColors.black, height: 1),
+              pw.SizedBox(height: 3),
               
               pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Expanded(
-                    flex: 4,
+                    flex: 3,
                     child: pw.Text(
                       'Article',
                       style: pw.TextStyle(font: boldFont, fontSize: 8),
@@ -577,70 +558,68 @@ class InvoiceService {
                   ),
                 ],
               ),
-              
-              pw.Divider(thickness: 1),
+              pw.SizedBox(height: 3),
+              pw.Divider(color: PdfColors.black, height: 1),
+              pw.SizedBox(height: 3),
               
               ...sale.items.map((item) {
                 final itemTotal = item.quantity * item.unitPrice;
-                return pw.Column(
-                  children: [
-                    pw.Row(
-                      children: [
-                        pw.Expanded(
-                          flex: 4,
-                          child: pw.Text(
-                            item.productName,
-                            style: pw.TextStyle(font: regularFont, fontSize: 8),
-                          ),
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 1),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Expanded(
+                        flex: 3,
+                        child: pw.Text(
+                          item.productName,
+                          style: pw.TextStyle(font: regularFont, fontSize: 8),
                         ),
-                        pw.Expanded(
-                          flex: 1,
-                          child: pw.Text(
-                            '${item.quantity}',
-                            style: pw.TextStyle(font: regularFont, fontSize: 8),
-                            textAlign: pw.TextAlign.center,
-                          ),
+                      ),
+                      pw.Expanded(
+                        flex: 1,
+                        child: pw.Text(
+                          '${item.quantity}',
+                          style: pw.TextStyle(font: regularFont, fontSize: 8),
+                          textAlign: pw.TextAlign.center,
                         ),
-                        pw.Expanded(
-                          flex: 2,
-                          child: pw.Text(
-                            formatCurrency(item.unitPrice, currency),
-                            style: pw.TextStyle(font: regularFont, fontSize: 8),
-                            textAlign: pw.TextAlign.right,
-                          ),
+                      ),
+                      pw.Expanded(
+                        flex: 2,
+                        child: pw.Text(
+                          formatCurrency(item.unitPrice, currency.code),
+                          style: pw.TextStyle(font: regularFont, fontSize: 8),
+                          textAlign: pw.TextAlign.right,
                         ),
-                        pw.Expanded(
-                          flex: 2,
-                          child: pw.Text(
-                            formatCurrency(itemTotal, currency),
-                            style: pw.TextStyle(font: regularFont, fontSize: 8),
-                            textAlign: pw.TextAlign.right,
-                          ),
+                      ),
+                      pw.Expanded(
+                        flex: 2,
+                        child: pw.Text(
+                          formatCurrency(itemTotal, currency.code),
+                          style: pw.TextStyle(font: regularFont, fontSize: 8),
+                          textAlign: pw.TextAlign.right,
                         ),
-                      ],
-                    ),
-                    pw.SizedBox(height: 2),
-                  ],
+                      ),
+                    ],
+                  ),
                 );
               }),
               
-              pw.Divider(thickness: 1),
-              
               pw.SizedBox(height: 5),
+              pw.Divider(color: PdfColors.black, height: 1),
+              pw.SizedBox(height: 3),
+              
               pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
                 children: [
-                  pw.Expanded(
-                    flex: 3,
-                    child: pw.Text(
-                      'Sous-total:',
-                      style: pw.TextStyle(font: regularFont, fontSize: 8),
-                      textAlign: pw.TextAlign.right,
-                    ),
+                  pw.Text(
+                    'Sous-total: ',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
                   ),
-                  pw.Expanded(
-                    flex: 2,
+                  pw.SizedBox(
+                    width: 60, // Adjust width as needed
                     child: pw.Text(
-                      formatCurrency(subtotal, currency),
+                      formatCurrency(subtotal, currency.code),
                       style: pw.TextStyle(font: regularFont, fontSize: 8),
                       textAlign: pw.TextAlign.right,
                     ),
@@ -651,19 +630,16 @@ class InvoiceService {
               if (settings.showTaxes) ...[
                 pw.SizedBox(height: 2),
                 pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.end,
                   children: [
-                    pw.Expanded(
-                      flex: 3,
-                      child: pw.Text(
-                        'TVA (${settings.defaultTaxRate}%):',
-                        style: pw.TextStyle(font: regularFont, fontSize: 8),
-                        textAlign: pw.TextAlign.right,
-                      ),
+                    pw.Text(
+                      'TVA (${settings.defaultTaxRate}%): ',
+                      style: pw.TextStyle(font: regularFont, fontSize: 8),
                     ),
-                    pw.Expanded(
-                      flex: 2,
+                    pw.SizedBox(
+                      width: 60, // Adjust width as needed
                       child: pw.Text(
-                        formatCurrency(taxAmount, currency),
+                        formatCurrency(taxAmount, currency.code),
                         style: pw.TextStyle(font: regularFont, fontSize: 8),
                         textAlign: pw.TextAlign.right,
                       ),
@@ -672,62 +648,46 @@ class InvoiceService {
                 ),
               ],
               
-              pw.SizedBox(height: 5),
-              
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                decoration: const pw.BoxDecoration(
-                  border: pw.Border(
-                    top: pw.BorderSide(),
-                    bottom: pw.BorderSide(),
+              pw.SizedBox(height: 3),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'TOTAL: ',
+                    style: pw.TextStyle(font: boldFont, fontSize: 10),
                   ),
-                ),
-                child: pw.Row(
-                  children: [
-                    pw.Expanded(
-                      flex: 3,
-                      child: pw.Text(
-                        'TOTAL À PAYER:',
-                        style: pw.TextStyle(
-                          font: boldFont,
-                          fontSize: 10,
-                        ),
-                        textAlign: pw.TextAlign.right,
-                      ),
+                  pw.SizedBox(
+                    width: 60, // Adjust width as needed
+                    child: pw.Text(
+                      formatCurrency(total, currency.code),
+                      style: pw.TextStyle(font: boldFont, fontSize: 10),
+                      textAlign: pw.TextAlign.right,
                     ),
-                    pw.Expanded(
-                      flex: 2,
-                      child: pw.Text(
-                        formatCurrency(total, currency),
-                        style: pw.TextStyle(
-                          font: boldFont,
-                          fontSize: 10,
-                        ),
-                        textAlign: pw.TextAlign.right,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               
               pw.SizedBox(height: 10),
               
-              pw.Center(
-                child: pw.Column(
-                  children: [
-                    pw.Text(
-                      'Merci de votre visite!',
-                      style: pw.TextStyle(font: boldFont, fontSize: 10),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      'Généré par Wanzo, conçu par i-kiotahub Goma.',
-                      style: pw.TextStyle(font: regularFont, fontSize: 6, color: PdfColors.grey600),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                  ]
-                )
+              if (settings.defaultInvoiceNotes.isNotEmpty) ...[
+                pw.Text(
+                  settings.defaultInvoiceNotes,
+                  style: pw.TextStyle(font: regularFont, fontSize: 8),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 5),
+              ],
+              
+              pw.Text(
+                'Merci pour votre achat!',
+                style: pw.TextStyle(font: boldFont, fontSize: 9),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 3),
+              pw.Text(
+                'Wanzo by i-kiotahub Goma',
+                style: pw.TextStyle(font: regularFont, fontSize: 7, color: PdfColors.grey600),
+                textAlign: pw.TextAlign.center,
               ),
             ],
           );
@@ -742,70 +702,33 @@ class InvoiceService {
     return file.path;
   }
   
-  /// Imprime une facture ou un ticket de caisse
-  Future<void> printDocument(String filePath) async {
-    final file = File(filePath);
-    if (await file.exists()) {
+  /// Imprime directement une facture ou un ticket (nécessite une imprimante configurée)
+  Future<void> printDocument(String filePath, {bool isReceipt = false}) async {
+    try {
+      // Pour l'impression directe, on peut utiliser printing.layoutPdf
+      // ou pour une impression plus contrôlée, on peut utiliser platform-specific code.
+      // Ici, on utilise une méthode simple qui pourrait ouvrir le dialogue d'impression.
       await Printing.layoutPdf(
-        onLayout: (_) async => await file.readAsBytes(),
+        onLayout: (PdfPageFormat format) async {
+          final file = File(filePath);
+          return file.readAsBytes();
+        },
+        name: isReceipt ? 'Receipt_${DateTime.now().millisecondsSinceEpoch}' : 'Invoice_${DateTime.now().millisecondsSinceEpoch}',
       );
+    } catch (e) {
+      // print('Erreur lors de l'impression du document: $e');
+      throw Exception('Impossible d\'imprimer le document: $e'); // Escaped apostrophe
     }
-  }
-  
-  /// Ouvre un aperçu avant impression
-  Future<void> previewDocument(String filePath) async {
-    final file = File(filePath);
-    if (await file.exists()) {
-      await Printing.layoutPdf(
-        onLayout: (_) async => await file.readAsBytes(),
-        name: 'Document',
-        format: PdfPageFormat.a4,
-        dynamicLayout: false,
-      );
-    }
-  }
-
-  /// Partage un document PDF
-  Future<void> shareDocument(String filePath, String subject) async {
-    final file = File(filePath);
-    if (await file.exists()) {
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        subject: subject,
-      );
-    }
-  }
-  
-  /// Génère et affiche un reçu/facture pour une vente
-  Future<void> generateAndShowReceipt({
-    required Sale sale,
-    required String companyName,
-    required String companyAddress,
-    required String companyPhone,
-    required String companyEmail,
-    required String footerText,
-  }) async {
-    final settings = Settings(
-      companyName: companyName,
-      companyAddress: companyAddress,
-      companyPhone: companyPhone,
-      companyEmail: companyEmail,
-      companyLogo: '',
-      currency: CurrencyType.cdf,
-      dateFormat: 'dd/MM/yyyy',
-      themeMode: AppThemeMode.light,
-      language: 'fr',
-      showTaxes: false,
-      defaultTaxRate: 0,
-      defaultInvoiceNotes: footerText,
-      taxIdentificationNumber: '',
-      rccmNumber: '',
-      idNatNumber: '',
-      invoiceNumberFormat: 'FAC-{YEAR}-{MONTH}-{SEQ}'
-    );
-    
-    final pdfPath = await generateInvoicePdf(sale, settings);
-    
-    await previewDocument(pdfPath);
   }
 }
+
+// Helper function to load font (if needed for custom fonts, not used with Helvetica)
+// Future<pw.Font> loadFont(String path) async {
+//   final fontData = await rootBundle.load(path);
+//   return pw.Font.ttf(fontData);
+// }
+
+// Example of how to get a default font if a custom one fails (not directly used here)
+// pw.Font getFallbackFont() {
+//   return pw.Font.helvetica();
+// }

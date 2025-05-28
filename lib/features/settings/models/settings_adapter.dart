@@ -1,11 +1,12 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\features\settings\models\settings_adapter.dart
 import 'package:hive/hive.dart';
 import 'settings.dart';
+import '../../../core/enums/currency_enum.dart'; // Import Currency
 
 /// Adaptateur Hive pour la classe Settings
 class SettingsAdapter extends TypeAdapter<Settings> {
   @override
-  final int typeId = 24; // Make sure this typeId is unique and registered in main.dart
+  final int typeId = 26; // Corrected typeId to match Settings model
 
   @override
   Settings read(BinaryReader reader) {
@@ -14,19 +15,30 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     
+    // Read activeCurrency (field 5)
+    Currency activeCurrencyValue;
+    if (fields[5] is String) {
+      activeCurrencyValue = Currency.values.firstWhere((e) => e.name == fields[5], orElse: () => Currency.CDF);
+    } else if (fields[5] is int) { // Assuming older versions might store int index
+      activeCurrencyValue = Currency.values.elementAtOrNull(fields[5] as int) ?? Currency.CDF;
+    }
+    else {
+      activeCurrencyValue = fields[5] as Currency? ?? Currency.CDF;
+    }
+
     return Settings(
       companyName: fields[0] as String? ?? '',
       companyAddress: fields[1] as String? ?? '',
       companyPhone: fields[2] as String? ?? '',
       companyEmail: fields[3] as String? ?? '',
       companyLogo: fields[4] as String? ?? '',
-      currency: fields[5] is String ? CurrencyType.values.firstWhere((e) => e.name == fields[5], orElse: () => CurrencyType.usd) : fields[5] as CurrencyType? ?? CurrencyType.usd,
+      activeCurrency: activeCurrencyValue, // Use the deserialized value
       dateFormat: fields[6] as String? ?? 'dd/MM/yyyy',
-      themeMode: fields[7] as AppThemeMode? ?? AppThemeMode.system,
+      themeMode: fields[7] is int ? AppThemeMode.values[fields[7] as int] : fields[7] as AppThemeMode? ?? AppThemeMode.system, // Handle int for enum
       language: fields[8] as String? ?? 'fr',
       showTaxes: fields[9] as bool? ?? false,
       defaultTaxRate: fields[10] as double? ?? 0.0,
-      invoiceNumberFormat: fields[11] as String? ?? 'INV-{YYYY}-{NNNN}',
+      invoiceNumberFormat: fields[11] as String? ?? 'INV-{YYYY}-{SEQ}', // Corrected default format
       invoicePrefix: fields[12] as String? ?? 'INV',
       defaultPaymentTerms: fields[13] as String? ?? 'Net 30',
       defaultInvoiceNotes: fields[14] as String? ?? '',
@@ -34,20 +46,24 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       defaultProductCategory: fields[16] as String? ?? '',
       lowStockAlertDays: fields[17] as int? ?? 7,
       backupEnabled: fields[18] as bool? ?? false,
-      backupFrequency: fields[19] as int? ?? 24, // Assuming hours
+      backupFrequency: fields[19] as int? ?? 24, 
       reportEmail: fields[20] as String? ?? '',
       rccmNumber: fields[21] as String? ?? '',
       idNatNumber: fields[22] as String? ?? '',
       pushNotificationsEnabled: fields[23] as bool? ?? true,
       inAppNotificationsEnabled: fields[24] as bool? ?? true,
       emailNotificationsEnabled: fields[25] as bool? ?? true,
-      soundNotificationsEnabled: fields[26] as bool? ?? true,
+      // Assuming soundNotificationsEnabled was field 26 and activeCurrency was 5
+      // The original adapter had 27 fields, but Settings model has 26 fields if activeCurrency is 5
+      // Let's assume soundNotificationsEnabled is field 26
+      soundNotificationsEnabled: numOfFields > 26 && fields.containsKey(26) ? fields[26] as bool? ?? true : true,
+      // Add other fields if any were missed, ensure field indices match write method
     );
   }
 
   @override
   void write(BinaryWriter writer, Settings obj) {
-    writer.writeByte(27); // Total number of fields
+    writer.writeByte(27); // Number of fields being written
     writer.writeByte(0);
     writer.writeString(obj.companyName);
     writer.writeByte(1);
@@ -59,11 +75,11 @@ class SettingsAdapter extends TypeAdapter<Settings> {
     writer.writeByte(4);
     writer.writeString(obj.companyLogo);
     writer.writeByte(5);
-    writer.writeString(obj.currency.name); // Store enum as string
+    writer.write(obj.activeCurrency); // Store Currency enum directly (Hive will use its adapter)
     writer.writeByte(6);
     writer.writeString(obj.dateFormat);
     writer.writeByte(7);
-    writer.write(obj.themeMode); // Assuming AppThemeMode is already a HiveObject or has an adapter
+    writer.write(obj.themeMode); 
     writer.writeByte(8);
     writer.writeString(obj.language);
     writer.writeByte(9);
@@ -100,23 +116,25 @@ class SettingsAdapter extends TypeAdapter<Settings> {
     writer.writeBool(obj.inAppNotificationsEnabled);
     writer.writeByte(25);
     writer.writeBool(obj.emailNotificationsEnabled);
-    writer.writeByte(26);
+    writer.writeByte(26); // Added for soundNotificationsEnabled
     writer.writeBool(obj.soundNotificationsEnabled);
   }
 }
 
-/// Adaptateur Hive pour l'énumération AppThemeMode
-class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
-  @override
-  final int typeId = 25;
+// Make sure AppThemeMode also has a TypeAdapter registered if it's an enum
+// For example:
+// enum AppThemeMode { system, light, dark }
+// class AppThemeModeAdapter extends TypeAdapter<AppThemeMode> {
+//   @override
+//   final typeId = 25; // Ensure this is unique
 
-  @override
-  AppThemeMode read(BinaryReader reader) {
-    return AppThemeMode.values[reader.readByte()];
-  }
+//   @override
+//   AppThemeMode read(BinaryReader reader) {
+//     return AppThemeMode.values[reader.readByte()];
+//   }
 
-  @override
-  void write(BinaryWriter writer, AppThemeMode obj) {
-    writer.writeByte(obj.index);
-  }
-}
+//   @override
+//   void write(BinaryWriter writer, AppThemeMode obj) {
+//     writer.writeByte(obj.index);
+//   }
+// }

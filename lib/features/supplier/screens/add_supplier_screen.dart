@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wanzo/l10n/generated/app_localizations.dart'; // Import AppLocalizations
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';

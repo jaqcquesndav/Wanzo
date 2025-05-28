@@ -6,10 +6,9 @@ import '../../../constants/constants.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../../settings/bloc/settings_state.dart';
-import '../../settings/models/settings.dart';
 import '../bloc/financing_bloc.dart';
 import '../models/financing_request.dart';
-import '../../../core/utils/currency_formatter.dart' as currencyUtil;
+import '../../../core/enums/currency_enum.dart';
 
 class AddFinancingRequestScreen extends StatefulWidget {
   const AddFinancingRequestScreen({super.key});
@@ -61,7 +60,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
     );
   }
 
-  void _submitRequest(CurrencyType currencyType) {
+  void _submitRequest(Currency currency) { // Changed CurrencyType to Currency
     if (_formKey.currentState!.validate()) {
       final amount = double.tryParse(_amountController.text);
       if (amount == null || amount <= 0) {
@@ -74,7 +73,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
       final newRequest = FinancingRequest(
         id: const Uuid().v4(),
         amount: amount,
-        currency: currencyType.name,
+        currency: currency.code, // Used currency.code instead of currency.name
         reason: _reasonController.text,
         type: _selectedFinancingType,
         institution: _selectedInstitution,
@@ -89,15 +88,15 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
-        CurrencyType currentCurrencyType = CurrencyType.usd;
-        String currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
+        Currency currentCurrency = Currency.USD; // Changed CurrencyType to Currency and default value
+        String currencySymbol = currentCurrency.symbol; // Used .symbol getter
 
         if (settingsState is SettingsLoaded) {
-          currentCurrencyType = settingsState.settings.currency;
-          currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
+          currentCurrency = settingsState.settings.activeCurrency; // Changed to activeCurrency
+          currencySymbol = currentCurrency.symbol; // Used .symbol getter
         } else if (settingsState is SettingsUpdated) {
-          currentCurrencyType = settingsState.settings.currency;
-          currencySymbol = currencyUtil.getCurrencySymbol(currentCurrencyType);
+          currentCurrency = settingsState.settings.activeCurrency; // Changed to activeCurrency
+          currencySymbol = currentCurrency.symbol; // Used .symbol getter
         }
 
         return WanzoScaffold(
@@ -207,7 +206,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
                     ),
                     const SizedBox(height: WanzoSpacing.xl),
                     ElevatedButton(
-                      onPressed: () => _submitRequest(currentCurrencyType),
+                      onPressed: () => _submitRequest(currentCurrency),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.primary),
                       child: BlocBuilder<FinancingBloc, FinancingState>(

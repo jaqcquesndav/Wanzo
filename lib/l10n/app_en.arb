@@ -864,5 +864,6 @@
   "dashboardQuickActionsNewSupplier": "New Supplier",
   "dashboardQuickActionsCashRegister": "Cash Register",
   "dashboardQuickActionsSettings": "Settings",
-  "commonLoading": "Loading..."
+  "commonLoading": "Loading...",
+  "cancel": "Cancel"
 }

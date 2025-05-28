@@ -1248,4 +1248,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonLoading => 'Loading...';
+
+  @override
+  String get cancel => 'Cancel';
 }

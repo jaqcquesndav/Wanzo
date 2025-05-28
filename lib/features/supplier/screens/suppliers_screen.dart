@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:wanzo/l10n/generated/app_localizations.dart'; // Import AppLocalizations
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 import 'package:wanzo/core/services/currency_service.dart'; // Import CurrencyService
+import 'package:wanzo/core/utils/currency_formatter.dart'; // Added import
+import 'package:wanzo/core/enums/currency_enum.dart'; // Added import for Currency enum and extension
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -75,7 +77,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
             listener: (context, state) {
               if (state is SupplierError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(localizations.supplierError(message: state.message))), // Localized
+                  SnackBar(content: Text(localizations.supplierError(state.message))), // Localized & Positional
                 );
               } else if (state is SupplierOperationSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +112,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               } else if (state is SupplierError) {
                 return Center(
                   child: Text(
-                    localizations.supplierError(message: state.message), // Localized
+                    localizations.supplierError(state.message), // Localized & Positional
                     style: const TextStyle(color: Colors.red),
                   ),
                 );
@@ -160,7 +162,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     if (suppliers.isEmpty) {
       if (isSearchResult) {
         return Center(
-          child: Text(localizations.noResultsForSearchTerm(searchTerm: searchTerm)), // Localized
+          child: Text(localizations.noResultsForSearchTerm(searchTerm)), // Localized & Positional
         );
       }
       return Center(
@@ -196,7 +198,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       header = Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          localizations.resultsForSearchTerm(searchTerm: searchTerm), // Localized
+          localizations.resultsForSearchTerm(searchTerm), // Localized & Positional
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -228,7 +230,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     final currencyService = context.read<CurrencyService>(); // Get CurrencyService instance
 
     final lastPurchaseText = supplier.lastPurchaseDate != null
-        ? localizations.lastPurchaseDate(date: _formatDate(supplier.lastPurchaseDate!)) // Localized
+        ? localizations.lastPurchaseDate(_formatDate(supplier.lastPurchaseDate!)) // Localized & Positional
         : localizations.noRecentPurchase; // Localized
     
     final categoryColor = _getCategoryColor(context, supplier.category); 
@@ -249,12 +251,17 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
           mainAxisSize: MainAxisSize.min, 
           children: [
             Text(supplier.contactPerson.isNotEmpty 
-              ? localizations.contactPerson(name: supplier.contactPerson) // Localized
+              ? localizations.contactPerson(supplier.contactPerson) // Localized & Positional
               : supplier.phoneNumber),
-            Text(
-              localizations.totalPurchasesAmount(amount: currencyService.formatPrice(supplier.totalPurchases, currencyService.activeCurrency)), // Localized & Use CurrencyService
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Builder(builder: (context) {
+              // Access the 'code' getter from the Currency enum extension
+              final String currencyCode = currencyService.currentSettings.activeCurrency.code;
+              final String formattedTotalPurchases = formatCurrency(supplier.totalPurchases, currencyCode);
+              return Text(
+                localizations.totalPurchasesAmount(formattedTotalPurchases), // Localized & Positional
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              );
+            }),
             Text(lastPurchaseText),
           ],
         ),
@@ -387,7 +394,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return AlertDialog(
           title: Text(localizations.deleteSupplierTitle), // Localized
           content: Text(
-            localizations.deleteSupplierConfirmation(supplierName: supplier.name), // Localized
+            localizations.deleteSupplierConfirmation(supplier.name), // Localized & Positional
           ),
           actions: [
             TextButton(
@@ -450,8 +457,6 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return Theme.of(context).colorScheme.surfaceContainerHighest;
       case SupplierCategory.international:
         return Theme.of(context).colorScheme.primaryContainer;
-      default: // Add default for safety, though all enum values should be covered
-        return Colors.grey;
     }
   }
   /// Retourne le nom d\\\'une catégorie de fournisseur
@@ -468,8 +473,6 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
         return localizations.supplierCategoryInternational;
-      default: // Add default for safety
-        return localizations.supplierCategoryUnknown;
     }
   }
 

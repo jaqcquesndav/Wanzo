@@ -11,7 +11,7 @@ import '../../../core/shared_widgets/wanzo_scaffold.dart';
 import '../../../features/settings/presentation/cubit/currency_settings_cubit.dart';
 import '../bloc/sales_bloc.dart';
 import '../models/sale.dart';
-import 'package:wanzo/l10n/generated/app_localizations.dart'; 
+import 'package:wanzo/l10n/app_localizations.dart'; 
 
 /// Écran principal de gestion des ventes
 class SalesScreen extends StatefulWidget {

@@ -16,7 +16,7 @@ import 'package:wanzo/core/utils/currency_formatter.dart'; // Added
 import 'package:wanzo/core/enums/currency_enum.dart'; // Added
 import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart'; // Changed
 import 'package:wanzo/core/services/currency_service.dart'; // Added
-import 'package:wanzo/l10n/generated/app_localizations.dart'; // Updated import
+import 'package:wanzo/l10n/app_localizations.dart'; // Updated import
 
 /// Écran principal de gestion de l'inventaire
 class InventoryScreen extends StatefulWidget {
@@ -395,7 +395,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: WanzoSpacing.xs),
-              Text('${l10n.priceLabel}: ${formatCurrency(displaySellingPrice, displayCurrencyCode, l10n)} (${l10n.inputPriceLabel}: ${formatCurrency(product.sellingPriceInInputCurrency, product.inputCurrencyCode, l10n)}) '),
+              Text('${l10n.priceLabel}: ${formatCurrency(displaySellingPrice, displayCurrencyCode)} (${l10n.inputPriceLabel}: ${formatCurrency(product.sellingPriceInInputCurrency, product.inputCurrencyCode)}) '),
               Text(
                 '${l10n.stockLabel}: ${product.stockQuantity} ${_getUnitName(product.unit, l10n)}',
                 style: TextStyle(
@@ -476,7 +476,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
           margin: const EdgeInsets.symmetric(vertical: WanzoSpacing.xs),
           child: ListTile(
             title: Text("${_getTransactionTypeName(transaction.type, l10n)}: ${product?.name ?? l10n.unknownProductLabel}"),
-            subtitle: Text("${l10n.quantityLabel}: ${transaction.quantity}, ${l10n.dateLabel}: ${formatDate(transaction.date, l10n)}\n${l10n.valueLabel}: ${formatCurrency(displayValue, displayCurrencyCode, l10n)} (${formatCurrency(transaction.totalValueInCdf, Currency.CDF.code, l10n)})" ),
+            subtitle: Text("${l10n.quantityLabel}: ${transaction.quantity}, ${l10n.dateLabel}: ${formatDate(transaction.date, l10n)}\n${l10n.valueLabel}: ${formatCurrency(displayValue, displayCurrencyCode)} (${formatCurrency(transaction.totalValueInCdf, Currency.CDF.code)})" ),
             leading: Icon(transaction.quantity > 0 ? Icons.arrow_upward : Icons.arrow_downward,
                 color: transaction.quantity > 0 ? Colors.green : Colors.red),
           ),

@@ -1,7 +1,7 @@
 // filepath: c:\Users\DevSpace\Flutter\wanzo\lib\core\enums\currency_enum.dart
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart'; // Added Hive import
-import 'package:wanzo/l10n/generated/app_localizations.dart'; // Updated import
+import 'package:wanzo/l10n/app_localizations.dart'; // Updated import
 
 part 'currency_enum.g.dart'; // Added for generated adapter
 

@@ -11,7 +11,7 @@ import 'package:wanzo/features/settings/bloc/settings_state.dart';
 import 'package:wanzo/features/subscription/bloc/subscription_bloc.dart';
 import 'package:wanzo/features/subscription/models/invoice_model.dart'; // Assuming Invoice class is here
 import 'package:wanzo/features/subscription/models/subscription_tier_model.dart'; // Assuming SubscriptionTier class is here
-import 'package:wanzo/l10n/generated/app_localizations.dart';
+import 'package:wanzo/l10n/app_localizations.dart';
 import 'package:wanzo/constants/spacing.dart';
 
 // Placeholder events - these should be defined in subscription_event.dart
