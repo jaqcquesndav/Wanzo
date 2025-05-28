@@ -159,7 +159,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
           _hasChanges = false;
         });
          ScaffoldMessenger.of(context).showSnackBar( // Show generic success message
-          SnackBar(content: Text(l10n.settingsSavedSuccess)),
+          SnackBar(content: Text(l10n.settingsSavedSuccess)), // Localized
         );
       }
     }
@@ -177,7 +177,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
               // Message is now shown in _saveSettings after both saves attempt
             } else if (state is old_settings_state.SettingsError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message.isNotEmpty ? state.message : l10n.anErrorOccurred), backgroundColor: Colors.red),
+                SnackBar(content: Text(state.message.isNotEmpty ? state.message : l10n.anErrorOccurred), backgroundColor: Colors.red), // Localized
               );
             }
           },
@@ -186,7 +186,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
           listener: (context, state) {
             if (state.status == CurrencySettingsStatus.error) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.currencySettingsError(state.errorMessage ?? l10n.errorUnknown)), backgroundColor: Colors.red),
+                SnackBar(content: Text(l10n.currencySettingsError(state.errorMessage ?? l10n.errorUnknown)), backgroundColor: Colors.red), // Localized
               );
             } else if (state.status == CurrencySettingsStatus.saved) { 
               // Message is now shown in _saveSettings after both saves attempt

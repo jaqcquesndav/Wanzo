@@ -19,7 +19,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String exchangeRateSpecific(String currencyFrom, String currencyTo) {
-    return 'Taux de change $fromCurrency vers $toCurrency';
+    return 'Taux de change ($currencyFrom vers $currencyTo)';
   }
 
   @override
@@ -28,17 +28,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get errorFieldRequired => 'Ce champ est requis';
+  String get errorFieldRequired => 'Ce champ est requis.';
 
   @override
-  String get errorInvalidRate => 'Veuillez entrer un taux valide supérieur à 0';
+  String get errorInvalidRate => 'Veuillez entrer un taux positif valide.';
 
   @override
   String get invoiceFormatting => 'Formatage des factures';
 
   @override
   String invoiceFormatHint(Object YEAR, Object MONTH, Object SEQ) {
-    return 'Utilisez $YEAR, $MONTH, $SEQ pour année, mois, séquence.';
+    return 'Utilisez $YEAR, $MONTH, $SEQ pour les valeurs dynamiques.';
   }
 
   @override
@@ -57,7 +57,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get defaultTaxRatePercentage => 'Taux de taxe par défaut (%)';
 
   @override
-  String get errorInvalidTaxRate => 'Le taux de taxe doit être compris entre 0 et 100';
+  String get errorInvalidTaxRate => 'Le taux de taxe doit être entre 0 et 100.';
 
   @override
   String get defaultPaymentTerms => 'Conditions de paiement par défaut';
@@ -72,11 +72,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get anErrorOccurred => 'Une erreur s\'est produite';
 
   @override
-  String get errorUnknown => 'Une erreur inconnue s\'est produite.';
+  String get errorUnknown => 'Erreur inconnue';
 
   @override
   String currencySettingsError(String errorDetails) {
-    return 'Erreur des paramètres de devise: $message';
+    return 'Impossible d\'enregistrer les paramètres de devise : $errorDetails';
   }
 
   @override

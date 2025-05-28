@@ -1,41 +1,70 @@
 {
   "@@locale": "fr",
   "invoiceSettingsTitle": "Paramètres de facturation",
-  "saveChanges": "Enregistrer les modifications",
   "currencySettings": "Paramètres de devise",
   "activeCurrency": "Devise active",
-  "errorFieldRequired": "Ce champ est requis",
-  "exchangeRateSpecific": "Taux de change {fromCurrency} vers {toCurrency}",
+  "exchangeRateSpecific": "Taux de change ({currencyFrom} vers {currencyTo})",
   "@exchangeRateSpecific": {
-    "description": "Label for exchange rate input field",
+    "description": "Libellé pour le champ de taux de change spécifique",
     "placeholders": {
-      "fromCurrency": {
+      "currencyFrom": {
         "type": "String",
         "example": "USD"
       },
-      "toCurrency": {
+      "currencyTo": {
         "type": "String",
         "example": "CDF"
       }
     }
   },
-  "errorInvalidRate": "Veuillez entrer un taux valide supérieur à 0",
+  "exchangeRateHint": "Entrez le taux pour 1 {currencyFrom} vers {currencyTo}",
+  "@exchangeRateHint": {
+    "description": "Texte d'aide pour le champ de taux de change",
+    "placeholders": {
+      "currencyFrom": {
+        "type": "String",
+        "example": "USD"
+      },
+      "currencyTo": {
+        "type": "String",
+        "example": "CDF"
+      }
+    }
+  },
+  "errorFieldRequired": "Ce champ est requis.",
+  "errorInvalidRate": "Veuillez entrer un taux positif valide.",
   "invoiceFormatting": "Formatage des factures",
-  "invoiceFormatHint": "Utilisez {YEAR}, {MONTH}, {SEQ} pour année, mois, séquence.",
+  "invoiceFormatHint": "Utilisez {YEAR}, {MONTH}, {SEQ} pour les valeurs dynamiques.",
+  "@invoiceFormatHint": {
+    "description": "Aide pour les placeholders du format de numéro de facture",
+    "placeholders": {
+      "YEAR": {
+        "type": "Object"
+      },
+      "MONTH": {
+        "type": "Object"
+      },
+      "SEQ": {
+        "type": "Object"
+      }
+    }
+  },
   "invoiceNumberFormat": "Format du numéro de facture",
   "invoicePrefix": "Préfixe de facture",
   "taxesAndConditions": "Taxes et conditions",
   "showTaxesOnInvoices": "Afficher les taxes sur les factures",
   "defaultTaxRatePercentage": "Taux de taxe par défaut (%)",
-  "errorInvalidTaxRate": "Le taux de taxe doit être compris entre 0 et 100",
+  "errorInvalidTaxRate": "Le taux de taxe doit être entre 0 et 100.",
   "defaultPaymentTerms": "Conditions de paiement par défaut",
   "defaultInvoiceNotes": "Notes de facture par défaut",
   "settingsSavedSuccess": "Paramètres enregistrés avec succès.",
-  "errorUnknown": "Une erreur inconnue s'est produite.",
-  "currencySettingsError": "Erreur des paramètres de devise: {message}",
+  "anErrorOccurred": "Une erreur est survenue.",
+  "errorUnknown": "Erreur inconnue",
+  "currencySettingsError": "Impossible d'enregistrer les paramètres de devise : {errorDetails}",
   "@currencySettingsError": {
+    "description": "Message d'erreur lors de l'échec de l'enregistrement des paramètres de devise",
     "placeholders": {
-      "message": {
+      "errorDetails": {
         "type": "String"
       }
     }

@@ -954,6 +954,27 @@
   "registerButton": "Register",
   "emailLabel": "Email",
   "passwordLabel": "Password",
+  "loginToYourAccount": "Login to your account",
+  "emailHint": "example@email.com",
+  "emailValidationErrorRequired": "Please enter your email",
+  "emailValidationErrorInvalid": "Please enter a valid email",
+  "passwordHint": "••••••••",
+  "passwordValidationErrorRequired": "Please enter your password",
+  "rememberMe": "Remember me",
+  "forgotPassword": "Forgot password?",
+  "loginButton": "Login",
+  "dontHaveAnAccount": "Don't have an account?",
+  "createAccountButton": "Create account",
+  "demoModeButton": "Demo Mode",
+  "loginFailed": "Login failed: {errorMessage}",
+  "@loginFailed": {
+    "description": "Error message shown when login fails",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
 
   "settings": "Settings",
   "settingsTitle": "Settings",
