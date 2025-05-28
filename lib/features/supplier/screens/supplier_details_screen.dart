@@ -426,36 +426,40 @@ class SupplierDetailsScreen extends StatelessWidget {
   }
   Color _getCategoryColor(SupplierCategory category) {
     switch (category) {
-      case SupplierCategory.strategic:
-        return Colors.indigo;
-      case SupplierCategory.regular:
-        return Colors.blue;      
-      case SupplierCategory.newSupplier:
+      case SupplierCategory.local:
         return Colors.green;
-      case SupplierCategory.occasional:
-        return Colors.orange;
       case SupplierCategory.international:
+        return Colors.blue;
+      case SupplierCategory.online:
+        return Colors.orange;
+      case SupplierCategory.strategic:
         return Colors.purple;
-      // No default needed as all enum values are handled by SupplierCategory.values
+      case SupplierCategory.regular:
+        return Colors.teal;
+      case SupplierCategory.newSupplier: // Changed from new to newSupplier
+        return Colors.pink;
+      case SupplierCategory.occasional:
+        return Colors.brown;
     }
   }
-  String _getCategoryName(BuildContext context, SupplierCategory category) { 
+
+  String _getCategoryName(BuildContext context, SupplierCategory category) {
     final localizations = AppLocalizations.of(context)!; 
-    switch (category) {      
+    switch (category) {
+      case SupplierCategory.local:
+        return localizations.supplierCategoryLocal; 
+      case SupplierCategory.international:
+        return localizations.supplierCategoryInternational; 
+      case SupplierCategory.online:
+        return localizations.supplierCategoryOnline; 
       case SupplierCategory.strategic:
         return localizations.supplierCategoryStrategic;
       case SupplierCategory.regular:
         return localizations.supplierCategoryRegular;
-      case SupplierCategory.newSupplier: 
-        return localizations.supplierCategoryNew;
+      case SupplierCategory.newSupplier: // Changed from new to newSupplier
+        return localizations.supplierCategoryNew; 
       case SupplierCategory.occasional:
         return localizations.supplierCategoryOccasional;
-      case SupplierCategory.international:
-        return localizations.supplierCategoryInternational;
-      // No default needed as all enum values are handled by SupplierCategory.values
-      // default: return localizations.supplierCategoryUnknown;
-      default: // Added default case
-        return localizations.supplierCategoryUnknown;
     }
   }
 

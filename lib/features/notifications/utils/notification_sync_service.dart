@@ -4,7 +4,7 @@ import '../../../core/utils/logger.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/database_service.dart';
-import '../../../core/services/conflict_resolution_service.dart';
+// import '../../../core/services/conflict_resolution_service.dart'; // Commented out as _conflictResolver is unused
 import '../models/notification_model.dart';
 import 'notification_cache_manager.dart';
 
@@ -24,7 +24,7 @@ class NotificationSyncService {
   final ConnectivityService _connectivityService = ConnectivityService();
   late final NotificationCacheManager _cacheManager;
   // Unused field, keeping for future use
-  final ConflictResolutionService _conflictResolver = ConflictResolutionService();
+  // final ConflictResolutionService _conflictResolver = ConflictResolutionService(); // Commented out as it's unused
 
   bool _isSyncing = false;
   Timer? _periodicSyncTimer;

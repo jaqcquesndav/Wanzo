@@ -8,8 +8,8 @@ import '../models/notification_model.dart';
 // Suppression de l'import redondant: import '../models/notification_adapter.dart';
 import '../../settings/models/settings.dart';
 import '../../../core/services/database_service.dart';
-import '../../../core/services/api_service.dart'; // Make sure API service is imported
-import '../../../core/services/data_sync_manager.dart';
+// import '../../../core/services/api_service.dart'; // Commented out as _apiService is unused
+// import '../../../core/services/data_sync_manager.dart'; // Commented out as _dataSyncManager is unused
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/logger.dart'; // Corrected logger import
 import '../utils/notification_cache_manager.dart';
@@ -21,7 +21,7 @@ class NotificationService {  static final NotificationService _instance = Notifi
   /// Instance unique du service (singleton)
   factory NotificationService() => _instance;
       /// API Service instance
-  final ApiService _apiService = ApiService();
+  // final ApiService _apiService = ApiService(); // Commented out as it's unused
     
   NotificationService._internal();
   
@@ -36,7 +36,7 @@ class NotificationService {  static final NotificationService _instance = Notifi
   final DatabaseService _databaseService = DatabaseService();
   final ConnectivityService _connectivityService = ConnectivityService();
   late final NotificationCacheManager _notificationCacheManager;
-  late final DataSyncManager _dataSyncManager;
+  // late final DataSyncManager _dataSyncManager; // Commented out as it's unused
   
   /// Indique si le service fonctionne en mode hors ligne
   bool _isOfflineMode = false;
@@ -62,11 +62,13 @@ class NotificationService {  static final NotificationService _instance = Notifi
     _notificationCacheManager = NotificationCacheManager(databaseService: _databaseService);
     
     // Initialisation du gestionnaire de synchronisation
+    /* // Commented out as _dataSyncManager is unused
     _dataSyncManager = DataSyncManager(
       connectivityService: _connectivityService,
       databaseService: _databaseService,
-      apiService: _apiService,
+      apiService: _apiService, // _apiService would also need to be uncommented
     );
+    */
     
     // Initialisation de la boîte Hive pour les notifications
     await _initHive();

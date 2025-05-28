@@ -149,7 +149,15 @@ enum SupplierCategory {
   @HiveField(3)
   occasional,
 
-  /// Fournisseur international
+  /// Fournisseur local
   @HiveField(4)
+  local,
+
+  /// Fournisseur international
+  @HiveField(5)
   international,
+
+  /// Fournisseur en ligne
+  @HiveField(6)
+  online
 }

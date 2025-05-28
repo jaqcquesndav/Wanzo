@@ -1006,6 +1006,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supplierCategoryUnknown => 'Unknown';
 
   @override
+  String get supplierCategoryLocal => 'Local';
+
+  @override
+  String get supplierCategoryOnline => 'Online';
+
+  @override
   String get addSupplierTitle => 'Add Supplier';
 
   @override

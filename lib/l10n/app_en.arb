@@ -731,6 +731,8 @@
   "supplierCategoryOccasional": "Occasional",
   "supplierCategoryInternational": "International",
   "supplierCategoryUnknown": "Unknown",
+  "supplierCategoryLocal": "Local",
+  "supplierCategoryOnline": "Online",
 
   "addSupplierTitle": "Add Supplier",
   "editSupplierTitle": "Edit Supplier",

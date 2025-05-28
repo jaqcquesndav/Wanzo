@@ -92,7 +92,11 @@ class SupplierCategoryAdapter extends TypeAdapter<SupplierCategory> {
       case 3:
         return SupplierCategory.occasional;
       case 4:
+        return SupplierCategory.local;
+      case 5:
         return SupplierCategory.international;
+      case 6:
+        return SupplierCategory.online;
       default:
         return SupplierCategory.strategic;
     }
@@ -113,8 +117,14 @@ class SupplierCategoryAdapter extends TypeAdapter<SupplierCategory> {
       case SupplierCategory.occasional:
         writer.writeByte(3);
         break;
-      case SupplierCategory.international:
+      case SupplierCategory.local:
         writer.writeByte(4);
+        break;
+      case SupplierCategory.international:
+        writer.writeByte(5);
+        break;
+      case SupplierCategory.online:
+        writer.writeByte(6);
         break;
     }
   }
@@ -176,5 +186,7 @@ const _$SupplierCategoryEnumMap = {
   SupplierCategory.regular: 'regular',
   SupplierCategory.newSupplier: 'newSupplier',
   SupplierCategory.occasional: 'occasional',
+  SupplierCategory.local: 'local',
   SupplierCategory.international: 'international',
+  SupplierCategory.online: 'online',
 };

@@ -42,10 +42,8 @@ class NotificationRouter {
       case NotificationType.success:
       case NotificationType.warning:
       case NotificationType.error:
-      default:
         // Route générique
         _routeGeneric(context, notification.actionRoute!, additionalData);
-        break;
     }
   }
   

@@ -1937,6 +1937,18 @@ abstract class AppLocalizations {
   /// **'Unknown'**
   String get supplierCategoryUnknown;
 
+  /// No description provided for @supplierCategoryLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get supplierCategoryLocal;
+
+  /// No description provided for @supplierCategoryOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get supplierCategoryOnline;
+
   /// No description provided for @addSupplierTitle.
   ///
   /// In en, this message translates to:
