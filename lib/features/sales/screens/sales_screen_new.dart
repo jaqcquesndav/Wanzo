@@ -91,7 +91,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                                     Icon(
                                       Icons.shopping_cart,
                                       size: 64,
-                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), // Use theme color
+                                      color: Theme.of(context).colorScheme.onSurface.withAlpha(102), // Replaced withOpacity
                                     ),
                                     const SizedBox(height: WanzoSpacing.md),
                                     const Text(
@@ -258,7 +258,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
   /// Construire le sommaire des ventes
   Widget _buildSalesSummary(SalesLoaded state) {
     final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
+      symbol: 'FC', // This should ideally come from currency settings
       decimalDigits: 0,
     );
     
@@ -273,7 +273,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    currencyFormat.format(state.totalAmount),
+                    currencyFormat.format(state.totalAmountInCdf), // Changed to totalAmountInCdf
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: WanzoTypography.fontWeightBold,
@@ -283,7 +283,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   Text(
                     'Montant total',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // Replaced withOpacity
                     ),
                   ),
                 ],
@@ -303,7 +303,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   Text(
                     'Ventes',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // Replaced withOpacity
                     ),
                   ),
                 ],
@@ -314,7 +314,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${state.sales.where((s) => s.status == SaleStatus.pending).length}',
+                    '${state.sales.where((s) => s.status == SaleStatus.pending || s.status == SaleStatus.partiallyPaid).length}', // Added partiallyPaid
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: WanzoTypography.fontWeightBold,
@@ -324,7 +324,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                   Text(
                     'En attente',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // Replaced withOpacity
                     ),
                   ),
                 ],
@@ -339,7 +339,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
   /// Construire un élément de vente
   Widget _buildSaleItem(BuildContext context, Sale sale) {
     final currencyFormat = NumberFormat.currency(
-      symbol: 'FC',
+      symbol: sale.transactionCurrencyCode == 'CDF' ? 'FC' : sale.transactionCurrencyCode, // Dynamic symbol
       decimalDigits: 0,
     );
     
@@ -400,7 +400,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
                     ),
                   ),
                   Text(
-                    currencyFormat.format(sale.totalAmount),
+                    currencyFormat.format(sale.totalAmountInTransactionCurrency), // Changed to totalAmountInTransactionCurrency
                     style: TextStyle(
                       fontWeight: WanzoTypography.fontWeightBold,
                       fontSize: WanzoTypography.fontSizeLg,
@@ -430,6 +430,10 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
         color = Theme.of(context).colorScheme.secondary; // Use theme color for success/completed
         label = 'Terminée';
         break;
+      case SaleStatus.partiallyPaid: // Added case for partiallyPaid
+        color = Colors.blue; // Or another theme color
+        label = 'Partiellement payée';
+        break;
       case SaleStatus.cancelled:
         color = Theme.of(context).colorScheme.error; // Use theme color
         label = 'Annulée';
@@ -442,7 +446,7 @@ class _SalesScreenState extends State<SalesScreen> with SingleTickerProviderStat
         vertical: WanzoSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(25), // Replaced withOpacity
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color),
       ),

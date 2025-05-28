@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Corrigé
+import 'package:wanzo/l10n/app_localizations.dart'; // Corrigé
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -19,6 +19,11 @@ class JournalService {
     AppLocalizations l10n,
     Settings settings,
   ) async {
+    // final font = await PdfGoogleFonts.nunitoExtraLight();
+    pw.RichText.debug = true;
+    // print('Generating PDF with ${entries.length} entries.');
+    // print('Selected currency: ${settings.mainCurrency}');
+
     final pdf = pw.Document();
     final font = await PdfGoogleFonts.robotoRegular();
     final boldFont = await PdfGoogleFonts.robotoBold();
@@ -159,8 +164,8 @@ class JournalService {
       await file.writeAsBytes(await pdf.save());
       return file;
     } catch (e) {
-      // print('Error saving PDF: $e'); // Pour le débogage
-      return null;
+      // print('Error generating PDF: $e');
+      rethrow;
     }
   }
 

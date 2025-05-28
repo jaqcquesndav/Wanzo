@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -12,6 +13,8 @@ import 'package:wanzo/features/settings/bloc/settings_state.dart' as old_setting
 import 'package:wanzo/features/settings/models/settings.dart' as old_settings_model;
 import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
 import 'package:wanzo/features/invoice/services/invoice_service.dart';
+import 'package:pdf/pdf.dart'; // Added import
+import 'package:printing/printing.dart'; // Added import for Printing
 
 /// Écran de détails d'une vente
 class SaleDetailsScreen extends StatelessWidget {
@@ -65,8 +68,11 @@ class SaleDetailsScreen extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == "edit") {
-                // TODO: Naviguer vers l'écran d'édition
-                // Consider passing the sale object and currency settings
+                // Naviguer vers l'écran d'édition
+                context.push(
+                  '/sales/edit', 
+                  extra: {'sale': sale, 'currencySettings': context.read<CurrencySettingsCubit>().state.settings}
+                );
               } else if (value == "delete") {
                 _showDeleteConfirmation(context);
               } else if (value == "print") {
@@ -433,7 +439,10 @@ class SaleDetailsScreen extends StatelessWidget {
       
       if (pdfPath.isNotEmpty && context.mounted) {
         if (print) {
-          await invoiceService.previewDocument(pdfPath); // Or printDocument directly if preferred
+          // await invoiceService.previewDocument(pdfPath); // Or printDocument directly if preferred
+          await Printing.layoutPdf(
+            onLayout: (PdfPageFormat format) async => File(pdfPath!).readAsBytes(),
+          );
         } else {
           // For sharing, customer phone might be needed if not in sale object or if it can be different
           // Assuming sale.customerPhoneNumber exists or can be retrieved if necessary for sharing.
