@@ -169,6 +169,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name,
         relatedDocumentId: product.id, // Could be product ID or a purchase order ID if available
         currencyCode: 'CDF', // Added currency code
+        isDebit: true,
+        isCredit: false,
+        balanceAfter: 0.0,
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
       
@@ -238,6 +241,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: transaction.id,
         currencyCode: 'CDF', // Added currency code
+        isDebit: transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn,
+        isCredit: !(transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn),
+        balanceAfter: 0.0,
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
@@ -291,6 +297,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: originalTransaction.id, // Link to original transaction ID
         currencyCode: 'CDF', // Added currency code
+        isDebit: !(originalTransaction.type == StockTransactionType.purchase || originalTransaction.type == StockTransactionType.initialStock || originalTransaction.type == StockTransactionType.returned || originalTransaction.type == StockTransactionType.transferIn),
+        isCredit: originalTransaction.type == StockTransactionType.purchase || originalTransaction.type == StockTransactionType.initialStock || originalTransaction.type == StockTransactionType.returned || originalTransaction.type == StockTransactionType.transferIn,
+        balanceAfter: 0.0,
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 

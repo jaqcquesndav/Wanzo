@@ -42,6 +42,9 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         amount: requestWithId.amount, 
         relatedDocumentId: requestWithId.id,
         paymentMethod: requestWithId.currency, 
+        isDebit: false, // Financing request itself is not a debit/credit yet until approved/rejected or funds move
+        isCredit: false,
+        balanceAfter: 0, // Placeholder, journal service should calculate this
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
 

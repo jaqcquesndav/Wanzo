@@ -125,6 +125,9 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         type: saleType,
         amount: event.sale.totalAmountInCdf, // Use totalAmountInCdf
         relatedDocumentId: event.sale.id,
+        isDebit: false, // Sales are typically credits to revenue
+        isCredit: true,
+        balanceAfter: 0, // Placeholder
       ));
 
       // Si un paiement partiel ou total est effectué au moment de la vente (non crédit pur)
@@ -136,6 +139,9 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
           type: OperationType.cashIn,
           amount: event.sale.paidAmountInCdf, // Use paidAmountInCdf
           relatedDocumentId: event.sale.id,
+          isDebit: true, // CashIn is a debit to cash asset
+          isCredit: false,
+          balanceAfter: 0, // Placeholder
         ));
       }
 
@@ -146,8 +152,11 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
           date: event.sale.date,
           description: 'Sortie stock: ${item.quantity} x ${item.productName} (Vente #${event.sale.id.substring(0, 6)})',
           type: OperationType.stockOut,
-          amount: 0,
+          amount: 0, // Cost of goods sold would be calculated and used here in a full system
           relatedDocumentId: event.sale.id,
+          isDebit: true, // COGS is a debit (expense), Inventory is credited
+          isCredit: false, // This entry reflects the COGS/Inventory reduction part
+          balanceAfter: 0, // Placeholder
         ));
       }
 

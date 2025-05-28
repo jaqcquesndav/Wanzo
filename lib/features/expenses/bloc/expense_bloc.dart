@@ -74,6 +74,9 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: -newExpense.amount.abs(), // Assurer que le montant est négatif pour cashOut
         paymentMethod: newExpense.paymentMethod,
         relatedDocumentId: newExpense.id, // Lier au document de dépense
+        isDebit: true, // Expenses are debits to the business
+        isCredit: false,
+        balanceAfter: 0, // This will be calculated by the journal service/bloc normally
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 
@@ -108,6 +111,9 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: originalExpense.amount.abs(), // Positive amount for cashIn
         paymentMethod: originalExpense.paymentMethod,
         relatedDocumentId: originalExpense.id,
+        isDebit: false, // Reversal of an expense is a credit
+        isCredit: true,
+        balanceAfter: 0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(reversalJournalEntry));
 
@@ -120,6 +126,9 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: -updatedExpense.amount.abs(), // Negative amount for cashOut
         paymentMethod: updatedExpense.paymentMethod,
         relatedDocumentId: updatedExpense.id,
+        isDebit: true, // Updated expense is a debit
+        isCredit: false,
+        balanceAfter: 0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(newJournalEntry));
 
@@ -152,6 +161,9 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: expenseToDelete.amount.abs(), // Positive amount for cashIn
         paymentMethod: expenseToDelete.paymentMethod,
         relatedDocumentId: expenseToDelete.id,
+        isDebit: false, // Reversal of an expense is a credit
+        isCredit: true,
+        balanceAfter: 0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
 
