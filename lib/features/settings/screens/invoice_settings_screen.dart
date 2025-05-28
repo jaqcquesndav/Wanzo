@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wanzo/core/enums/currency_enum.dart';
 import 'package:wanzo/core/models/currency_settings_model.dart';
 import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:wanzo/l10n/app_localizations.dart';
 
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
@@ -319,7 +319,7 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                   // --- Invoice Formatting Section ---
                   Text(l10n.invoiceFormatting, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
-                  Text(l10n.invoiceFormatHint, style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.invoiceFormatHint('YEAR', 'MONTH', 'SEQ'), style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   Card(
                     elevation: 1,
@@ -407,12 +407,12 @@ class _InvoiceSettingsScreenState extends State<InvoiceSettingsScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _saveSettings,
-                        child: Text(l10n.saveChanges),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           // backgroundColor: Theme.of(context).primaryColor, // Example: theming
                           // foregroundColor: Colors.white, // Example: theming
                         ),
+                        child: Text(l10n.saveChanges),
                       ),
                     ),
                   const SizedBox(height: 20), // For bottom padding
