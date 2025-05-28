@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wanzo/constants/constants.dart';
 import 'package:wanzo/features/auth/screens/forgot_password_screen.dart';
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 import '../bloc/auth_bloc.dart';
 import '../../../features/connectivity/widgets/subtle_offline_indicator.dart';
 
@@ -46,6 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get AppLocalizations instance
+
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -56,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Affichage d'une erreur
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(l10n.authFailureMessage(state.message)), // Use localized string
                 backgroundColor: WanzoColors.error,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -96,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: WanzoSpacing.md),
                           Text(
-                            'WANZO',
+                            'WANZO', // This could be a brand name, typically not localized
                             style: TextStyle(
                               color: WanzoColors.primary,
                               fontSize: WanzoTypography.fontSizeXl,
@@ -107,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: WanzoSpacing.sm),
                           Text(
-                            'Connectez-vous à votre compte',
+                            l10n.loginToYourAccount, // Use localized string
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontSize: WanzoTypography.fontSizeMd,
@@ -127,8 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: InputDecoration(
-                                    labelText: 'Email',
-                                    hintText: 'exemple@email.com',
+                                    labelText: l10n.emailLabel, // Use localized string
+                                    hintText: l10n.emailHint, // Use localized string
                                     prefixIcon: const Icon(Icons.email_outlined),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
@@ -144,10 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez saisir votre email';
+                                      return l10n.emailValidationErrorRequired; // Use localized string
                                     }
                                     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                      return 'Veuillez saisir un email valide';
+                                      return l10n.emailValidationErrorInvalid; // Use localized string
                                     }
                                     return null;
                                   },
@@ -159,8 +162,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   controller: _passwordController,
                                   obscureText: _obscurePassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Mot de passe',
-                                    hintText: '••••••••',
+                                    labelText: l10n.passwordLabel, // Use localized string
+                                    hintText: l10n.passwordHint, // Use localized string
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -186,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez saisir votre mot de passe';
+                                      return l10n.passwordValidationErrorRequired; // Use localized string
                                     }
                                     return null;
                                   },
@@ -211,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                           Flexible( // Use Flexible for text to allow wrapping if needed
                                             child: Text(
-                                              'Se souvenir de moi',
+                                              l10n.rememberMeLabel, // Use localized string
                                               style: TextStyle(fontSize: WanzoTypography.fontSizeSm),
                                             ),
                                           ),
@@ -225,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           context.push(ForgotPasswordScreen.routeName);
                                         },
                                         child: Text(
-                                          'Mot de passe oublié ?',
+                                          l10n.forgotPasswordButton, // Use localized string
                                           textAlign: TextAlign.end, // Align text to the end
                                           style: TextStyle(
                                             fontSize: WanzoTypography.fontSizeSm,
@@ -259,8 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                               strokeWidth: 3,
                                             ),
                                           )
-                                        : const Text(
-                                            'Se connecter',
+                                        : Text(
+                                            l10n.loginButton, // Use localized string
                                             style: TextStyle(
                                               fontSize: WanzoTypography.fontSizeMd,
                                               fontWeight: WanzoTypography.fontWeightSemiBold,
@@ -276,13 +279,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("Vous n'avez pas de compte?"),
+                              Text(l10n.noAccountPrompt), // Use localized string
                               TextButton(
                                 onPressed: () {
                                   context.go('/signup');
                                 },
-                                child: const Text(
-                                  'Créer un compte',
+                                child: Text(
+                                  l10n.createAccountButton, // Use localized string
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -305,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
                               ),
                             ),
-                            child: const Text('Mode démo'),
+                            child: Text(l10n.demoModeButton), // Use localized string
                           ),
                         ], // Fin des enfants de la colonne principale
                       ), // Fin de la colonne principale

@@ -1346,7 +1346,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerButton => 'Register';
 
   @override
+  String get emailHint => 'Enter your email';
+
+  @override
+  String get emailValidationErrorRequired => 'Please enter your email';
+
+  @override
+  String get emailValidationErrorInvalid => 'Please enter a valid email';
+
+  @override
   String get passwordLabel => 'Password';
+
+  @override
+  String get passwordHint => 'Enter your password';
+
+  @override
+  String get passwordValidationErrorRequired => 'Please enter your password';
+
+  @override
+  String authFailureMessage(Object message) {
+    return 'Authentication failed: $message';
+  }
+
+  @override
+  String get loginToYourAccount => 'Login to your account';
+
+  @override
+  String get rememberMeLabel => 'Remember me';
+
+  @override
+  String get forgotPasswordButton => 'Forgot password?';
+
+  @override
+  String get noAccountPrompt => 'Don\'t have an account?';
+
+  @override
+  String get createAccountButton => 'Create account';
+
+  @override
+  String get demoModeButton => 'Demo Mode';
 
   @override
   String get settings => 'Settings';
@@ -1745,4 +1783,258 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noCategoriesFound => 'No categories found. Add one to get started!';
+
+  @override
+  String get signupScreenTitle => 'Create Business Account';
+
+  @override
+  String get signupStepIdentity => 'Identity';
+
+  @override
+  String get signupStepCompany => 'Company';
+
+  @override
+  String get signupStepConfirmation => 'Confirmation';
+
+  @override
+  String get signupPersonalInfoTitle => 'Your Personal Information';
+
+  @override
+  String get signupOwnerNameLabel => 'Full Name of Owner';
+
+  @override
+  String get signupOwnerNameHint => 'Enter your full name';
+
+  @override
+  String get signupOwnerNameValidation => 'Please enter the owner\'s name';
+
+  @override
+  String get signupEmailLabel => 'Email Address';
+
+  @override
+  String get signupEmailHint => 'Enter your email address';
+
+  @override
+  String get signupEmailValidationRequired => 'Please enter your email';
+
+  @override
+  String get signupEmailValidationInvalid => 'Please enter a valid email';
+
+  @override
+  String get signupPhoneLabel => 'Phone Number';
+
+  @override
+  String get signupPhoneHint => 'Enter your phone number';
+
+  @override
+  String get signupPhoneValidation => 'Please enter your phone number';
+
+  @override
+  String get signupPasswordLabel => 'Password';
+
+  @override
+  String get signupPasswordHint => 'Enter your password (min. 8 characters)';
+
+  @override
+  String get signupPasswordValidationRequired => 'Please enter a password';
+
+  @override
+  String get signupPasswordValidationLength => 'Password must be at least 8 characters';
+
+  @override
+  String get signupConfirmPasswordLabel => 'Confirm Password';
+
+  @override
+  String get signupConfirmPasswordHint => 'Confirm your password';
+
+  @override
+  String get signupConfirmPasswordValidationRequired => 'Please confirm your password';
+
+  @override
+  String get signupConfirmPasswordValidationMatch => 'Passwords do not match';
+
+  @override
+  String get signupRequiredFields => '* Required fields';
+
+  @override
+  String get signupCompanyInfoTitle => 'Your Company Information';
+
+  @override
+  String get signupCompanyNameLabel => 'Company Name';
+
+  @override
+  String get signupCompanyNameHint => 'Enter your company name';
+
+  @override
+  String get signupCompanyNameValidation => 'Please enter the company name';
+
+  @override
+  String get signupRccmLabel => 'RCCM Number / Business Registration';
+
+  @override
+  String get signupRccmHint => 'Enter your RCCM number or equivalent';
+
+  @override
+  String get signupRccmValidation => 'Please enter the RCCM number';
+
+  @override
+  String get signupAddressLabel => 'Address / Location';
+
+  @override
+  String get signupAddressHint => 'Enter your company address';
+
+  @override
+  String get signupAddressValidation => 'Please enter your company address';
+
+  @override
+  String get signupActivitySectorLabel => 'Business Sector';
+
+  @override
+  String get signupTermsAndConditionsTitle => 'Summary and Terms';
+
+  @override
+  String get signupInfoSummaryPersonal => 'Personal Information:';
+
+  @override
+  String get signupInfoSummaryName => 'Name:';
+
+  @override
+  String get signupInfoSummaryEmail => 'Email:';
+
+  @override
+  String get signupInfoSummaryPhone => 'Phone:';
+
+  @override
+  String get signupInfoSummaryCompany => 'Company Information:';
+
+  @override
+  String get signupInfoSummaryCompanyName => 'Company Name:';
+
+  @override
+  String get signupInfoSummaryRccm => 'RCCM:';
+
+  @override
+  String get signupInfoSummaryAddress => 'Address:';
+
+  @override
+  String get signupInfoSummaryActivitySector => 'Activity Sector:';
+
+  @override
+  String get signupAgreeToTerms => 'I have read and agree to the';
+
+  @override
+  String get signupTermsOfUse => 'Terms of Use';
+
+  @override
+  String get andConnector => 'and';
+
+  @override
+  String get signupPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get signupAgreeToTermsConfirmation => 'By checking this box, you confirm that you have read, understood, and accepted our terms of service and privacy policy.';
+
+  @override
+  String get signupButtonPrevious => 'Previous';
+
+  @override
+  String get signupButtonNext => 'Next';
+
+  @override
+  String get signupButtonRegister => 'Register';
+
+  @override
+  String get signupAlreadyHaveAccount => 'Already have an account? Log in';
+
+  @override
+  String get signupErrorFillFields => 'Please fill in all required fields correctly for the current step.';
+
+  @override
+  String get signupErrorAgreeToTerms => 'You must agree to the terms and conditions to register.';
+
+  @override
+  String get signupSuccessMessage => 'Registration successful! Logging you in...';
+
+  @override
+  String signupErrorRegistration(String error) {
+    return 'Registration failed: $error';
+  }
+
+  @override
+  String get sectorAgricultureName => 'Agriculture and Agri-food';
+
+  @override
+  String get sectorAgricultureDescription => 'Agricultural production, food processing, livestock';
+
+  @override
+  String get sectorCommerceName => 'Trade and Distribution';
+
+  @override
+  String get sectorCommerceDescription => 'Retail, distribution, import-export';
+
+  @override
+  String get sectorServicesName => 'Services';
+
+  @override
+  String get sectorServicesDescription => 'Business and personal services';
+
+  @override
+  String get sectorTechnologyName => 'Technology and Innovation';
+
+  @override
+  String get sectorTechnologyDescription => 'Software development, telecommunications, fintech';
+
+  @override
+  String get sectorManufacturingName => 'Manufacturing and Industry';
+
+  @override
+  String get sectorManufacturingDescription => 'Industrial production, crafts, textiles';
+
+  @override
+  String get sectorConstructionName => 'Construction and Real Estate';
+
+  @override
+  String get sectorConstructionDescription => 'Construction, real estate development, architecture';
+
+  @override
+  String get sectorTransportationName => 'Transport and Logistics';
+
+  @override
+  String get sectorTransportationDescription => 'Freight transport, logistics, warehousing';
+
+  @override
+  String get sectorEnergyName => 'Energy and Natural Resources';
+
+  @override
+  String get sectorEnergyDescription => 'Energy production, mining, water';
+
+  @override
+  String get sectorTourismName => 'Tourism and Hospitality';
+
+  @override
+  String get sectorTourismDescription => 'Hotels, restaurants, tourism';
+
+  @override
+  String get sectorEducationName => 'Education and Training';
+
+  @override
+  String get sectorEducationDescription => 'Teaching, vocational training';
+
+  @override
+  String get sectorHealthName => 'Health and Medical Services';
+
+  @override
+  String get sectorHealthDescription => 'Medical care, pharmacy, medical equipment';
+
+  @override
+  String get sectorFinanceName => 'Financial Services';
+
+  @override
+  String get sectorFinanceDescription => 'Banking, insurance, microfinance';
+
+  @override
+  String get sectorOtherName => 'Other';
+
+  @override
+  String get sectorOtherDescription => 'Other business sectors';
 }

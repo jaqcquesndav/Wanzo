@@ -2579,11 +2579,83 @@ abstract class AppLocalizations {
   /// **'Register'**
   String get registerButton;
 
+  /// No description provided for @emailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email'**
+  String get emailHint;
+
+  /// No description provided for @emailValidationErrorRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get emailValidationErrorRequired;
+
+  /// No description provided for @emailValidationErrorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get emailValidationErrorInvalid;
+
   /// No description provided for @passwordLabel.
   ///
   /// In en, this message translates to:
   /// **'Password'**
   String get passwordLabel;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get passwordHint;
+
+  /// No description provided for @passwordValidationErrorRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your password'**
+  String get passwordValidationErrorRequired;
+
+  /// No description provided for @authFailureMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed: {message}'**
+  String authFailureMessage(Object message);
+
+  /// No description provided for @loginToYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Login to your account'**
+  String get loginToYourAccount;
+
+  /// No description provided for @rememberMeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember me'**
+  String get rememberMeLabel;
+
+  /// No description provided for @forgotPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPasswordButton;
+
+  /// No description provided for @noAccountPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get noAccountPrompt;
+
+  /// No description provided for @createAccountButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get createAccountButton;
+
+  /// No description provided for @demoModeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo Mode'**
+  String get demoModeButton;
 
   /// No description provided for @settings.
   ///
@@ -3352,6 +3424,510 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No categories found. Add one to get started!'**
   String get noCategoriesFound;
+
+  /// No description provided for @signupScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Business Account'**
+  String get signupScreenTitle;
+
+  /// No description provided for @signupStepIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity'**
+  String get signupStepIdentity;
+
+  /// No description provided for @signupStepCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get signupStepCompany;
+
+  /// No description provided for @signupStepConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation'**
+  String get signupStepConfirmation;
+
+  /// No description provided for @signupPersonalInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Personal Information'**
+  String get signupPersonalInfoTitle;
+
+  /// No description provided for @signupOwnerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name of Owner'**
+  String get signupOwnerNameLabel;
+
+  /// No description provided for @signupOwnerNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your full name'**
+  String get signupOwnerNameHint;
+
+  /// No description provided for @signupOwnerNameValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the owner\'s name'**
+  String get signupOwnerNameValidation;
+
+  /// No description provided for @signupEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get signupEmailLabel;
+
+  /// No description provided for @signupEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address'**
+  String get signupEmailHint;
+
+  /// No description provided for @signupEmailValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get signupEmailValidationRequired;
+
+  /// No description provided for @signupEmailValidationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get signupEmailValidationInvalid;
+
+  /// No description provided for @signupPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get signupPhoneLabel;
+
+  /// No description provided for @signupPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number'**
+  String get signupPhoneHint;
+
+  /// No description provided for @signupPhoneValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your phone number'**
+  String get signupPhoneValidation;
+
+  /// No description provided for @signupPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get signupPasswordLabel;
+
+  /// No description provided for @signupPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password (min. 8 characters)'**
+  String get signupPasswordHint;
+
+  /// No description provided for @signupPasswordValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password'**
+  String get signupPasswordValidationRequired;
+
+  /// No description provided for @signupPasswordValidationLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters'**
+  String get signupPasswordValidationLength;
+
+  /// No description provided for @signupConfirmPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get signupConfirmPasswordLabel;
+
+  /// No description provided for @signupConfirmPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your password'**
+  String get signupConfirmPasswordHint;
+
+  /// No description provided for @signupConfirmPasswordValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get signupConfirmPasswordValidationRequired;
+
+  /// No description provided for @signupConfirmPasswordValidationMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get signupConfirmPasswordValidationMatch;
+
+  /// No description provided for @signupRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'* Required fields'**
+  String get signupRequiredFields;
+
+  /// No description provided for @signupCompanyInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Company Information'**
+  String get signupCompanyInfoTitle;
+
+  /// No description provided for @signupCompanyNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Company Name'**
+  String get signupCompanyNameLabel;
+
+  /// No description provided for @signupCompanyNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your company name'**
+  String get signupCompanyNameHint;
+
+  /// No description provided for @signupCompanyNameValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the company name'**
+  String get signupCompanyNameValidation;
+
+  /// No description provided for @signupRccmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RCCM Number / Business Registration'**
+  String get signupRccmLabel;
+
+  /// No description provided for @signupRccmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your RCCM number or equivalent'**
+  String get signupRccmHint;
+
+  /// No description provided for @signupRccmValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the RCCM number'**
+  String get signupRccmValidation;
+
+  /// No description provided for @signupAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address / Location'**
+  String get signupAddressLabel;
+
+  /// No description provided for @signupAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your company address'**
+  String get signupAddressHint;
+
+  /// No description provided for @signupAddressValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your company address'**
+  String get signupAddressValidation;
+
+  /// No description provided for @signupActivitySectorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Sector'**
+  String get signupActivitySectorLabel;
+
+  /// No description provided for @signupTermsAndConditionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary and Terms'**
+  String get signupTermsAndConditionsTitle;
+
+  /// No description provided for @signupInfoSummaryPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information:'**
+  String get signupInfoSummaryPersonal;
+
+  /// No description provided for @signupInfoSummaryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name:'**
+  String get signupInfoSummaryName;
+
+  /// No description provided for @signupInfoSummaryEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email:'**
+  String get signupInfoSummaryEmail;
+
+  /// No description provided for @signupInfoSummaryPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone:'**
+  String get signupInfoSummaryPhone;
+
+  /// No description provided for @signupInfoSummaryCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company Information:'**
+  String get signupInfoSummaryCompany;
+
+  /// No description provided for @signupInfoSummaryCompanyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Company Name:'**
+  String get signupInfoSummaryCompanyName;
+
+  /// No description provided for @signupInfoSummaryRccm.
+  ///
+  /// In en, this message translates to:
+  /// **'RCCM:'**
+  String get signupInfoSummaryRccm;
+
+  /// No description provided for @signupInfoSummaryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address:'**
+  String get signupInfoSummaryAddress;
+
+  /// No description provided for @signupInfoSummaryActivitySector.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Sector:'**
+  String get signupInfoSummaryActivitySector;
+
+  /// No description provided for @signupAgreeToTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and agree to the'**
+  String get signupAgreeToTerms;
+
+  /// No description provided for @signupTermsOfUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get signupTermsOfUse;
+
+  /// No description provided for @andConnector.
+  ///
+  /// In en, this message translates to:
+  /// **'and'**
+  String get andConnector;
+
+  /// No description provided for @signupPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get signupPrivacyPolicy;
+
+  /// No description provided for @signupAgreeToTermsConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'By checking this box, you confirm that you have read, understood, and accepted our terms of service and privacy policy.'**
+  String get signupAgreeToTermsConfirmation;
+
+  /// No description provided for @signupButtonPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get signupButtonPrevious;
+
+  /// No description provided for @signupButtonNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get signupButtonNext;
+
+  /// No description provided for @signupButtonRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get signupButtonRegister;
+
+  /// No description provided for @signupAlreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Log in'**
+  String get signupAlreadyHaveAccount;
+
+  /// No description provided for @signupErrorFillFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in all required fields correctly for the current step.'**
+  String get signupErrorFillFields;
+
+  /// No description provided for @signupErrorAgreeToTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'You must agree to the terms and conditions to register.'**
+  String get signupErrorAgreeToTerms;
+
+  /// No description provided for @signupSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration successful! Logging you in...'**
+  String get signupSuccessMessage;
+
+  /// Error message when registration fails
+  ///
+  /// In en, this message translates to:
+  /// **'Registration failed: {error}'**
+  String signupErrorRegistration(String error);
+
+  /// No description provided for @sectorAgricultureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Agriculture and Agri-food'**
+  String get sectorAgricultureName;
+
+  /// No description provided for @sectorAgricultureDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Agricultural production, food processing, livestock'**
+  String get sectorAgricultureDescription;
+
+  /// No description provided for @sectorCommerceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade and Distribution'**
+  String get sectorCommerceName;
+
+  /// No description provided for @sectorCommerceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Retail, distribution, import-export'**
+  String get sectorCommerceDescription;
+
+  /// No description provided for @sectorServicesName.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get sectorServicesName;
+
+  /// No description provided for @sectorServicesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Business and personal services'**
+  String get sectorServicesDescription;
+
+  /// No description provided for @sectorTechnologyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology and Innovation'**
+  String get sectorTechnologyName;
+
+  /// No description provided for @sectorTechnologyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Software development, telecommunications, fintech'**
+  String get sectorTechnologyDescription;
+
+  /// No description provided for @sectorManufacturingName.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturing and Industry'**
+  String get sectorManufacturingName;
+
+  /// No description provided for @sectorManufacturingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Industrial production, crafts, textiles'**
+  String get sectorManufacturingDescription;
+
+  /// No description provided for @sectorConstructionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Construction and Real Estate'**
+  String get sectorConstructionName;
+
+  /// No description provided for @sectorConstructionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Construction, real estate development, architecture'**
+  String get sectorConstructionDescription;
+
+  /// No description provided for @sectorTransportationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport and Logistics'**
+  String get sectorTransportationName;
+
+  /// No description provided for @sectorTransportationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Freight transport, logistics, warehousing'**
+  String get sectorTransportationDescription;
+
+  /// No description provided for @sectorEnergyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy and Natural Resources'**
+  String get sectorEnergyName;
+
+  /// No description provided for @sectorEnergyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy production, mining, water'**
+  String get sectorEnergyDescription;
+
+  /// No description provided for @sectorTourismName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tourism and Hospitality'**
+  String get sectorTourismName;
+
+  /// No description provided for @sectorTourismDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotels, restaurants, tourism'**
+  String get sectorTourismDescription;
+
+  /// No description provided for @sectorEducationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Education and Training'**
+  String get sectorEducationName;
+
+  /// No description provided for @sectorEducationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching, vocational training'**
+  String get sectorEducationDescription;
+
+  /// No description provided for @sectorHealthName.
+  ///
+  /// In en, this message translates to:
+  /// **'Health and Medical Services'**
+  String get sectorHealthName;
+
+  /// No description provided for @sectorHealthDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical care, pharmacy, medical equipment'**
+  String get sectorHealthDescription;
+
+  /// No description provided for @sectorFinanceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Services'**
+  String get sectorFinanceName;
+
+  /// No description provided for @sectorFinanceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Banking, insurance, microfinance'**
+  String get sectorFinanceDescription;
+
+  /// No description provided for @sectorOtherName.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get sectorOtherName;
+
+  /// No description provided for @sectorOtherDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Other business sectors'**
+  String get sectorOtherDescription;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

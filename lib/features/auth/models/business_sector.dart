@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:flutter/material.dart';
+import 'package:wanzo/l10n/app_localizations.dart'; // Import AppLocalizations
 
 part 'business_sector.g.dart';
 
@@ -43,83 +45,86 @@ class BusinessSector extends Equatable {
 }
 
 /// Liste des secteurs d'activité courants en Afrique
-final List<BusinessSector> africanBusinessSectors = [
-  const BusinessSector(
-    id: 'agriculture',
-    name: 'Agriculture et agroalimentaire',
-    description: 'Production agricole, transformation alimentaire, élevage',
-    icon: 'agriculture',
-  ),
-  const BusinessSector(
-    id: 'commerce',
-    name: 'Commerce et distribution',
-    description: 'Vente au détail, distribution, import-export',
-    icon: 'store',
-  ),
-  const BusinessSector(
-    id: 'services',
-    name: 'Services',
-    description: 'Services aux entreprises et aux particuliers',
-    icon: 'business_center',
-  ),
-  const BusinessSector(
-    id: 'technology',
-    name: 'Technologies et innovation',
-    description: 'Développement informatique, télécommunications, fintech',
-    icon: 'computer',
-  ),
-  const BusinessSector(
-    id: 'manufacturing',
-    name: 'Manufacture et industrie',
-    description: 'Production industrielle, artisanat, textile',
-    icon: 'factory',
-  ),
-  const BusinessSector(
-    id: 'construction',
-    name: 'Construction et immobilier',
-    description: 'BTP, promotion immobilière, architecture',
-    icon: 'construction',
-  ),
-  const BusinessSector(
-    id: 'transportation',
-    name: 'Transport et logistique',
-    description: 'Transport de marchandises, logistique, entreposage',
-    icon: 'local_shipping',
-  ),
-  const BusinessSector(
-    id: 'energy',
-    name: 'Énergie et ressources naturelles',
-    description: 'Production d\'énergie, mines, eau',
-    icon: 'bolt',
-  ),
-  const BusinessSector(
-    id: 'tourism',
-    name: 'Tourisme et hôtellerie',
-    description: 'Hôtellerie, restauration, tourisme',
-    icon: 'hotel',
-  ),
-  const BusinessSector(
-    id: 'education',
-    name: 'Éducation et formation',
-    description: 'Enseignement, formation professionnelle',
-    icon: 'school',
-  ),
-  const BusinessSector(
-    id: 'health',
-    name: 'Santé et services médicaux',
-    description: 'Soins médicaux, pharmacie, équipements médicaux',
-    icon: 'local_hospital',
-  ),
-  const BusinessSector(
-    id: 'finance',
-    name: 'Services financiers',
-    description: 'Banque, assurance, microfinance',
-    icon: 'account_balance',
-  ),
-  const BusinessSector(
-    id: 'other',
-    name: 'Autre',
-    description: 'Autres secteurs d\'activité',
-    icon: 'category',
-  ),
-];
+List<BusinessSector> getAfricanBusinessSectors(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  return [
+    BusinessSector(
+      id: 'agriculture',
+      name: l10n.sectorAgricultureName,
+      description: l10n.sectorAgricultureDescription,
+      icon: 'agriculture',
+    ),
+    BusinessSector(
+      id: 'commerce',
+      name: l10n.sectorCommerceName,
+      description: l10n.sectorCommerceDescription,
+      icon: 'store',
+    ),
+    BusinessSector(
+      id: 'services',
+      name: l10n.sectorServicesName,
+      description: l10n.sectorServicesDescription,
+      icon: 'business_center',
+    ),
+    BusinessSector(
+      id: 'technology',
+      name: l10n.sectorTechnologyName,
+      description: l10n.sectorTechnologyDescription,
+      icon: 'computer',
+    ),
+    BusinessSector(
+      id: 'manufacturing',
+      name: l10n.sectorManufacturingName,
+      description: l10n.sectorManufacturingDescription,
+      icon: 'factory',
+    ),
+    BusinessSector(
+      id: 'construction',
+      name: l10n.sectorConstructionName,
+      description: l10n.sectorConstructionDescription,
+      icon: 'construction',
+    ),
+    BusinessSector(
+      id: 'transportation',
+      name: l10n.sectorTransportationName,
+      description: l10n.sectorTransportationDescription,
+      icon: 'local_shipping',
+    ),
+    BusinessSector(
+      id: 'energy',
+      name: l10n.sectorEnergyName,
+      description: l10n.sectorEnergyDescription,
+      icon: 'bolt',
+    ),
+    BusinessSector(
+      id: 'tourism',
+      name: l10n.sectorTourismName,
+      description: l10n.sectorTourismDescription,
+      icon: 'hotel',
+    ),
+    BusinessSector(
+      id: 'education',
+      name: l10n.sectorEducationName,
+      description: l10n.sectorEducationDescription,
+      icon: 'school',
+    ),
+    BusinessSector(
+      id: 'health',
+      name: l10n.sectorHealthName,
+      description: l10n.sectorHealthDescription,
+      icon: 'local_hospital',
+    ),
+    BusinessSector(
+      id: 'finance',
+      name: l10n.sectorFinanceName,
+      description: l10n.sectorFinanceDescription,
+      icon: 'account_balance',
+    ),
+    BusinessSector(
+      id: 'other',
+      name: l10n.sectorOtherName,
+      description: l10n.sectorOtherDescription,
+      icon: 'category',
+    ),
+  ];
+}

@@ -3,32 +3,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
-// Wanzo models & adapters are now handled in hive_setup.dart
-// import 'package:wanzo/features/auth/models/user.dart' as auth_user_model;
-// ... (all other model and adapter imports removed)
+import 'package:wanzo/l10n/app_localizations.dart';
 
 import 'package:wanzo/utils/theme.dart';
 
-// Core services and utilities
 import 'package:wanzo/core/navigation/app_router.dart';
 import 'package:wanzo/core/services/api_client.dart';
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
-import 'package:wanzo/core/utils/hive_setup.dart'; // Import hive_setup.dart
+import 'package:wanzo/core/utils/hive_setup.dart';
 
-// Import SyncService and its dependencies
 import 'package:wanzo/core/services/sync_service.dart';
 import 'package:wanzo/core/services/product_api_service.dart';
 import 'package:wanzo/core/services/customer_api_service.dart';
 import 'package:wanzo/core/services/sale_api_service.dart';
 
-// Feature-specific services
 import 'package:wanzo/features/auth/services/auth0_service.dart';
 import 'package:wanzo/features/auth/services/offline_auth_service.dart';
 import 'package:wanzo/features/notifications/services/notification_service.dart';
 
-// Repositories
 import 'package:wanzo/features/auth/repositories/auth_repository.dart';
 import 'package:wanzo/features/inventory/repositories/inventory_repository.dart';
 import 'package:wanzo/features/sales/repositories/sales_repository.dart';
@@ -40,14 +33,12 @@ import 'package:wanzo/features/notifications/repositories/notification_repositor
 import 'package:wanzo/features/dashboard/repositories/operation_journal_repository.dart';
 import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/financing/repositories/financing_repository.dart';
-import 'package:wanzo/features/subscription/repositories/subscription_repository.dart'; // Ensure this import is present
-import 'package:wanzo/features/transactions/repositories/transaction_repository.dart'; // Added
+import 'package:wanzo/features/subscription/repositories/subscription_repository.dart';
+import 'package:wanzo/features/transactions/repositories/transaction_repository.dart';
 
-// Core Services for Currency
 import 'package:wanzo/core/services/currency_service.dart';
 import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cubit.dart';
 
-// BLoCs
 import 'package:wanzo/features/auth/bloc/auth_bloc.dart';
 import 'package:wanzo/features/inventory/bloc/inventory_bloc.dart';
 import 'package:wanzo/features/sales/bloc/sales_bloc.dart';
@@ -60,32 +51,20 @@ import 'package:wanzo/features/dashboard/bloc/operation_journal_bloc.dart';
 import 'package:wanzo/features/expenses/bloc/expense_bloc.dart';
 import 'package:wanzo/features/subscription/bloc/subscription_bloc.dart';
 import 'package:wanzo/features/financing/bloc/financing_bloc.dart';
-import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart'; // Added
+import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart';
 
-// BLoC Events & States
 import 'package:wanzo/features/settings/bloc/settings_event.dart';
 import 'package:wanzo/features/settings/bloc/settings_state.dart' as settings_bloc_state;
-import 'package:wanzo/features/settings/models/settings.dart' as settings_models; // Keep for ThemeMode access
+import 'package:wanzo/features/settings/models/settings.dart' as settings_models;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter(); // Initialize Hive itself
+  await Hive.initFlutter();
 
-  await initializeHiveAdapters(); // Call adapter registration from hive_setup.dart
-  await openHiveBoxes(); // Call box opening from hive_setup.dart
+  await initializeHiveAdapters();
+  await openHiveBoxes();
 
-  // The following Hive.registerAdapter calls are removed as they are now in hive_setup.dart
-  // Hive.registerAdapter(auth_user_model.UserAdapter());
-  // ... (all other Hive.registerAdapter calls removed)
-
-  // The following Hive.openBox calls are removed as they are now in hive_setup.dart
-  // await Hive.openBox<settings_models.Settings>('settingsBox');
-  // final syncStatusBox = await Hive.openBox<String>('syncStatusBox'); // This specific one might need to be kept if syncStatusBox is used directly here, or passed from openHiveBoxes
-  // For now, assuming syncStatusBox is managed within services that use it, or openHiveBoxes makes it available if needed by main.
-  // If syncStatusBox is needed directly in main, openHiveBoxes should return it or it should be opened here after openHiveBoxes.
-  // Let's assume for now it's handled by SyncService initialization.
-  final syncStatusBox = Hive.box<String>('syncStatusBox'); // Get the already opened box
-
+  final syncStatusBox = Hive.box<String>('syncStatusBox');
 
   final connectivityService = ConnectivityService();
   await connectivityService.init();
@@ -94,7 +73,6 @@ Future<void> main() async {
   final secureStorage = const FlutterSecureStorage();
   final apiClient = ApiClient();
 
-  // Instantiate specific API services
   final productApiService = ProductApiService(apiClient: apiClient);
   final customerApiService = CustomerApiService(apiClient: apiClient);
   final saleApiService = SaleApiService(apiClient: apiClient);
@@ -110,16 +88,13 @@ Future<void> main() async {
 
   final notificationService = NotificationService();
 
-  // Instantiate Repositories
   final authRepository = AuthRepository(auth0Service: auth0Service);
   await authRepository.init();
 
   final settingsRepository = SettingsRepository();
   await settingsRepository.init();
 
-  // Initialize notificationService after settingsRepository
   await notificationService.init(await settingsRepository.getSettings());
-
 
   final inventoryRepository = InventoryRepository();
   await inventoryRepository.init();
@@ -148,10 +123,9 @@ Future<void> main() async {
   final financingRepository = FinancingRepository();
   await financingRepository.init();
 
-  final transactionRepository = TransactionRepository(); // Added
-  await transactionRepository.init(); // Added
+  final transactionRepository = TransactionRepository();
+  await transactionRepository.init();
 
-  // Initialize CurrencyService
   final currencyService = CurrencyService();
   await currencyService.loadSettings();
 
@@ -159,7 +133,6 @@ Future<void> main() async {
     expenseRepository: expenseRepository,
     apiService: apiClient,
   );
-  // No need to call init on subscriptionRepository if it doesn't have one
 
   final syncService = SyncService(
     productApiService: productApiService,
@@ -169,57 +142,47 @@ Future<void> main() async {
   );
   await syncService.init();
 
-  // Instantiate BLoCs
   final authBloc = AuthBloc(authRepository: authRepository);
   final operationJournalBloc = OperationJournalBloc(repository: operationJournalRepository);
-
-  // CurrencySettingsCubit will be created in MyApp's MultiBlocProvider
-
   final inventoryBloc = InventoryBloc(
     inventoryRepository: inventoryRepository,
     notificationService: notificationService,
     operationJournalBloc: operationJournalBloc,
   );
-
   final salesBloc = SalesBloc(
     salesRepository: salesRepository,
     operationJournalBloc: operationJournalBloc,
   );
-  
   final adhaBloc = AdhaBloc(
     adhaRepository: adhaRepository,
-    authRepository: authRepository, // Added
-    operationJournalRepository: operationJournalRepository, // Added
+    authRepository: authRepository,
+    operationJournalRepository: operationJournalRepository,
   );
-  
   final customerBloc = CustomerBloc(customerRepository: customerRepository);
-  
   final supplierBloc = SupplierBloc(supplierRepository: supplierRepository);
-
   final settingsBloc = SettingsBloc(
     settingsRepository: settingsRepository,
   )..add(const LoadSettings());
   
-  final notificationsBloc = NotificationsBloc(notificationService);
-
   final expenseBloc = ExpenseBloc(
-    expenseRepository: expenseRepository,
-    operationJournalBloc: operationJournalBloc,
-  );
+      expenseRepository: expenseRepository,
+      operationJournalBloc: operationJournalBloc);
   
-  final subscriptionBloc = SubscriptionBloc(subscriptionRepository: subscriptionRepository);
-
+  final subscriptionBloc =
+      SubscriptionBloc(subscriptionRepository: subscriptionRepository);
+  
   final financingBloc = FinancingBloc(
-    financingRepository: financingRepository,
-    operationJournalBloc: operationJournalBloc,
-  );
+      financingRepository: financingRepository,
+      operationJournalBloc: operationJournalBloc);
   
-  final dashboardBloc = DashboardBloc( // Added
-    salesRepository: salesRepository, 
+  final dashboardBloc = DashboardBloc(
+    salesRepository: salesRepository,
     customerRepository: customerRepository, 
     transactionRepository: transactionRepository, 
   );
-  
+
+  final notificationsBloc = NotificationsBloc(notificationService);
+
   final appRouter = AppRouter(authBloc: authBloc);
 
   runApp(MyApp(
@@ -231,29 +194,25 @@ Future<void> main() async {
     customerBloc: customerBloc,
     supplierBloc: supplierBloc,
     settingsBloc: settingsBloc,
-    notificationsBloc: notificationsBloc,
     operationJournalBloc: operationJournalBloc,
     expenseBloc: expenseBloc,
     subscriptionBloc: subscriptionBloc,
     financingBloc: financingBloc,
-    dashboardBloc: dashboardBloc, // Added
-    // Pass repositories
+    dashboardBloc: dashboardBloc,
+    notificationsBloc: notificationsBloc,
+    currencyService: currencyService,
+    // Pass repositories directly
     authRepository: authRepository,
-    settingsRepository: settingsRepository,
     inventoryRepository: inventoryRepository,
     salesRepository: salesRepository,
     adhaRepository: adhaRepository,
     customerRepository: customerRepository,
     supplierRepository: supplierRepository,
-    notificationRepository: notificationRepository,
+    settingsRepository: settingsRepository,
     operationJournalRepository: operationJournalRepository,
     expenseRepository: expenseRepository,
-    financingRepository: financingRepository,
-    transactionRepository: transactionRepository, // Added
     subscriptionRepository: subscriptionRepository,
-    // Pass services that might be needed via RepositoryProvider (if any)
-    currencyService: currencyService, // Added CurrencyService
-    // notificationService: notificationService, // Example
+    financingRepository: financingRepository,
   ));
 }
 
@@ -266,30 +225,26 @@ class MyApp extends StatelessWidget {
   final CustomerBloc customerBloc;
   final SupplierBloc supplierBloc;
   final SettingsBloc settingsBloc;
-  final NotificationsBloc notificationsBloc;
   final OperationJournalBloc operationJournalBloc;
   final ExpenseBloc expenseBloc;
   final SubscriptionBloc subscriptionBloc;
   final FinancingBloc financingBloc;
-  final DashboardBloc dashboardBloc; // Added
+  final DashboardBloc dashboardBloc;
+  final NotificationsBloc notificationsBloc;
+  final CurrencyService currencyService;
 
-  // Repositories
+  // Add repository fields
   final AuthRepository authRepository;
-  final SettingsRepository settingsRepository;
   final InventoryRepository inventoryRepository;
   final SalesRepository salesRepository;
   final AdhaRepository adhaRepository;
   final CustomerRepository customerRepository;
   final SupplierRepository supplierRepository;
-  final NotificationRepository notificationRepository;
+  final SettingsRepository settingsRepository;
   final OperationJournalRepository operationJournalRepository;
   final ExpenseRepository expenseRepository;
-  final FinancingRepository financingRepository;
   final SubscriptionRepository subscriptionRepository;
-  final TransactionRepository transactionRepository; // Added
-
-  // Services
-  final CurrencyService currencyService; // Added
+  final FinancingRepository financingRepository;
 
   const MyApp({
     super.key,
@@ -301,51 +256,42 @@ class MyApp extends StatelessWidget {
     required this.customerBloc,
     required this.supplierBloc,
     required this.settingsBloc,
-    required this.notificationsBloc,
     required this.operationJournalBloc,
     required this.expenseBloc,
     required this.subscriptionBloc,
     required this.financingBloc,
-    required this.dashboardBloc, // Added
-    // Repositories
+    required this.dashboardBloc,
+    required this.notificationsBloc,
+    required this.currencyService,
+    // Add repositories to constructor
     required this.authRepository,
-    required this.settingsRepository,
     required this.inventoryRepository,
     required this.salesRepository,
     required this.adhaRepository,
     required this.customerRepository,
     required this.supplierRepository,
-    required this.notificationRepository,
+    required this.settingsRepository,
     required this.operationJournalRepository,
     required this.expenseRepository,
-    required this.financingRepository,
-    required this.transactionRepository, // Added
     required this.subscriptionRepository,
-    // Services
-    required this.currencyService, // Added
-    // required this.notificationService, // Example
+    required this.financingRepository,
   });
 
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider.value(value: authRepository),
-        RepositoryProvider.value(value: settingsRepository),
-        RepositoryProvider.value(value: inventoryRepository),
-        RepositoryProvider.value(value: salesRepository),
-        RepositoryProvider.value(value: adhaRepository),
-        RepositoryProvider.value(value: customerRepository),
-        RepositoryProvider.value(value: supplierRepository),
-        RepositoryProvider.value(value: notificationRepository),
-        RepositoryProvider.value(value: operationJournalRepository),
-        RepositoryProvider.value(value: expenseRepository),
-        RepositoryProvider.value(value: financingRepository),
-        RepositoryProvider.value(value: transactionRepository), // Added
-        RepositoryProvider.value(value: subscriptionRepository),
-        // If NotificationService needs to be available via RepositoryProvider.of<NotificationService>(context)
-        // RepositoryProvider.value(value: notificationService),
-        RepositoryProvider.value(value: currencyService), // Added CurrencyService
+        RepositoryProvider<SettingsRepository>.value(value: settingsRepository),
+        RepositoryProvider<AuthRepository>.value(value: authRepository),
+        RepositoryProvider<InventoryRepository>.value(value: inventoryRepository),
+        RepositoryProvider<SalesRepository>.value(value: salesRepository),
+        RepositoryProvider<AdhaRepository>.value(value: adhaRepository),
+        RepositoryProvider<CustomerRepository>.value(value: customerRepository),
+        RepositoryProvider<SupplierRepository>.value(value: supplierRepository),
+        RepositoryProvider<OperationJournalRepository>.value(value: operationJournalRepository),
+        RepositoryProvider<ExpenseRepository>.value(value: expenseRepository),
+        RepositoryProvider<SubscriptionRepository>.value(value: subscriptionRepository),
+        RepositoryProvider<FinancingRepository>.value(value: financingRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -356,43 +302,47 @@ class MyApp extends StatelessWidget {
           BlocProvider.value(value: customerBloc),
           BlocProvider.value(value: supplierBloc),
           BlocProvider.value(value: settingsBloc),
-          BlocProvider.value(value: notificationsBloc),
           BlocProvider.value(value: operationJournalBloc),
           BlocProvider.value(value: expenseBloc),
           BlocProvider.value(value: subscriptionBloc),
           BlocProvider.value(value: financingBloc),
-          BlocProvider.value(value: dashboardBloc), // Added
-          BlocProvider(create: (context) => CurrencySettingsCubit(context.read<CurrencyService>())..loadSettings()), // Added CurrencySettingsCubit
+          BlocProvider.value(value: dashboardBloc),
+          BlocProvider.value(value: notificationsBloc),
+          BlocProvider<CurrencySettingsCubit>(
+            create: (context) => CurrencySettingsCubit(currencyService), 
+          ),
         ],
         child: BlocBuilder<SettingsBloc, settings_bloc_state.SettingsState>(
           builder: (context, settingsState) {
-            ThemeMode currentThemeMode = ThemeMode.light; // Default to light
+            ThemeMode themeMode = ThemeMode.system;
             if (settingsState is settings_bloc_state.SettingsLoaded) {
-              currentThemeMode = settingsState.settings.themeMode == settings_models.AppThemeMode.dark
-                  ? ThemeMode.dark
-                  : ThemeMode.light;
-            } else if (settingsState is settings_bloc_state.SettingsUpdated) {
-              currentThemeMode = settingsState.settings.themeMode == settings_models.AppThemeMode.dark
-                  ? ThemeMode.dark
-                  : ThemeMode.light;
+              switch (settingsState.settings.themeMode) {
+                case settings_models.AppThemeMode.light:
+                  themeMode = ThemeMode.light;
+                  break;
+                case settings_models.AppThemeMode.dark:
+                  themeMode = ThemeMode.dark;
+                  break;
+                case settings_models.AppThemeMode.system:
+                  themeMode = ThemeMode.system;
+                  break;
+              }
             }
 
             return MaterialApp.router(
+              routerConfig: appRouter.router,
               title: 'Wanzo',
               theme: WanzoTheme.lightTheme,
               darkTheme: WanzoTheme.darkTheme,
-              themeMode: currentThemeMode,
-              routerConfig: appRouter.router,
-              debugShowCheckedModeBanner: false,
+              themeMode: themeMode,
+              locale: const Locale('fr'),
               localizationsDelegates: const [
+                AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              supportedLocales: const [
-                Locale('en', ''), 
-                Locale('fr', 'FR'),
-              ],
+              supportedLocales: AppLocalizations.supportedLocales,
             );
           },
         ),

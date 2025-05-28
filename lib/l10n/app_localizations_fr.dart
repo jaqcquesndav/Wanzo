@@ -1346,7 +1346,45 @@ class AppLocalizationsFr extends AppLocalizations {
   String get registerButton => 'S\'inscrire';
 
   @override
+  String get emailHint => 'Entrez votre e-mail';
+
+  @override
+  String get emailValidationErrorRequired => 'Veuillez entrer votre e-mail';
+
+  @override
+  String get emailValidationErrorInvalid => 'Veuillez entrer un e-mail valide';
+
+  @override
   String get passwordLabel => 'Mot de passe';
+
+  @override
+  String get passwordHint => 'Entrez votre mot de passe';
+
+  @override
+  String get passwordValidationErrorRequired => 'Veuillez entrer votre mot de passe';
+
+  @override
+  String authFailureMessage(Object message) {
+    return 'Échec de l\'authentification : $message';
+  }
+
+  @override
+  String get loginToYourAccount => 'Connectez-vous à votre compte';
+
+  @override
+  String get rememberMeLabel => 'Se souvenir de moi';
+
+  @override
+  String get forgotPasswordButton => 'Mot de passe oublié ?';
+
+  @override
+  String get noAccountPrompt => 'Vous n\'avez pas de compte ?';
+
+  @override
+  String get createAccountButton => 'Créer un compte';
+
+  @override
+  String get demoModeButton => 'Mode Démo';
 
   @override
   String get settings => 'Paramètres';
@@ -1745,4 +1783,258 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noCategoriesFound => 'Aucune catégorie trouvée. Ajoutez-en une pour commencer !';
+
+  @override
+  String get signupScreenTitle => 'Créer un compte entreprise';
+
+  @override
+  String get signupStepIdentity => 'Identité';
+
+  @override
+  String get signupStepCompany => 'Entreprise';
+
+  @override
+  String get signupStepConfirmation => 'Confirmation';
+
+  @override
+  String get signupPersonalInfoTitle => 'Vos informations personnelles';
+
+  @override
+  String get signupOwnerNameLabel => 'Nom complet du propriétaire';
+
+  @override
+  String get signupOwnerNameHint => 'Entrez votre nom complet';
+
+  @override
+  String get signupOwnerNameValidation => 'Veuillez entrer le nom du propriétaire';
+
+  @override
+  String get signupEmailLabel => 'Adresse e-mail';
+
+  @override
+  String get signupEmailHint => 'Entrez votre adresse e-mail';
+
+  @override
+  String get signupEmailValidationRequired => 'Veuillez entrer votre e-mail';
+
+  @override
+  String get signupEmailValidationInvalid => 'Veuillez entrer un e-mail valide';
+
+  @override
+  String get signupPhoneLabel => 'Numéro de téléphone';
+
+  @override
+  String get signupPhoneHint => 'Entrez votre numéro de téléphone';
+
+  @override
+  String get signupPhoneValidation => 'Veuillez entrer votre numéro de téléphone';
+
+  @override
+  String get signupPasswordLabel => 'Mot de passe';
+
+  @override
+  String get signupPasswordHint => 'Entrez votre mot de passe (min. 8 caractères)';
+
+  @override
+  String get signupPasswordValidationRequired => 'Veuillez entrer un mot de passe';
+
+  @override
+  String get signupPasswordValidationLength => 'Le mot de passe doit comporter au moins 8 caractères';
+
+  @override
+  String get signupConfirmPasswordLabel => 'Confirmer le mot de passe';
+
+  @override
+  String get signupConfirmPasswordHint => 'Confirmez votre mot de passe';
+
+  @override
+  String get signupConfirmPasswordValidationRequired => 'Veuillez confirmer votre mot de passe';
+
+  @override
+  String get signupConfirmPasswordValidationMatch => 'Les mots de passe ne correspondent pas';
+
+  @override
+  String get signupRequiredFields => '* Champs obligatoires';
+
+  @override
+  String get signupCompanyInfoTitle => 'Informations sur votre entreprise';
+
+  @override
+  String get signupCompanyNameLabel => 'Nom de l\'entreprise';
+
+  @override
+  String get signupCompanyNameHint => 'Entrez le nom de votre entreprise';
+
+  @override
+  String get signupCompanyNameValidation => 'Veuillez entrer le nom de l\'entreprise';
+
+  @override
+  String get signupRccmLabel => 'Numéro RCCM / Enregistrement commercial';
+
+  @override
+  String get signupRccmHint => 'Entrez votre numéro RCCM ou équivalent';
+
+  @override
+  String get signupRccmValidation => 'Veuillez entrer le numéro RCCM';
+
+  @override
+  String get signupAddressLabel => 'Adresse / Localisation';
+
+  @override
+  String get signupAddressHint => 'Entrez l\'adresse de votre entreprise';
+
+  @override
+  String get signupAddressValidation => 'Veuillez entrer l\'adresse de l\'entreprise';
+
+  @override
+  String get signupActivitySectorLabel => 'Secteur d\'activité';
+
+  @override
+  String get signupTermsAndConditionsTitle => 'Résumé et conditions';
+
+  @override
+  String get signupInfoSummaryPersonal => 'Informations personnelles :';
+
+  @override
+  String get signupInfoSummaryName => 'Nom :';
+
+  @override
+  String get signupInfoSummaryEmail => 'E-mail :';
+
+  @override
+  String get signupInfoSummaryPhone => 'Téléphone :';
+
+  @override
+  String get signupInfoSummaryCompany => 'Informations sur l\'entreprise :';
+
+  @override
+  String get signupInfoSummaryCompanyName => 'Nom de l\'entreprise :';
+
+  @override
+  String get signupInfoSummaryRccm => 'RCCM :';
+
+  @override
+  String get signupInfoSummaryAddress => 'Adresse :';
+
+  @override
+  String get signupInfoSummaryActivitySector => 'Secteur d\'activité :';
+
+  @override
+  String get signupAgreeToTerms => 'J\'ai lu et j\'accepte les';
+
+  @override
+  String get signupTermsOfUse => 'Conditions d\'utilisation';
+
+  @override
+  String get andConnector => 'et';
+
+  @override
+  String get signupPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get signupAgreeToTermsConfirmation => 'En cochant cette case, vous confirmez avoir lu, compris et accepté nos conditions d\'utilisation et notre politique de confidentialité.';
+
+  @override
+  String get signupButtonPrevious => 'Précédent';
+
+  @override
+  String get signupButtonNext => 'Suivant';
+
+  @override
+  String get signupButtonRegister => 'S\'inscrire';
+
+  @override
+  String get signupAlreadyHaveAccount => 'Vous avez déjà un compte ? Se connecter';
+
+  @override
+  String get signupErrorFillFields => 'Veuillez remplir correctement tous les champs obligatoires pour l\'étape actuelle.';
+
+  @override
+  String get signupErrorAgreeToTerms => 'Vous devez accepter les conditions générales pour vous inscrire.';
+
+  @override
+  String get signupSuccessMessage => 'Inscription réussie ! Connexion en cours...';
+
+  @override
+  String signupErrorRegistration(String error) {
+    return 'L\'inscription a échoué : $error';
+  }
+
+  @override
+  String get sectorAgricultureName => 'Agriculture et agroalimentaire';
+
+  @override
+  String get sectorAgricultureDescription => 'Production agricole, transformation alimentaire, élevage';
+
+  @override
+  String get sectorCommerceName => 'Commerce et distribution';
+
+  @override
+  String get sectorCommerceDescription => 'Vente au détail, distribution, import-export';
+
+  @override
+  String get sectorServicesName => 'Services';
+
+  @override
+  String get sectorServicesDescription => 'Services aux entreprises et aux particuliers';
+
+  @override
+  String get sectorTechnologyName => 'Technologies et innovation';
+
+  @override
+  String get sectorTechnologyDescription => 'Développement informatique, télécommunications, fintech';
+
+  @override
+  String get sectorManufacturingName => 'Manufacture et industrie';
+
+  @override
+  String get sectorManufacturingDescription => 'Production industrielle, artisanat, textile';
+
+  @override
+  String get sectorConstructionName => 'Construction et immobilier';
+
+  @override
+  String get sectorConstructionDescription => 'BTP, promotion immobilière, architecture';
+
+  @override
+  String get sectorTransportationName => 'Transport et logistique';
+
+  @override
+  String get sectorTransportationDescription => 'Transport de marchandises, logistique, entreposage';
+
+  @override
+  String get sectorEnergyName => 'Énergie et ressources naturelles';
+
+  @override
+  String get sectorEnergyDescription => 'Production d\'énergie, mines, eau';
+
+  @override
+  String get sectorTourismName => 'Tourisme et hôtellerie';
+
+  @override
+  String get sectorTourismDescription => 'Hôtellerie, restauration, tourisme';
+
+  @override
+  String get sectorEducationName => 'Éducation et formation';
+
+  @override
+  String get sectorEducationDescription => 'Enseignement, formation professionnelle';
+
+  @override
+  String get sectorHealthName => 'Santé et services médicaux';
+
+  @override
+  String get sectorHealthDescription => 'Soins médicaux, pharmacie, équipements médicaux';
+
+  @override
+  String get sectorFinanceName => 'Services financiers';
+
+  @override
+  String get sectorFinanceDescription => 'Banque, assurance, microfinance';
+
+  @override
+  String get sectorOtherName => 'Autre';
+
+  @override
+  String get sectorOtherDescription => 'Autres secteurs d\'activité';
 }
