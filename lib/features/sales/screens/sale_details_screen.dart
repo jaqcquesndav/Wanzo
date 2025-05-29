@@ -320,49 +320,58 @@ class SaleDetailsScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton.icon(
-                // onPressed: () => _printOrShareInvoice(context, print: true),
-                onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: true),
-                icon: const Icon(Icons.print),
-                label: const Text("Imprimer"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-              ElevatedButton.icon(
-                // onPressed: () => _printOrShareInvoice(context, print: false),
-                onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: false),
-                icon: const Icon(Icons.share),
-                label: const Text("Partager"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-              if (sale.status == SaleStatus.pending || sale.status == SaleStatus.partiallyPaid) // Modified condition
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Marquer la vente comme terminée
-                    // All amounts are already correctly stored in the sale object.
-                    // We just need to update the status.
-                    final Sale updatedSale = sale.copyWith(
-                      status: SaleStatus.completed,
-                      // Ensure paid amount covers the total if marking completed this way
-                      // This might need more sophisticated logic if partial payments can lead to completion
-                      paidAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency,
-                      paidAmountInCdf: sale.totalAmountInCdf,
-                    );
-                    context.read<SalesBloc>().add(UpdateSale(updatedSale));
-                    GoRouter.of(context).pop();
-                  },
-                  icon: const Icon(Icons.check),
-                  label: const Text("Terminer"),
+              Expanded(
+                child: ElevatedButton.icon(
+                  // onPressed: () => _printOrShareInvoice(context, print: true),
+                  onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: true),
+                  icon: const Icon(Icons.print),
+                  label: const Text("Imprimer"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
                 ),
+              ),
+              const SizedBox(width: WanzoSpacing.sm), // Add some spacing between buttons
+              Expanded(
+                child: ElevatedButton.icon(
+                  // onPressed: () => _printOrShareInvoice(context, print: false),
+                  onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: false),
+                  icon: const Icon(Icons.share),
+                  label: const Text("Partager"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              if (sale.status == SaleStatus.pending || sale.status == SaleStatus.partiallyPaid) ...[
+                const SizedBox(width: WanzoSpacing.sm), // Add some spacing between buttons
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Marquer la vente comme terminée
+                      // All amounts are already correctly stored in the sale object.
+                      // We just need to update the status.
+                      final Sale updatedSale = sale.copyWith(
+                        status: SaleStatus.completed,
+                        // Ensure paid amount covers the total if marking completed this way
+                        // This might need more sophisticated logic if partial payments can lead to completion
+                        paidAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency,
+                        paidAmountInCdf: sale.totalAmountInCdf,
+                      );
+                      context.read<SalesBloc>().add(UpdateSale(updatedSale));
+                      GoRouter.of(context).pop();
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text("Terminer"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ]
             ],
           ),
         ),
