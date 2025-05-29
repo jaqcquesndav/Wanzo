@@ -213,6 +213,8 @@ Future<void> main() async {
     expenseRepository: expenseRepository,
     subscriptionRepository: subscriptionRepository,
     financingRepository: financingRepository,
+    notificationRepository: notificationRepository, // Added
+    transactionRepository: transactionRepository, // Added
   ));
 }
 
@@ -245,6 +247,8 @@ class MyApp extends StatelessWidget {
   final ExpenseRepository expenseRepository;
   final SubscriptionRepository subscriptionRepository;
   final FinancingRepository financingRepository;
+  final NotificationRepository notificationRepository; // Added
+  final TransactionRepository transactionRepository; // Added
 
   const MyApp({
     super.key,
@@ -275,6 +279,8 @@ class MyApp extends StatelessWidget {
     required this.expenseRepository,
     required this.subscriptionRepository,
     required this.financingRepository,
+    required this.notificationRepository, // Added
+    required this.transactionRepository, // Added
   });
 
   @override
@@ -292,6 +298,8 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<ExpenseRepository>.value(value: expenseRepository),
         RepositoryProvider<SubscriptionRepository>.value(value: subscriptionRepository),
         RepositoryProvider<FinancingRepository>.value(value: financingRepository),
+        RepositoryProvider<NotificationRepository>.value(value: notificationRepository), // Added
+        RepositoryProvider<TransactionRepository>.value(value: transactionRepository), // Added
       ],
       child: MultiBlocProvider(
         providers: [
