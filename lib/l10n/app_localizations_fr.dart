@@ -1255,6 +1255,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboardQuickActionsSettings => 'Paramètres';
 
   @override
+  String get dashboardQuickActionsNewInvoice => 'Facturation';
+
+  @override
+  String get dashboardQuickActionsNewFinancing => 'Financement';
+
+  @override
   String get commonLoading => 'Chargement...';
 
   @override

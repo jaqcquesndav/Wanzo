@@ -300,6 +300,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<FinancingRepository>.value(value: financingRepository),
         RepositoryProvider<NotificationRepository>.value(value: notificationRepository), // Added
         RepositoryProvider<TransactionRepository>.value(value: transactionRepository), // Added
+        RepositoryProvider<CurrencyService>.value(value: currencyService), // Added
       ],
       child: MultiBlocProvider(
         providers: [
@@ -317,14 +318,18 @@ class MyApp extends StatelessWidget {
           BlocProvider.value(value: dashboardBloc),
           BlocProvider.value(value: notificationsBloc),
           BlocProvider<CurrencySettingsCubit>(
-            create: (context) => CurrencySettingsCubit(currencyService), 
+            create: (context) => CurrencySettingsCubit(currencyService)..loadSettings(), 
           ),
         ],
         child: BlocBuilder<SettingsBloc, settings_bloc_state.SettingsState>(
           builder: (context, settingsState) {
             ThemeMode themeMode = ThemeMode.system;
-            if (settingsState is settings_bloc_state.SettingsLoaded) {
-              switch (settingsState.settings.themeMode) {
+            // Check if the state is SettingsLoaded or SettingsUpdated and has settings
+            if (settingsState is settings_bloc_state.SettingsLoaded || settingsState is settings_bloc_state.SettingsUpdated) {
+              final currentSettings = (settingsState is settings_bloc_state.SettingsLoaded)
+                  ? settingsState.settings
+                  : (settingsState as settings_bloc_state.SettingsUpdated).settings;
+              switch (currentSettings.themeMode) {
                 case settings_models.AppThemeMode.light:
                   themeMode = ThemeMode.light;
                   break;

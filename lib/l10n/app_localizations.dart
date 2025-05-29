@@ -2405,6 +2405,18 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get dashboardQuickActionsSettings;
 
+  /// No description provided for @dashboardQuickActionsNewInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoicing'**
+  String get dashboardQuickActionsNewInvoice;
+
+  /// No description provided for @dashboardQuickActionsNewFinancing.
+  ///
+  /// In en, this message translates to:
+  /// **'Financing'**
+  String get dashboardQuickActionsNewFinancing;
+
   /// No description provided for @commonLoading.
   ///
   /// In en, this message translates to:

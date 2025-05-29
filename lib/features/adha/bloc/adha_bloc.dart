@@ -17,12 +17,14 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
   final AuthRepository authRepository;
   final OperationJournalRepository operationJournalRepository;
   final _uuid = const Uuid();
+  String? _currentlyActiveConversationId; // Added to track active conversation
 
   AdhaBloc({
     required this.adhaRepository,
     required this.authRepository,
     required this.operationJournalRepository,
   }) : super(const AdhaInitial()) {
+    _currentlyActiveConversationId = null; // Explicitly null at start
     on<SendMessage>(_onSendMessage);
     on<LoadConversations>(_onLoadConversations);
     on<LoadConversation>(_onLoadConversation);
@@ -193,6 +195,7 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
       );
       
       await adhaRepository.saveConversation(finalConversation);
+      _currentlyActiveConversationId = finalConversation.id; // Set active ID
       
       emit(AdhaConversationActive(
         conversation: finalConversation,
@@ -218,6 +221,17 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
     NewConversation event,
     Emitter<AdhaState> emit,
   ) async {
+    // If the initial message is empty and the source is the new conversation button,
+    // or more generally, if we want to reset to the initial suggestion view.
+    if (event.initialMessage.isEmpty && event.contextInfo.interactionContext.sourceIdentifier == 'new_conversation_button') {
+      _currentlyActiveConversationId = null; // Clear active ID
+      emit(const AdhaInitial());
+      // Optionally, if you want to ensure a default "empty" conversation is ready in the background
+      // you could load conversations which might create one if none exist.
+      // add(const LoadConversations()); 
+      return;
+    }
+
     emit(const AdhaLoading());
     AdhaConversationActive? previousState = state is AdhaConversationActive ? (state as AdhaConversationActive) : null;
     try {
@@ -240,9 +254,34 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
         title: _generateConversationTitle(event.initialMessage),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        messages: [userMessage],
+        messages: event.initialMessage.isNotEmpty ? [userMessage] : [], // Ensure messages list is empty if initialMessage is empty
       );
 
+      // If initialMessage is empty, we might not want to immediately process.
+      // The AdhaInitial state should be shown.
+      // However, the current structure proceeds to send a message.
+      // This part might need review if an empty initialMessage is truly intended for _onNewConversation
+      // beyond just resetting to AdhaInitial via the button.
+      // For now, assuming if initialMessage is not empty, we proceed.
+
+      if (event.initialMessage.isEmpty) {
+         // This case should ideally be fully handled by the AdhaInitial emission above
+         // if the intent is just to go to suggestions.
+         // If a "new blank conversation" is to be created and made active without a message,
+         // then _currentlyActiveConversationId should be set.
+         // For now, the button press path (empty message) clears the ID and emits AdhaInitial.
+         // If this event is called with an empty message NOT from the button,
+         // it implies creating a blank, active conversation.
+         if (event.contextInfo.interactionContext.sourceIdentifier != 'new_conversation_button') {
+            await adhaRepository.saveConversation(newConversation);
+            _currentlyActiveConversationId = newConversation.id;
+            emit(AdhaConversationActive(conversation: newConversation, isProcessing: false));
+         }
+         return;
+      }
+
+
+      // Proceed if initialMessage is not empty
       emit(AdhaConversationActive(
         conversation: newConversation,
         isProcessing: true, 
@@ -269,6 +308,7 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
       );
 
       await adhaRepository.saveConversation(updatedConversationWithResponse);
+      _currentlyActiveConversationId = updatedConversationWithResponse.id; // Set active ID
 
       emit(AdhaConversationActive(
         conversation: updatedConversationWithResponse,
@@ -286,24 +326,32 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
   ) async {
     emit(const AdhaLoading());
     try {
-      final conversations = await adhaRepository.getConversations();
-      if (conversations.isEmpty) {
-        final newConversationId = _uuid.v4();
-        final newConversation = AdhaConversation(
-          id: newConversationId,
-          title: 'Nouvelle conversation',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          messages: [],
-        );
-        await adhaRepository.saveConversation(newConversation); 
-        emit(AdhaConversationActive(conversation: newConversation));
+      // Case 1: User explicitly wants the initial screen (_currentlyActiveConversationId is null).
+      if (_currentlyActiveConversationId == null) {
+        emit(const AdhaInitial());
+        // Optional: In the background, ensure a default conversation exists if the repository is empty,
+        // but don't make it active here as the user wants the initial screen.
+        // This part is removed to strictly adhere to showing AdhaInitial if ID is null.
+        // If no conversations exist at all, AdhaInitial is fine, user can start one.
+        return;
+      }
+
+      // Case 2: A specific conversation is supposed to be active. Load it.
+      // (_currentlyActiveConversationId is NOT null here)
+      final AdhaConversation? conversation = await adhaRepository.getConversation(_currentlyActiveConversationId!);
+      if (conversation != null) {
+        emit(AdhaConversationActive(conversation: conversation));
       } else {
-        conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-        emit(AdhaConversationActive(conversation: conversations.first));
+        // The active conversation ID was stored, but the conversation is gone from the repo.
+        // This is an inconsistent state. Fallback: clear the active ID and go to AdhaInitial.
+        _currentlyActiveConversationId = null; // Clear the bad ID
+        emit(const AdhaInitial()); // Go to initial screen as a safe fallback
       }
     } catch (e) {
+      _currentlyActiveConversationId = null; // Clear on error to prevent broken state
       emit(AdhaError('Erreur lors du chargement des conversations: $e'));
+      // Optionally, after error, try to emit AdhaInitial so user is not stuck on error screen.
+      // emit(const AdhaInitial());
     }
   }
 
@@ -315,6 +363,7 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
     try {
       final conversation = await adhaRepository.getConversation(event.conversationId);
       if (conversation != null) {
+        _currentlyActiveConversationId = conversation.id; // Set active ID
         emit(AdhaConversationActive(conversation: conversation));
       } else {
         emit(const AdhaError('Conversation non trouvée'));
@@ -331,7 +380,10 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
   ) async {
     try {
       await adhaRepository.deleteConversation(event.conversationId);
-      add(const LoadConversations());
+      if (_currentlyActiveConversationId == event.conversationId) {
+        _currentlyActiveConversationId = null; // Clear active ID if it was deleted
+      }
+      add(const LoadConversations()); // Reload, will go to AdhaInitial if active ID is now null
     } catch (e) {
       emit(AdhaError('Erreur lors de la suppression de la conversation: $e'));
     }
@@ -345,18 +397,26 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
       final currentState = state as AdhaConversationActive;
       if (!currentState.isProcessing) {
          emit(currentState.copyWith(isVoiceActive: true));
+         // _currentlyActiveConversationId remains what it was, voice is just an input method for current/new convo
       }
     } else {
+      // This case implies starting voice recognition when not in an active conversation (e.g. from AdhaInitial)
+      // A new conversation should be implicitly started or prepared.
       final newConversationId = _uuid.v4();
       final newConversation = AdhaConversation(
         id: newConversationId,
-        title: 'Conversation vocale',
+        title: 'Conversation vocale', // Temporary title
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         messages: [],
       );
-      await adhaRepository.saveConversation(newConversation);
-      emit(AdhaConversationActive(conversation: newConversation, isVoiceActive: true));
+      // Don't save or set active ID yet, wait for actual speech input.
+      // The AdhaConversationActive state here is to enable voice input UI.
+      // The actual conversation will be formed by SendMessage after voice input.
+      emit(AdhaConversationActive(conversation: newConversation, isVoiceActive: true, isProcessing: false));
+      // _currentlyActiveConversationId should ideally be set when the first message from voice is processed.
+      // For now, if voice is started from AdhaInitial, _currentlyActiveConversationId is still null.
+      // SendMessage will handle creating/activating the conversation.
     }
   }
 

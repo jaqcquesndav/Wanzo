@@ -873,6 +873,8 @@
   "dashboardQuickActionsNewSupplier": "Nouveau Fournisseur",
   "dashboardQuickActionsCashRegister": "Caisse",
   "dashboardQuickActionsSettings": "Paramètres",
+  "dashboardQuickActionsNewInvoice": "Facturation",
+  "dashboardQuickActionsNewFinancing": "Financement",
   "cancel": "Annuler",
   "supplierCategoryLocal": "Local",
   "@supplierCategoryLocal": {

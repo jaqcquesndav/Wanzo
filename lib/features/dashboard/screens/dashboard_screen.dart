@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:wanzo/l10n/app_localizations.dart'; // Corrected import path
+import 'package:go_router/go_router.dart';
 
 import 'package:wanzo/core/shared_widgets/wanzo_scaffold.dart';
 import 'package:wanzo/core/utils/currency_formatter.dart';
@@ -16,7 +17,6 @@ import 'package:wanzo/features/settings/bloc/settings_state.dart';
 import 'package:wanzo/features/settings/models/settings.dart';
 import 'package:wanzo/constants/spacing.dart';
 import 'package:wanzo/constants/border_radius.dart';
-import 'package:wanzo/constants/typography.dart';
 import 'package:wanzo/core/enums/currency_enum.dart';
 import 'package:wanzo/features/dashboard/models/operation_journal_entry.dart'; // Import for OperationTypeUIIcon
 
@@ -236,8 +236,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (journalState is OperationJournalLoaded) {
       if (_selectedStartDate == null || _selectedEndDate == null) {
+        // Store context before async gap
+        final currentContext = context;
         await _selectDateRangeInternal(context, l10n, (start, end) async {
-          if (!mounted) return; 
+          if (!mounted) return;
           final file = await _journalService.generateJournalPdf(
             journalState.operations,
             start,
@@ -247,17 +249,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             settings
           );
           if (!mounted) return;
-          if (file != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.dashboardJournalExportSuccessMessage)),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.dashboardJournalExportFailureMessage)),
-            );
-          }
+          ScaffoldMessenger.of(currentContext).showSnackBar( // Use stored context
+            SnackBar(content: Text(file != null ? l10n.dashboardJournalExportSuccessMessage : l10n.dashboardJournalExportFailureMessage)),
+          );
         });
       } else {
+        // Store context before async gap
+        final currentContext = context;
         if (!mounted) return;
         final file = await _journalService.generateJournalPdf(
           journalState.operations,
@@ -268,15 +266,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           settings
         );
         if (!mounted) return;
-        if (file != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.dashboardJournalExportSuccessMessage)),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.dashboardJournalExportFailureMessage)),
-          );
-        }
+        ScaffoldMessenger.of(currentContext).showSnackBar( // Use stored context
+          SnackBar(content: Text(file != null ? l10n.dashboardJournalExportSuccessMessage : l10n.dashboardJournalExportFailureMessage)),
+        );
       }
     } else {
       if (!mounted) return;
@@ -398,27 +390,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.dashboardQuickActionsTitle, // Restored l10n key
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: WanzoSpacing.md),
+              Text(l10n.dashboardQuickActionsTitle, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: WanzoSpacing.lg),
               GridView.count(
-                crossAxisCount: 4, // Restored
-                shrinkWrap: true, // Restored
-                physics: const NeverScrollableScrollPhysics(), // Restored
-                mainAxisSpacing: WanzoSpacing.sm, // Restored
-                crossAxisSpacing: WanzoSpacing.sm, // Restored
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: WanzoSpacing.md,
+                crossAxisSpacing: WanzoSpacing.md,
+                childAspectRatio: 1.0,
                 children: [
-                  // These items were present in a previously correct version of the file
-                  // _buildQuickActionInternal(context, Icons.add_shopping_cart, l10n.dashboardQuickActionsNewSale, () => context.push(AppRoutes.addSale), l10n),
-                  // _buildQuickActionInternal(context, Icons.receipt_long, l10n.dashboardQuickActionsNewExpense, () => context.push(AppRoutes.addExpense), l10n),
-                  // _buildQuickActionInternal(context, Icons.inventory_2, l10n.dashboardQuickActionsNewProduct, () => context.push(AppRoutes.addProduct), l10n),
-                  _buildQuickActionInternal(context, Icons.design_services, l10n.dashboardQuickActionsNewService, () { /* TODO */ }, l10n),
-                  // _buildQuickActionInternal(context, Icons.person_add, l10n.dashboardQuickActionsNewClient, () => context.push(AppRoutes.addCustomer), l10n),
-                  // _buildQuickActionInternal(context, Icons.group_add, l10n.dashboardQuickActionsNewSupplier, () => context.push(AppRoutes.addSupplier), l10n),
-                  _buildQuickActionInternal(context, Icons.point_of_sale, l10n.dashboardQuickActionsCashRegister, () { /* TODO */ }, l10n),
-                  // _buildQuickActionInternal(context, Icons.settings, l10n.dashboardQuickActionsSettings, () => context.push(AppRoutes.settings), l10n),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.add_shopping_cart,
+                    l10n.dashboardQuickActionsNewInvoice,
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/sales/add');
+                    },
+                    iconColor: Colors.green,
+                  ),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.inventory_2,
+                    l10n.addProductTitle, // Corrected localization key
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/inventory/add'); // Corrected route
+                    },
+                    iconColor: Colors.orange,
+                  ),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.monetization_on,
+                    l10n.dashboardQuickActionsNewFinancing,
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/financing/add');
+                    },
+                    iconColor: Colors.teal,
+                  ),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.receipt_long,
+                    l10n.dashboardQuickActionsNewExpense, 
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/expenses/add'); 
+                    },
+                    iconColor: Colors.redAccent,
+                  ),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.person_add_alt_1,
+                    l10n.dashboardQuickActionsNewClient, 
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/customers/add'); 
+                    },
+                    iconColor: Colors.blueAccent,
+                  ),
+                  _buildQuickActionInternal(
+                    bottomSheetContext,
+                    Icons.store, 
+                    l10n.dashboardQuickActionsNewSupplier, 
+                    () {
+                      Navigator.pop(bottomSheetContext);
+                      context.push('/suppliers/add'); 
+                    },
+                    iconColor: Colors.purpleAccent,
+                  ),
                 ],
               ),
               const SizedBox(height: WanzoSpacing.md),
@@ -429,37 +470,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionInternal(BuildContext context, IconData icon, String label, VoidCallback onTap, AppLocalizations l10n) {
+  Widget _buildQuickActionInternal(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    Color iconColor = Colors.grey, // Default color
+    double iconSize = 28.0, // Adjusted icon size
+    double iconContainerPadding = WanzoSpacing.sm, // e.g. 8.0
+    double spacingAfterIcon = WanzoSpacing.xs,    // e.g. 4.0
+    TextStyle? labelTextStyle,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(WanzoBorderRadius.lg),
-      child: Container(
-        width: 100, 
-        padding: const EdgeInsets.all(WanzoSpacing.sm),
+      borderRadius: BorderRadius.circular(WanzoBorderRadius.md), // e.g. 12.0
+      child: Padding(
+        padding: const EdgeInsets.all(WanzoSpacing.xs / 2), // Minimal padding for the InkWell area
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, 
           children: [
             Container(
-              padding: const EdgeInsets.all(WanzoSpacing.md),
+              padding: EdgeInsets.all(iconContainerPadding),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withAlpha(50),
-                borderRadius: BorderRadius.circular(WanzoBorderRadius.md),
+                color: iconColor.withOpacity(0.15), // Tinted background for the icon
+                shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                color: Theme.of(context).colorScheme.primary,
-                size: 32, 
+                size: iconSize,
+                color: iconColor, // Icon takes the main color
               ),
             ),
-            const SizedBox(height: WanzoSpacing.xs),
+            SizedBox(height: spacingAfterIcon),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: WanzoTypography.fontWeightMedium,
-              ),
-              maxLines: 2,
+              style: labelTextStyle ?? Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11), // Adjusted font size
+              maxLines: 2, 
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -518,7 +567,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: WanzoSpacing.lg),
                 _buildSalesChart(context, recentSales, l10n, displayCurrencyCode),
                 const SizedBox(height: WanzoSpacing.lg),
-                _buildRecentSalesAndJournal(context, recentSales, l10n, displayCurrencyCode),
+                // _buildRecentSalesAndJournal(context, recentSales, l10n, displayCurrencyCode), // Original Row layout
+                _buildTabbedRecentSalesAndJournal(context, recentSales, l10n, displayCurrencyCode), // New Tabbed layout
               ],
             ),
           );
@@ -670,14 +720,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return dailySales.entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value)).toList()..sort((a,b)=> a.x.compareTo(b.x));
   }
 
-  Widget _buildRecentSalesAndJournal(BuildContext context, List<Sale> recentSales, AppLocalizations l10n, String displayCurrencyCode) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _buildRecentSalesList(context, recentSales, false, l10n, displayCurrencyCode)),
-        const SizedBox(width: WanzoSpacing.md),
-        Expanded(child: _buildOperationsJournal(context, false, l10n, displayCurrencyCode)),
-      ],
+  Widget _buildTabbedRecentSalesAndJournal(BuildContext context, List<Sale> recentSales, AppLocalizations l10n, String displayCurrencyCode) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TabBar(
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()), // Updated to use withAlpha
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            tabs: [
+              Tab(text: l10n.dashboardRecentSalesTitle),
+              Tab(text: l10n.dashboardOperationsJournalTitle),
+            ],
+          ),
+          SizedBox(
+            // Adjust height as needed, or use Flexible/Expanded if inside a Column with constraints
+            height: 400, // Example height, might need adjustment
+            child: TabBarView(
+              children: [
+                _buildRecentSalesList(context, recentSales, false, l10n, displayCurrencyCode),
+                _buildOperationsJournal(context, false, l10n, displayCurrencyCode),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -847,37 +916,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ); // Closes Card
   }
 }
-
-// Add icon getter to OperationType extension if it doesn\'t exist
-// Example (to be placed in operation_journal_entry.dart or a relevant extension file):
-/*
-extension OperationTypeUIIcon on OperationType {
-  IconData get icon {
-    switch (this) {
-      case OperationType.saleCash:
-      case OperationType.saleCredit:
-      case OperationType.saleInstallment:
-        return Icons.shopping_cart;
-      case OperationType.stockIn:
-        return Icons.input;
-      case OperationType.stockOut:
-        return Icons.output;
-      case OperationType.cashIn:
-        return Icons.attach_money;
-      case OperationType.cashOut:
-        return Icons.money_off;
-      case OperationType.customerPayment:
-        return Icons.person_add_alt_1; // Or a payment icon
-      case OperationType.supplierPayment:
-        return Icons.payment;
-      case OperationType.financingRequest:
-      case OperationType.financingApproved:
-      case OperationType.financingRepayment:
-        return Icons.account_balance;
-      case OperationType.other:
-      default:
-        return Icons.receipt_long;
-    }
-  }
-}
-*/
