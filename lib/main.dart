@@ -342,13 +342,21 @@ class MyApp extends StatelessWidget {
               }
             }
 
+            Locale currentLocale = const Locale('fr'); // Default to French
+            if (settingsState is settings_bloc_state.SettingsLoaded || settingsState is settings_bloc_state.SettingsUpdated) {
+              final currentSettings = (settingsState is settings_bloc_state.SettingsLoaded)
+                  ? settingsState.settings
+                  : (settingsState as settings_bloc_state.SettingsUpdated).settings;
+              currentLocale = Locale(currentSettings.language); // Set locale from settings
+            }
+
             return MaterialApp.router(
               routerConfig: appRouter.router,
               title: 'Wanzo',
               theme: WanzoTheme.lightTheme,
               darkTheme: WanzoTheme.darkTheme,
               themeMode: themeMode,
-              locale: const Locale('fr'),
+              locale: currentLocale, // Use the locale from settings
               localizationsDelegates: const [
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,

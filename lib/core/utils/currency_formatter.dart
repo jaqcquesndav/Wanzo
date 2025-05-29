@@ -32,7 +32,7 @@ String formatCurrency(double amount, String currencyCode) {
   if (currency == Currency.CDF || currency == Currency.FCFA) {
     final String pattern = "#,##0${decimalDigits > 0 ? '.' + ''.padRight(decimalDigits, '0') : ''}";
     final NumberFormat numberFormatter = NumberFormat(pattern, locale);
-    return '${numberFormatter.format(amount)}\\u00A0$symbol';
+    return '${numberFormatter.format(amount)} $symbol'; // Changed \u00A0 to a regular space
   }
   
   // Default formatting (e.g., for USD)
