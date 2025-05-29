@@ -68,52 +68,63 @@ class InvoiceService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // En-tête avec logo et informations de l'entreprise
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  logoWidget ?? pw.SizedBox(width: 80, height: 80),
-                  pw.SizedBox(width: 10),
+                  // Logo et informations de l'entreprise à gauche
                   pw.Expanded(
+                    flex: 2,
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text(
-                          settings.companyName,
-                          style: pw.TextStyle(
-                            font: boldFont,
-                            fontSize: 18,
+                        if (logoWidget != null) logoWidget,
+                        if (logoWidget != null) pw.SizedBox(height: 5),
+                        if (settings.companyName.isNotEmpty)
+                          pw.Text(
+                            settings.companyName,
+                            style: pw.TextStyle(font: boldFont, fontSize: 12),
                           ),
-                        ),
-                        pw.SizedBox(height: 5),
-                        if (settings.companyAddress.isNotEmpty)
-                          pw.Text(settings.companyAddress),
-                        if (settings.companyPhone.isNotEmpty)
-                          pw.Text('Tél: ${settings.companyPhone}'),
-                        if (settings.companyEmail.isNotEmpty)
-                          pw.Text('Email: ${settings.companyEmail}'),
-                        if (settings.taxIdentificationNumber.isNotEmpty)
-                          pw.Text('NIF: ${settings.taxIdentificationNumber}'),
-                        if (settings.rccmNumber.isNotEmpty)
-                          pw.Text('RCCM: ${settings.rccmNumber}'),
-                        if (settings.idNatNumber.isNotEmpty)
-                          pw.Text('ID NAT: ${settings.idNatNumber}'),
+                        if (settings.companyAddress.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text(settings.companyAddress, style: pw.TextStyle(font: regularFont, fontSize: 9)),
+                        ],
+                        if (settings.companyPhone.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('Tél: ${settings.companyPhone}', style: pw.TextStyle(font: regularFont, fontSize: 9)),
+                        ],
+                        if (settings.taxIdentificationNumber.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('NIF: ${settings.taxIdentificationNumber}', style: pw.TextStyle(font: regularFont, fontSize: 9)),
+                        ],
+                        if (settings.rccmNumber.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('RCCM: ${settings.rccmNumber}', style: pw.TextStyle(font: regularFont, fontSize: 9)),
+                        ],
+                        if (settings.idNatNumber.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('ID NAT: ${settings.idNatNumber}', style: pw.TextStyle(font: regularFont, fontSize: 9)),
+                        ],
                       ],
                     ),
                   ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'FACTURE',
-                        style: pw.TextStyle(
-                          font: boldFont,
-                          fontSize: 16,
+                  pw.SizedBox(width: 20),
+                  // Informations de la facture à droite
+                  pw.Expanded(
+                    flex: 1,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text(
+                          'FACTURE',
+                          style: pw.TextStyle(font: boldFont, fontSize: 18, color: PdfColors.blueGrey700),
                         ),
-                      ),
-                      pw.SizedBox(height: 5),
-                      pw.Text('N°: $invoiceNumber'),
-                      pw.Text('Date: $formattedDate'),
-                    ],
+                        pw.SizedBox(height: 5),
+                        pw.Text('N°: $invoiceNumber', style: pw.TextStyle(font: regularFont, fontSize: 10)),
+                        pw.Text('Date: $formattedDate', style: pw.TextStyle(font: regularFont, fontSize: 10)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -609,7 +620,7 @@ class InvoiceService {
                 ],
               ),
               pw.SizedBox(height: 3),
-              pw.Divider(color: PdfColors.black, height: 1),
+              pw.Divider(color: PdfColors.black, height: 1), // Garder ce Divider
               pw.SizedBox(height: 3),
               
               ...sale.items.map((item) {
@@ -656,7 +667,7 @@ class InvoiceService {
               }),
               
               pw.SizedBox(height: 5),
-              pw.Divider(color: PdfColors.black, height: 1),
+              pw.Divider(color: PdfColors.black, height: 1), // Garder ce Divider
               pw.SizedBox(height: 3),
               
               pw.Row(
