@@ -96,8 +96,8 @@ This document outlines the expected API endpoints, request/response formats, and
 
 ### B. Customers
 - **Base Endpoint:** `/customers`
-- **Service:** `CustomerApiService`
-- **Model:** `Customer` (see `lib/features/customer/models/customer.dart`)
+- **Service:** `CustomerApiService` (see `lib/core/services/customer_api_service.dart`)
+- **Model:** `Customer` (see `lib/features/customers/models/customer.dart`)
 - **Operations:**
     - `GET /api/customers`: List customers.
     - `POST /api/customers`: Create a new customer.
@@ -108,15 +108,14 @@ This document outlines the expected API endpoints, request/response formats, and
   ```json
   {
     "id": "string",
-    "name": "string",
-    "email": "string",
+    "fullName": "string",
     "phoneNumber": "string",
+    "email": "string",
     "address": "string",
-    "customerCategoryId": "string",
-    "totalSpent": "number",
-    "lastPurchaseDate": "iso8601_string_date",
     "createdAt": "iso8601_string_date",
-    "updatedAt": "iso8601_string_date"
+    "notes": "string",
+    "totalPurchases": "number",
+    "profilePicture": "string"
   }
   ```
 
@@ -552,6 +551,157 @@ The context for Adha is prepared by the frontend in the background and sent with
         "description": "string"
       }
       ```
+
+---
+### M. Company Profile
+- **Base Endpoint:** `/api/company`
+- **Service:** (Assumed `CompanyApiService` or similar in `lib/features/company/services/`)
+- **Operations:**
+    - `GET /api/company`: Retrieve the current user's company profile.
+        - **Response (JSON - Success 200 OK):**
+          ```json
+          {
+            "success": true,
+            "message": "Company profile retrieved successfully.",
+            "data": {
+              "id": "string",
+              "name": "string",
+              "registrationNumber": "string",
+              "taxId": "string",
+              "address": "string",
+              "city": "string",
+              "country": "string",
+              "phoneNumber": "string",
+              "email": "string",
+              "website": "string",
+              "logoUrl": "string",
+              "industry": "string",
+              "createdAt": "iso8601_string_date",
+              "updatedAt": "iso8601_string_date"
+            },
+            "statusCode": 200
+          }
+          ```
+    - `PUT /api/company`: Update the company profile.
+        - **Request Body (JSON):**
+          ```json
+          {
+            "name": "string",
+            "registrationNumber": "string",
+            "taxId": "string",
+            "address": "string",
+            "city": "string",
+            "country": "string",
+            "phoneNumber": "string",
+            "email": "string",
+            "website": "string",
+            "industry": "string"
+          }
+          ```
+        - **Response (JSON - Success 200 OK):** (Returns the updated company profile, similar to GET response)
+
+    - `POST /api/company/logo`: Upload or update the company logo.
+        - **Request:** `multipart/form-data` with a file field (e.g., `logoFile`).
+        - **Response (JSON - Success 200 OK):**
+          ```json
+          {
+            "success": true,
+            "message": "Company logo updated successfully.",
+            "data": {
+              "logoUrl": "string" // URL of the uploaded/updated logo
+            },
+            "statusCode": 200
+          }
+          ```
+
+---
+### N. Document Management
+- **Base Endpoint:** `/api/documents`
+- **Service:** (Assumed `DocumentApiService` or similar in `lib/features/documents/services/`)
+- **Operations:**
+    - `POST /api/documents/upload`: Upload a document.
+        - **Request:** `multipart/form-data` including:
+            - `file`: The document file.
+            - `entityId`: \"string\" (ID of the entity this document is related to, e.g., sale ID, customer ID).
+            - `entityType`: \"string\" (Type of the entity, e.g., \"sale\", \"customer\", \"expense\").
+            - `documentType`: \"string\" (e.g., \"invoice\", \"receipt\", \"contract\", \"other\").
+            - `description`: \"string\" (Optional description).
+        - **Response (JSON - Success 201 Created):**
+          ```json
+          {
+            "success": true,
+            "message": "Document uploaded successfully.",
+            "data": {
+              "id": "string",
+              "fileName": "string",
+              "fileUrl": "string",
+              "documentType": "string",
+              "entityId": "string",
+              "entityType": "string",
+              "uploadedAt": "iso8601_string_date"
+            },
+            "statusCode": 201
+          }
+          ```
+    - `GET /api/documents`: List documents, typically filtered.
+        - **Query Params:** `entityId`, `entityType`, `documentType`, `page`, `limit`.
+        - **Response (JSON - Success 200 OK):** (Array of document objects as in POST response, with pagination)
+    - `GET /api/documents/{id}`: Get a specific document's details.
+        - **Response (JSON - Success 200 OK):** (Single document object)
+    - `DELETE /api/documents/{id}`: Delete a document.
+        - **Response (JSON - Success 200 OK or 204 No Content):**
+
+---
+### O. Financial Transactions
+- **Base Endpoint:** `/api/financial-transactions`
+- **Repository:** (Assumed `TransactionRepository` in `lib/features/transactions/repositories/`)
+- **Model:** (Assumed `FinancialTransaction` model)
+- **Operations:**
+    - `GET /api/financial-transactions`: List financial transactions.
+        - **Query Params:** `page`, `limit`, `dateFrom`, `dateTo`, `type (e.g., 'payment_in', 'payment_out', 'refund')`, `status (e.g., 'pending', 'completed', 'failed')`, `paymentMethodId`.
+        - **Response (JSON - Success 200 OK):** (Array of financial transaction objects, with pagination)
+          ```json
+          {
+            "id": "string",
+            "userId": "string",
+            "date": "iso8601_string_date",
+            "amount": "number",
+            "currency": "string",
+            "type": "string",
+            "description": "string",
+            "status": "string",
+            "paymentMethodId": "string", // Optional, if applicable
+            "relatedEntityId": "string", // Optional (e.g., Sale ID, Invoice ID)
+            "relatedEntityType": "string", // Optional (e.g., \"sale\", \"invoice\")
+            "createdAt": "iso8601_string_date",
+            "updatedAt": "iso8601_string_date"
+          }
+          ```
+    - `POST /api/financial-transactions`: Record a new financial transaction (e.g., manual entry).
+        - **Request Body (JSON):** (Similar to the GET response structure, for fields that can be set by user)
+        - **Response (JSON - Success 201 Created):** (The created financial transaction object)
+    - `GET /api/financial-transactions/{id}`: Get a specific financial transaction.
+        - **Response (JSON - Success 200 OK):** (Single financial transaction object)
+    - `PUT /api/financial-transactions/{id}`: Update a financial transaction.
+        - **Request Body (JSON):** (Fields to update)
+        - **Response (JSON - Success 200 OK):** (The updated financial transaction object)
+
+---
+### P. Dashboard
+
+The Dashboard feature aggregates data from various other services to provide an overview of business performance. It does not have its own dedicated API service but relies on the following services:
+
+-   **Sales API Service**: To fetch sales data, including total sales, recent sales, and sales trends. (Refer to [Sales API](#h-sales))
+-   **Customer API Service**: To fetch customer-related data, such as the number of clients served. (Refer to [Customers API](#b-customers))
+-   **Financial Transactions API Service**: To fetch the count of recent transactions. (Refer to [Financial Transactions API](#o-financial-transactions))
+
+Key Performance Indicators (KPIs) displayed on the dashboard include:
+-   Sales Today
+-   Clients Served Today
+-   Total Receivables
+-   Total Transactions Today
+
+No specific backend endpoints are defined solely for the dashboard. It consumes data from the endpoints defined in the respective sections mentioned above.
 
 ---
 This documentation should be expanded by the backend team, specifying exact request/response schemas, validation rules, and any other specific behaviors for each endpoint.
