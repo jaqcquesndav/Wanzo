@@ -457,9 +457,13 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return Theme.of(context).colorScheme.surfaceContainerHighest;
       case SupplierCategory.international:
         return Theme.of(context).colorScheme.primaryContainer;
+      case SupplierCategory.local: 
+        return Theme.of(context).colorScheme.secondaryContainer; 
+      case SupplierCategory.online: // Added missing case
+        return Theme.of(context).colorScheme.tertiaryContainer; // Example color
     }
   }
-  /// Retourne le nom d\\\'une catégorie de fournisseur
+  /// Retourne le nom d\\\\\\\'une catégorie de fournisseur
   String _getCategoryName(BuildContext context, SupplierCategory category) { // Add context
     final localizations = AppLocalizations.of(context)!; // Add localizations instance
     switch (category) {
@@ -473,6 +477,10 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         return localizations.supplierCategoryOccasional;
       case SupplierCategory.international:
         return localizations.supplierCategoryInternational;
+      case SupplierCategory.local: 
+        return localizations.supplierCategoryLocal; 
+      case SupplierCategory.online: // Added missing case
+        return localizations.supplierCategoryOnline; // Assuming this localization exists
     }
   }
 
