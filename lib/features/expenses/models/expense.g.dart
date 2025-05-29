@@ -19,24 +19,25 @@ class ExpenseAdapter extends TypeAdapter<Expense> {
     return Expense(
       id: fields[0] as String,
       date: fields[1] as DateTime,
-      description: fields[2] as String,
+      motif: fields[2] as String,
       amount: fields[3] as double,
       category: fields[4] as ExpenseCategory,
       paymentMethod: fields[5] as String?,
-      relatedDocumentId: fields[6] as String?,
+      attachmentUrls: (fields[6] as List?)?.cast<String>(),
+      supplierId: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Expense obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.date)
       ..writeByte(2)
-      ..write(obj.description)
+      ..write(obj.motif)
       ..writeByte(3)
       ..write(obj.amount)
       ..writeByte(4)
@@ -44,7 +45,9 @@ class ExpenseAdapter extends TypeAdapter<Expense> {
       ..writeByte(5)
       ..write(obj.paymentMethod)
       ..writeByte(6)
-      ..write(obj.relatedDocumentId);
+      ..write(obj.attachmentUrls)
+      ..writeByte(7)
+      ..write(obj.supplierId);
   }
 
   @override
@@ -126,3 +129,42 @@ class ExpenseCategoryAdapter extends TypeAdapter<ExpenseCategory> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Expense _$ExpenseFromJson(Map<String, dynamic> json) => Expense(
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      motif: json['motif'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      category: $enumDecode(_$ExpenseCategoryEnumMap, json['category']),
+      paymentMethod: json['paymentMethod'] as String?,
+      attachmentUrls: (json['attachmentUrls'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      supplierId: json['supplierId'] as String?,
+    );
+
+Map<String, dynamic> _$ExpenseToJson(Expense instance) => <String, dynamic>{
+      'id': instance.id,
+      'date': instance.date.toIso8601String(),
+      'motif': instance.motif,
+      'amount': instance.amount,
+      'category': _$ExpenseCategoryEnumMap[instance.category]!,
+      if (instance.paymentMethod case final value?) 'paymentMethod': value,
+      if (instance.attachmentUrls case final value?) 'attachmentUrls': value,
+      if (instance.supplierId case final value?) 'supplierId': value,
+    };
+
+const _$ExpenseCategoryEnumMap = {
+  ExpenseCategory.rent: 'rent',
+  ExpenseCategory.utilities: 'utilities',
+  ExpenseCategory.supplies: 'supplies',
+  ExpenseCategory.salaries: 'salaries',
+  ExpenseCategory.marketing: 'marketing',
+  ExpenseCategory.transport: 'transport',
+  ExpenseCategory.maintenance: 'maintenance',
+  ExpenseCategory.other: 'other',
+};

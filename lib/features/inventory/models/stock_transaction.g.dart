@@ -137,3 +137,45 @@ class StockTransactionTypeAdapter extends TypeAdapter<StockTransactionType> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+StockTransaction _$StockTransactionFromJson(Map<String, dynamic> json) =>
+    StockTransaction(
+      id: json['id'] as String,
+      productId: json['productId'] as String,
+      type: $enumDecode(_$StockTransactionTypeEnumMap, json['type']),
+      quantity: (json['quantity'] as num).toDouble(),
+      date: DateTime.parse(json['date'] as String),
+      referenceId: json['referenceId'] as String?,
+      notes: json['notes'] as String?,
+      unitCostInCdf: (json['unitCostInCdf'] as num).toDouble(),
+      totalValueInCdf: (json['totalValueInCdf'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$StockTransactionToJson(StockTransaction instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'productId': instance.productId,
+      'type': _$StockTransactionTypeEnumMap[instance.type]!,
+      'quantity': instance.quantity,
+      'date': instance.date.toIso8601String(),
+      if (instance.referenceId case final value?) 'referenceId': value,
+      if (instance.notes case final value?) 'notes': value,
+      'unitCostInCdf': instance.unitCostInCdf,
+      'totalValueInCdf': instance.totalValueInCdf,
+    };
+
+const _$StockTransactionTypeEnumMap = {
+  StockTransactionType.purchase: 'purchase',
+  StockTransactionType.sale: 'sale',
+  StockTransactionType.adjustment: 'adjustment',
+  StockTransactionType.transferIn: 'transferIn',
+  StockTransactionType.transferOut: 'transferOut',
+  StockTransactionType.returned: 'returned',
+  StockTransactionType.damaged: 'damaged',
+  StockTransactionType.lost: 'lost',
+  StockTransactionType.initialStock: 'initialStock',
+};

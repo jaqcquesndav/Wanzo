@@ -30,6 +30,27 @@ class AdhaMessage extends Equatable {
   @override
   List<Object?> get props => [id, content, timestamp, isUserMessage, type];
 
+  factory AdhaMessage.fromJson(Map<String, dynamic> json) {
+    return AdhaMessage(
+      id: json['id'] as String,
+      content: json['content'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      isUserMessage: json['isUserMessage'] as bool,
+      type: AdhaMessageType.values.firstWhere(
+        (e) => e.toString() == 'AdhaMessageType.${json['type']}',
+        orElse: () => AdhaMessageType.text, // Default if type is unknown
+      ),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'content': content,
+        'timestamp': timestamp.toIso8601String(),
+        'isUserMessage': isUserMessage,
+        'type': type.toString().split('.').last,
+      };
+
   AdhaMessage copyWith({
     String? id,
     String? content,

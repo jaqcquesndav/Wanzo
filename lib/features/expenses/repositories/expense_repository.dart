@@ -47,7 +47,7 @@ class ExpenseRepository {
     await Future.delayed(const Duration(milliseconds: 300));
     final newExpense = expense.copyWith(id: _uuid.v4());
     _mockExpenses.add(newExpense);
-    debugPrint("Expense added: ${newExpense.description} - ${_mockExpenses.length} total expenses");
+    debugPrint("Expense added: ${newExpense.motif} - ${_mockExpenses.length} total expenses");
     return newExpense;
   }
 

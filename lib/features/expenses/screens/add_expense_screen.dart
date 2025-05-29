@@ -51,12 +51,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       }
 
       final newExpense = Expense(
-        id: const Uuid().v4(), // Repository will assign ID if using mock/local db usually
+        id: const Uuid().v4(),
         date: _selectedDate,
-        description: _descriptionController.text,
+        motif: _descriptionController.text,
         amount: amount,
-        category: _selectedCategory,
-        paymentMethod: _selectedPaymentMethod,
+        category: _selectedCategory, // Use the ExpenseCategory enum value directly
+        paymentMethod: _selectedPaymentMethod ?? 'N/A',
+        // attachmentUrls and supplierId are optional and will use defaults if not provided
       );
 
       context.read<ExpenseBloc>().add(AddExpense(newExpense));
@@ -89,10 +90,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               children: <Widget>[
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  decoration: const InputDecoration(labelText: 'Motif'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer une description.';
+                      return 'Veuillez entrer un motif.';
                     }
                     return null;
                   },

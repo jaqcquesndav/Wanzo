@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wanzo/core/services/api_client.dart';
 import 'package:wanzo/features/expenses/models/expense.dart';
@@ -27,11 +28,11 @@ class SubscriptionRepository {
             .map((tierData) => SubscriptionTier.fromJson(tierData))
             .toList();
       }
-      print('Error fetching subscription tiers: Invalid responseData structure: $responseData');
-      return _tiers_fallback;
+      debugPrint('Error fetching subscription tiers: Invalid responseData structure: $responseData');
+      return _fallbackTiers;
     } catch (e) {
-      print('Error fetching subscription tiers: $e');
-      return _tiers_fallback;
+      debugPrint('Error fetching subscription tiers: $e');
+      return _fallbackTiers;
     }
   }
 
@@ -41,11 +42,11 @@ class SubscriptionRepository {
       if (responseData != null && responseData['data'] != null) {
         return SubscriptionTier.fromJson(responseData['data']);
       }
-      print('Error fetching current subscription: Invalid responseData structure: $responseData');
-      return _currentTier_fallback;
+      debugPrint('Error fetching current subscription: Invalid responseData structure: $responseData');
+      return _fallbackCurrentTier;
     } catch (e) {
-      print('Error fetching current subscription: $e');
-      return _currentTier_fallback;
+      debugPrint('Error fetching current subscription: $e');
+      return _fallbackCurrentTier;
     }
   }
 
@@ -55,10 +56,10 @@ class SubscriptionRepository {
       if (responseData != null && responseData['data'] != null && responseData['data']['usage_percentage'] != null) {
         return (responseData['data']['usage_percentage'] as num).toDouble();
       }
-      print('Error fetching token usage: Invalid responseData structure: $responseData');
+      debugPrint('Error fetching token usage: Invalid responseData structure: $responseData');
       return 0.0;
     } catch (e) {
-      print('Error fetching token usage: $e');
+      debugPrint('Error fetching token usage: $e');
       return 0.0;
     }
   }
@@ -69,10 +70,10 @@ class SubscriptionRepository {
       if (responseData != null && responseData['data'] != null && responseData['data']['tokens'] != null) {
         return (responseData['data']['tokens'] as num).toInt();
       }
-      print('Error fetching available tokens: Invalid responseData structure: $responseData');
+      debugPrint('Error fetching available tokens: Invalid responseData structure: $responseData');
       return 0;
     } catch (e) {
-      print('Error fetching available tokens: $e');
+      debugPrint('Error fetching available tokens: $e');
       return 0;
     }
   }
@@ -85,11 +86,11 @@ class SubscriptionRepository {
             .map((invoiceData) => Invoice.fromJson(invoiceData))
             .toList();
       }
-      print('Error fetching invoices: Invalid responseData structure: $responseData');
-      return _invoices_fallback;
+      debugPrint('Error fetching invoices: Invalid responseData structure: $responseData');
+      return _fallbackInvoices;
     } catch (e) {
-      print('Error fetching invoices: $e');
-      return _invoices_fallback;
+      debugPrint('Error fetching invoices: $e');
+      return _fallbackInvoices;
     }
   }
 
@@ -101,11 +102,11 @@ class SubscriptionRepository {
             .map((pmData) => PaymentMethod.fromJson(pmData))
             .toList();
       }
-      print('Error fetching payment methods: Invalid responseData structure: $responseData');
-      return _paymentMethods_fallback;
+      debugPrint('Error fetching payment methods: Invalid responseData structure: $responseData');
+      return _fallbackPaymentMethods;
     } catch (e) {
-      print('Error fetching payment methods: $e');
-      return _paymentMethods_fallback;
+      debugPrint('Error fetching payment methods: $e');
+      return _fallbackPaymentMethods;
     }
   }
 
@@ -118,72 +119,74 @@ class SubscriptionRepository {
   }
 
   Future<void> changeSubscriptionTier(SubscriptionTierType newTierType) async {
-    print('SubscriptionRepository: Attempting to change subscription to $newTierType via API');
+    debugPrint('SubscriptionRepository: Attempting to change subscription to $newTierType via API');
     try {
       await _apiService.post('subscription/change-tier', 
         body: {'newTierType': newTierType.toString().split('.').last},
         requiresAuth: true
       );
-      print('SubscriptionRepository: API call to change tier successful.');
+      debugPrint('SubscriptionRepository: API call to change tier successful.');
 
-      final newTierData = _tiers_fallback.firstWhere((t) => t.type == newTierType, orElse: () => _currentTier_fallback);
+      final newTierData = _fallbackTiers.firstWhere((t) => t.type == newTierType, orElse: () => _fallbackCurrentTier);
       final tierPrice = _parsePrice(newTierData.price);
       if (tierPrice > 0) {
         final expense = Expense(
           id: _uuid.v4(),
           date: DateTime.now(),
-          description: 'Paiement abonnement ${newTierData.name}',
+          motif: 'Paiement abonnement ${newTierData.name}',
           amount: tierPrice,
-          category: ExpenseCategory.utilities,
+          category: ExpenseCategory.other, // Assuming a general category, adjust if specific one exists
           paymentMethod: 'System/Online',
+          // attachmentUrls and supplierId are optional and can be omitted
         );
         try {
           await _expenseRepository.addExpense(expense);
-          print('SubscriptionRepository: Expense recorded for subscription change to ${newTierData.name}');
+          debugPrint('SubscriptionRepository: Expense recorded for subscription change to ${newTierData.name}');
         } catch (e) {
-          print('SubscriptionRepository: Failed to record expense for subscription change: $e');
+          debugPrint('SubscriptionRepository: Failed to record expense for subscription change: $e');
         }
       }
     } catch (e) {
-      print('Error changing subscription tier via API: $e');
+      debugPrint('Error changing subscription tier via API: $e');
       throw Exception('Failed to change subscription tier: $e');
     }
   }
 
   Future<void> topUpAdhaTokens(double amount) async {
-    print('SubscriptionRepository: Attempting to top up Adha tokens for $amount FCFA via API');
+    debugPrint('SubscriptionRepository: Attempting to top up Adha tokens for $amount FCFA via API');
     try {
       await _apiService.post('subscription/topup-tokens', 
         body: {'amount': amount.toString()},
         requiresAuth: true
       );
-      print('SubscriptionRepository: API call to topup tokens successful.');
+      debugPrint('SubscriptionRepository: API call to topup tokens successful.');
 
-      const double fcfaPerToken = 10.0;
+      const double fcfaPerToken = 10.0; 
       int tokensToAdd = (amount / fcfaPerToken).round();
 
       final expense = Expense(
         id: _uuid.v4(),
         date: DateTime.now(),
-        description: 'Recharge de $tokensToAdd tokens Adha ($amount FCFA)',
+        motif: 'Recharge de $tokensToAdd tokens Adha ($amount FCFA)',
         amount: amount,
-        category: ExpenseCategory.other,
+        category: ExpenseCategory.other, // Assuming a general category, adjust if specific one exists for Adha tokens
         paymentMethod: 'System/Online',
+        // attachmentUrls and supplierId are optional and can be omitted
       );
       try {
         await _expenseRepository.addExpense(expense);
-        print('SubscriptionRepository: Expense recorded for Adha token top-up of $amount FCFA');
+        debugPrint('SubscriptionRepository: Expense recorded for Adha token top-up of $amount FCFA');
       } catch (e) {
-        print('SubscriptionRepository: Failed to record expense for token top-up: $e');
+        debugPrint('SubscriptionRepository: Failed to record expense for token top-up: $e');
       }
     } catch (e) {
-      print('Error topping up Adha tokens via API: $e');
+      debugPrint('Error topping up Adha tokens via API: $e');
       throw Exception('Failed to top up Adha tokens: $e');
     }
   }
 
   Future<String> uploadPaymentProof(File imageFile) async {
-    print('SubscriptionRepository: Uploading payment proof via API: ${imageFile.path}');
+    debugPrint('SubscriptionRepository: Uploading payment proof via API: ${imageFile.path}');
     try {
       final response = await _apiService.postMultipart(
         'subscription/upload-proof',
@@ -196,29 +199,29 @@ class SubscriptionRepository {
         final responseData = jsonDecode(response.body);
         if (responseData['data'] != null && responseData['data']['proofUrl'] != null) {
           final proofUrl = responseData['data']['proofUrl'] as String;
-          print('SubscriptionRepository: Proof uploaded successfully via API. URL: $proofUrl');
+          debugPrint('SubscriptionRepository: Proof uploaded successfully via API. URL: $proofUrl');
           return proofUrl;
         }
-        print('Error uploading payment proof: Invalid responseData structure in 2xx response: ${response.body}');
+        debugPrint('Error uploading payment proof: Invalid responseData structure in 2xx response: ${response.body}');
         throw Exception('Payment proof upload failed: Invalid API response structure.');
       } else {
-        print('Error uploading payment proof: Status ${response.statusCode}, Body: ${response.body}');
+        debugPrint('Error uploading payment proof: Status ${response.statusCode}, Body: ${response.body}');
         throw Exception('Payment proof upload failed: Status code ${response.statusCode}.');
       }
     } catch (e) {
-      print('Error uploading payment proof via API: $e');
+      debugPrint('Error uploading payment proof via API: $e');
       throw Exception('Failed to upload payment proof: $e');
     }
   }
 
-  final List<SubscriptionTier> _tiers_fallback = [
+  final List<SubscriptionTier> _fallbackTiers = [
     SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium),
     SubscriptionTier(name: 'Starter', price: '5,000 FCFA/mois', users: '5 Utilisateurs', features: ['Stock illimité', 'Clients illimités', 'Ventes avancées', 'Support Email'], adhaTokens: '500', type: SubscriptionTierType.starter),
     SubscriptionTier(name: 'Premium', price: '15,000 FCFA/mois', users: 'Utilisateurs Illimités', features: ['Tout de Starter', 'Multi-boutiques', 'Support Prioritaire', 'Analyses Avancées'], adhaTokens: '2000', type: SubscriptionTierType.premium),
   ];
 
-  final SubscriptionTier _currentTier_fallback = SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium, isCurrent: true);
+  final SubscriptionTier _fallbackCurrentTier = SubscriptionTier(name: 'Freemium', price: 'Gratuit', users: '1 Utilisateur', features: ['Stock limité', 'Clients limités', 'Ventes basiques'], adhaTokens: '100', type: SubscriptionTierType.freemium, isCurrent: true);
 
-  final List<Invoice> _invoices_fallback = [];
-  final List<PaymentMethod> _paymentMethods_fallback = [];
+  final List<Invoice> _fallbackInvoices = [];
+  final List<PaymentMethod> _fallbackPaymentMethods = [];
 }

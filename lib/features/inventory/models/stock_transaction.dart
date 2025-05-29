@@ -1,9 +1,11 @@
 import 'package:hive/hive.dart';
 import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'stock_transaction.g.dart';
 
-@HiveType(typeId: 32) // Ensure this typeId is unique
+@HiveType(typeId: 32)
+@JsonEnum() // Added JsonEnum
 enum StockTransactionType {
   @HiveField(0)
   purchase, // Entrée de stock suite à un achat
@@ -33,7 +35,8 @@ enum StockTransactionType {
   initialStock, // Stock initial lors de la création du produit
 }
 
-@HiveType(typeId: 33) // Ensure this typeId is unique
+@HiveType(typeId: 33)
+@JsonSerializable() // Added JsonSerializable
 class StockTransaction extends Equatable {
   @HiveField(0)
   final String id;
@@ -76,6 +79,9 @@ class StockTransaction extends Equatable {
     required this.unitCostInCdf,
     required this.totalValueInCdf,
   });
+
+  factory StockTransaction.fromJson(Map<String, dynamic> json) => _$StockTransactionFromJson(json);
+  Map<String, dynamic> toJson() => _$StockTransactionToJson(this);
 
   @override
   List<Object?> get props => [id, productId, type, quantity, date, referenceId, notes, unitCostInCdf, totalValueInCdf];

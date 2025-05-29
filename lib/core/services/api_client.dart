@@ -22,6 +22,9 @@ class ApiClient {
   final http.Client _httpClient;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(); // Added
 
+  // Public getter for baseUrl
+  String get baseUrl => _baseUrl;
+
   // Private constructor
   ApiClient._internal({http.Client? httpClient})
       : _httpClient = httpClient ?? http.Client();
@@ -32,7 +35,7 @@ class ApiClient {
   // Factory constructor to return the singleton instance
   factory ApiClient() => _instance;
 
-  Future<Map<String, String>> _getHeaders({bool requiresAuth = false}) async {
+  Future<Map<String, String>> getHeaders({bool requiresAuth = false}) async { // Renamed from _getHeaders
     final headers = <String, String>{
       HttpHeaders.contentTypeHeader: 'application/json; charset=UTF-8',
       HttpHeaders.acceptHeader: 'application/json',
@@ -47,13 +50,13 @@ class ApiClient {
   }
 
   Future<dynamic> get(String endpoint, {Map<String, String>? queryParameters, bool requiresAuth = false}) async { // Added queryParameters
-    final url = Uri.parse('$_baseUrl/$endpoint').replace(queryParameters: queryParameters); // Use queryParameters
+    final url = Uri.parse('$baseUrl/$endpoint').replace(queryParameters: queryParameters); // Use queryParameters
     try {
       final response = await _httpClient.get(
         url,
-        headers: await _getHeaders(requiresAuth: requiresAuth),
+        headers: await getHeaders(requiresAuth: requiresAuth), // Use public getHeaders
       );
-      return _handleResponse(response);
+      return handleResponse(response); // Use public handleResponse
     } on SocketException {
       throw ApiException('Network error: Could not connect to the server.');
     } on HttpException {
@@ -66,14 +69,14 @@ class ApiClient {
   }
 
   Future<dynamic> post(String endpoint, {dynamic body, bool requiresAuth = false}) async {
-    final url = Uri.parse('$_baseUrl/$endpoint');
+    final url = Uri.parse('$baseUrl/$endpoint');
     try {
       final response = await _httpClient.post(
         url,
-        headers: await _getHeaders(requiresAuth: requiresAuth),
+        headers: await getHeaders(requiresAuth: requiresAuth), // Use public getHeaders
         body: jsonEncode(body),
       );
-      return _handleResponse(response);
+      return handleResponse(response); // Use public handleResponse
     } on SocketException {
       throw ApiException('Network error: Could not connect to the server.');
     } on HttpException {
@@ -86,14 +89,14 @@ class ApiClient {
   }
 
   Future<dynamic> put(String endpoint, {dynamic body, bool requiresAuth = false}) async {
-    final url = Uri.parse('$_baseUrl/$endpoint');
+    final url = Uri.parse('$baseUrl/$endpoint');
     try {
       final response = await _httpClient.put(
         url,
-        headers: await _getHeaders(requiresAuth: requiresAuth),
+        headers: await getHeaders(requiresAuth: requiresAuth), // Use public getHeaders
         body: jsonEncode(body),
       );
-      return _handleResponse(response);
+      return handleResponse(response); // Use public handleResponse
     } on SocketException {
       throw ApiException('Network error: Could not connect to the server.');
     } on HttpException {
@@ -105,14 +108,14 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> delete(String endpoint, {bool requiresAuth = false}) async {
-    final url = Uri.parse('$_baseUrl/$endpoint');
+  Future<dynamic> delete(String endpoint, {bool requiresAuth = false}) async { // Added requiresAuth
+    final url = Uri.parse('$baseUrl/$endpoint');
     try {
       final response = await _httpClient.delete(
         url,
-        headers: await _getHeaders(requiresAuth: requiresAuth),
+        headers: await getHeaders(requiresAuth: requiresAuth), // Use public getHeaders
       );
-      return _handleResponse(response);
+      return handleResponse(response); // Use public handleResponse
     } on SocketException {
       throw ApiException('Network error: Could not connect to the server.');
     } on HttpException {
@@ -125,10 +128,10 @@ class ApiClient {
   }
 
   Future<http.Response> postMultipart(String endpoint, {required File file, required String fileField, Map<String, String>? fields, bool requiresAuth = false}) async {
-    final url = Uri.parse('$_baseUrl/$endpoint');
+    final url = Uri.parse('$baseUrl/$endpoint');
     try {
       var request = http.MultipartRequest('POST', url);
-      request.headers.addAll(await _getHeaders(requiresAuth: requiresAuth));
+      request.headers.addAll(await getHeaders(requiresAuth: requiresAuth));
       if (fields != null) {
         request.fields.addAll(fields);
       }
@@ -152,18 +155,22 @@ class ApiClient {
     }
   }
 
-  dynamic _handleResponse(http.Response response) {
+  // Made public by removing underscore
+  dynamic handleResponse(http.Response response) {
     final statusCode = response.statusCode;
     final responseBody = response.body;
 
     if (statusCode >= 200 && statusCode < 300) {
       if (responseBody.isEmpty) {
-        return null; // Or an empty map/list depending on expected response
+        return null; // Or some other indicator of success with no content
       }
       try {
         return jsonDecode(responseBody);
       } catch (e) {
-        throw ApiException('Error decoding JSON response', statusCode: statusCode, responseBody: responseBody);
+        // If decoding fails but status is OK, it might be a plain text response
+        // Or it could be an issue if JSON was expected.
+        // For now, returning the raw body. Consider logging this.
+        return responseBody;
       }
     } else if (statusCode == 400) {
       throw ApiException('Bad request', statusCode: statusCode, responseBody: responseBody);

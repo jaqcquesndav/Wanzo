@@ -182,40 +182,138 @@ This document outlines the expected API endpoints, request/response formats, and
   ```
 
 ### E. Authentication
-- **Base Endpoint:** `/auth` (Convention, actual might vary slightly based on Auth0 or custom setup)
-- **Service:** `AuthRepository`, `Auth0Service`
-- **Operations:**
-    - `POST /api/auth/login`: User login.
-      - Body: `{ "email": "string", "password": "string" }` (for credentials) or OAuth flow.
-      - Response: `{ "token": "jwt_string", "user": { ... } }`
-    - `POST /api/auth/register`: User registration.
-    - `POST /api/auth/refresh-token`: Refresh access token.
-    - `GET /api/auth/me` (or `/api/user/profile`): Get current authenticated user.
+- **Base Endpoint:** `/auth`
+- **Primary Client-Facing Service (for direct backend calls):** `AuthApiService` (see `lib/core/services/auth_api_service.dart`)
+- **Repository (higher-level, manages Auth0, local persistence):** `AuthRepository` (see `lib/features/auth/repositories/auth_repository.dart`), which utilizes `Auth0Service`.
+- **Models:** `User` (see `lib/features/auth/models/user.dart`), `RegistrationRequest` (see `lib/features/company/models/registration_request.dart`)
 
-    ---
-    **New Operation for Auth0 Management API Token Retrieval:**
-    - **Endpoint:** `POST /api/auth/management-token`
-    - **Description:** Securely obtains an Auth0 Management API token for the authenticated user. The backend handles the secure retrieval of this token from Auth0 (e.g., using Client Credentials Grant with backend-stored M2M application credentials). This token is intended for the client to update its own user metadata in Auth0.
-    - **Request Body (JSON):**
+**Operations (handled by `AuthApiService` directly with the backend):**
+
+1.  **User Login:**
+    *   **Endpoint:** `POST /api/auth/login`
+    *   **Service Method:** `AuthApiService.login(String email, String password)`
+    *   **Request Body (JSON):**
         ```json
-        {} // Empty body, user context derived from authentication token
+        {
+          "email": "string",
+          "password": "string"
+        }
         ```
-    - **Response (JSON - Success 200 OK):**
+    *   **Response (JSON - Success 200 OK, as per `ApiResponse<User>` structure wrapping the standard API response):
+        ```json
+        // Outer ApiResponse structure
+        {
+          "success": true,
+          "message": "Login successful", 
+          "statusCode": 200,
+          "data": { // This is the 'data' field from the general API response format
+            "user": { /* User object */ },
+            "token": "jwt_string"
+          }
+        }
+        // The AuthApiService then extracts user and token, returning ApiResponse<User> with User in its data field.
+        ```
+
+2.  **User Registration:**
+    *   **Endpoint:** `POST /api/auth/register`
+    *   **Service Method:** `AuthApiService.register(RegistrationRequest registrationRequest)`
+    *   **Request Body (JSON - `RegistrationRequest`):**
+        ```json
+        {
+          "companyName": "string",
+          "adminEmail": "string",
+          "adminPassword": "string",
+          "adminName": "string",
+          "adminPhone": "string"
+          // ... any other fields from RegistrationRequest
+        }
+        ```
+    *   **Response (JSON - Success 201 Created, similar structure to login response):
         ```json
         {
           "success": true,
-          "message": "Auth0 Management API token retrieved successfully.",
+          "message": "Registration successful",
+          "statusCode": 201,
           "data": {
-            "managementApiToken": "string" // The Auth0 Management API token
-          },
+            "user": { /* User object of the newly registered admin */ },
+            "token": "jwt_string"
+          }
+        }
+        ```
+
+3.  **Get Current Authenticated User:**
+    *   **Endpoint:** `GET /api/auth/me`
+    *   **Service Method:** `AuthApiService.getCurrentUser()`
+    *   **Request:** Requires Bearer Token in Authorization header.
+    *   **Response (JSON - Success 200 OK, `ApiResponse<User>` structure):
+        ```json
+        {
+          "success": true,
+          "message": "User profile fetched successfully", // Or similar
+          "statusCode": 200,
+          "data": {
+             "user": { /* User object */ }
+          }
+        }
+        ```
+
+4.  **User Logout:**
+    *   **Endpoint:** `POST /api/auth/logout` (Conceptual: Backend might invalidate token server-side)
+    *   **Service Method:** `AuthApiService.logout()` (Currently, this method only clears local token. A call to a backend logout endpoint can be added if available.)
+    *   **Request:** Requires Bearer Token. Body might be empty.
+    *   **Response (JSON - Success 200 OK):
+        ```json
+        {
+          "success": true,
+          "message": "Logout successful",
           "statusCode": 200
         }
         ```
-    - **Security Notes:**
-        - The backend must securely store its Auth0 M2M client ID and secret.
-        - The Management API token obtained by the backend should have the minimum necessary scopes (e.g., `update:users_app_metadata` for the user's own `user_metadata` and `read:users_app_metadata`, and potentially `update:users` and `read:users` if root attributes like `name` or `picture` are being modified). It's crucial to request only the permissions needed. For instance, if only `user_metadata` is updated, `update:users_app_metadata` and `read:users_app_metadata` might suffice. If standard profile attributes (like name, nickname, picture) are also updated via this token, then `update:users` and `read:users` would be required.
-        - This endpoint must be protected and only accessible by authenticated users.
-    ---
+
+5.  **Refresh Access Token:**
+    *   **Endpoint:** `POST /api/auth/refresh-token`
+    *   **Service Method:** `AuthApiService.refreshToken()` (Currently a placeholder)
+    *   **Request Body (JSON):** Typically `{ "refreshToken": "string" }`
+    *   **Response (JSON - Success 200 OK):
+        ```json
+        {
+          "success": true,
+          "message": "Token refreshed successfully",
+          "statusCode": 200,
+          "data": {
+            "accessToken": "new_jwt_string",
+            "refreshToken": "optional_new_refresh_token"
+          }
+        }
+        ```
+
+---
+**Auth0 Specific Operations (handled by `Auth0Service` via `AuthRepository`):**
+
+These operations are generally not direct backend API calls in the same way as the above, but interact with the Auth0 platform.
+
+*   **Auth0 Login/Logout:** `AuthRepository` delegates to `Auth0Service` for Auth0 specific login flows (e.g., universal login) and logout.
+*   **Password Reset:** `AuthRepository.sendPasswordResetEmail(String email)` delegates to `Auth0Service`.
+*   **Update User Metadata in Auth0:** `AuthRepository.updateUserProfile(...)` and `updateLocalUser(...)` call `Auth0Service.updateUserMetadata(...)`.
+
+**Auth0 Management API Token Retrieval (Backend Endpoint):**
+
+*   **Endpoint:** `POST /api/auth/management-token`
+*   **Description:** Securely obtains an Auth0 Management API token. The backend handles the secure retrieval of this token from Auth0. This token is intended for the client (via `Auth0Service`) to update its own user metadata in Auth0 if direct client-side updates to Auth0 are performed.
+*   **Request Body (JSON):** `{}` (Empty body, user context derived from authentication token)
+*   **Response (JSON - Success 200 OK):
+    ```json
+    {
+      "success": true,
+      "message": "Auth0 Management API token retrieved successfully.",
+      "data": {
+        "managementApiToken": "string" // The Auth0 Management API token
+      },
+      "statusCode": 200
+    }
+    ```
+*   **Security Notes:** As previously mentioned, backend handles M2M credentials; token scopes should be minimal.
+---
 
 ### F. Suppliers
 - **Base Endpoint:** `/suppliers`
@@ -239,9 +337,10 @@ This document outlines the expected API endpoints, request/response formats, and
   ```
 
 ### G. Adha (AI Chat)
-- **Base Endpoint:** `/adha` or `/chat` (Backend to confirm final)
-- **Repository:** `AdhaRepository` (Frontend)
-- **Models:** `ChatMessage`, `Conversation` (Frontend: `lib/features/adha/models/`)
+- **Base Endpoint:** `/adha`
+- **Service:** `AdhaApiService` (see `lib\\features\\adha\\services\\adha_api_service.dart`)
+- **Repository (Frontend, uses AdhaApiService):** `AdhaRepository` (see `lib\\features\\adha\\repositories\\adha_repository.dart`)
+- **Models:** `AdhaMessage`, `AdhaContextInfo`, `AdhaConversation` (see `lib\\features\\adha\\models\\`)
 
 **Core Interaction Principles:**
 -   **Conversational Grouping:** All messages are part of a specific conversation, identified by a `conversationId`.
@@ -381,8 +480,10 @@ The context for Adha is prepared by the frontend in the background and sent with
     - `GET /api/expenses`: List expenses.
         - Query Params: `page`, `limit`, `dateFrom`, `dateTo`, `categoryId`, `sortBy`, `sortOrder`.
     - `POST /api/expenses`: Create a new expense.
+        - This endpoint should support `multipart/form-data` if attachments are sent directly with the expense data, or a separate endpoint for attachments might be used. The backend will handle uploading files to Cloudinary and storing the URLs.
     - `GET /api/expenses/{id}`: Get a specific expense.
     - `PUT /api/expenses/{id}`: Update an expense.
+        - This endpoint should also support `multipart/form-data` if attachments can be updated.
     - `DELETE /api/expenses/{id}`: Delete an expense.
 - **Expense JSON Structure (Example):**
   ```json
@@ -391,10 +492,11 @@ The context for Adha is prepared by the frontend in the background and sent with
     "userId": "string", // Automatically from authenticated user
     "date": "iso8601_string_date",
     "amount": "number",
-    "description": "string",
+    "motif": "string", // Renamed from description
     "categoryId": "string", // Reference to ExpenseCategory
     "paymentMethod": "string", // e.g., "cash", "card", "bank_transfer"
-    "receiptUrl": "string", // Optional URL to an uploaded receipt image
+    "attachmentUrls": ["string"], // Optional: Array of Cloudinary URLs to uploaded attachments (invoice, receipt, etc.)
+    "supplierId": "string", // Optional: Reference to an existing supplier
     "createdAt": "iso8601_string_date",
     "updatedAt": "iso8601_string_date"
   }
@@ -702,6 +804,75 @@ Key Performance Indicators (KPIs) displayed on the dashboard include:
 -   Total Transactions Today
 
 No specific backend endpoints are defined solely for the dashboard. It consumes data from the endpoints defined in the respective sections mentioned above.
+
+---
+
+## Q. Inventory Management
+
+Manages products, stock levels, and stock movements.
+
+### 1. Product Endpoints
+
+-   **`GET /api/inventory/products`**: List all products.
+    -   Query Parameters:
+        -   `page` (int, optional): Page number for pagination.
+        -   `limit` (int, optional): Number of items per page.
+        -   `category` (string, optional): Filter by product category (e.g., `food`, `electronics`).
+        -   `sortBy` (string, optional): Field to sort by (e.g., `name`, `createdAt`, `stockQuantity`).
+        -   `sortOrder` (string, optional): `asc` or `desc`.
+        -   `q` (string, optional): Search query for product name, description, or barcode.
+    -   Response: `200 OK` with a list of product objects.
+-   **`POST /api/inventory/products`**: Create a new product.
+    -   Request Body: `multipart/form-data` including product data (JSON string for product fields) and an optional `image` file.
+        -   Product fields (refer to `Product` model in `lib/features/inventory/models/product.dart`):
+            -   `name` (string, required)
+            -   `description` (string, optional)
+            -   `barcode` (string, optional)
+            -   `category` (string, required, e.g., `food`, `electronics` - see `ProductCategory` enum)
+            -   `costPriceInCdf` (double, required)
+            -   `sellingPriceInCdf` (double, required)
+            -   `stockQuantity` (double, required)
+            -   `unit` (string, required, e.g., `piece`, `kg` - see `ProductUnit` enum)
+            -   `alertThreshold` (double, optional, default: 5)
+            -   `inputCurrencyCode` (string, required, e.g., "USD", "CDF")
+            -   `inputExchangeRate` (double, required, rate to CDF)
+            -   `costPriceInInputCurrency` (double, required)
+            -   `sellingPriceInInputCurrency` (double, required)
+    -   Response: `201 Created` with the created product object.
+-   **`GET /api/inventory/products/{id}`**: Get a specific product by its ID.
+    -   Response: `200 OK` with the product object or `404 Not Found`.
+-   **`PUT /api/inventory/products/{id}`**: Update an existing product.
+    -   Request Body: `multipart/form-data` including product data (JSON string for product fields) and an optional `image` file. Can also include `removeImage` (boolean) to delete the existing image.
+    -   Response: `200 OK` with the updated product object or `404 Not Found`.
+-   **`DELETE /api/inventory/products/{id}`**: Delete a product.
+    -   Response: `204 No Content` or `404 Not Found`.
+
+### 2. Stock Transaction Endpoints
+
+-   **`GET /api/inventory/stock-transactions`**: List stock transactions.
+    -   Query Parameters:
+        -   `productId` (string, optional): Filter by product ID.
+        -   `page` (int, optional): Page number.
+        -   `limit` (int, optional): Items per page.
+        -   `type` (string, optional): Filter by transaction type (e.g., `purchase`, `sale`, `adjustment` - see `StockTransactionType` enum).
+        -   `dateFrom` (string, optional, format: `YYYY-MM-DD`): Start date for filtering.
+        -   `dateTo` (string, optional, format: `YYYY-MM-DD`): End date for filtering.
+    -   Response: `200 OK` with a list of stock transaction objects.
+-   **`POST /api/inventory/stock-transactions`**: Create a new stock transaction.
+    -   Request Body: JSON object for the stock transaction (refer to `StockTransaction` model in `lib/features/inventory/models/stock_transaction.dart`):
+        -   `productId` (string, required)
+        -   `type` (string, required, e.g., `purchase`, `sale`)
+        -   `quantity` (double, required, can be negative for outflows)
+        -   `date` (string, required, ISO 8601 format, e.g., `YYYY-MM-DDTHH:mm:ss.sssZ`)
+        -   `referenceId` (string, optional, e.g., invoice ID, purchase order ID)
+        -   `notes` (string, optional)
+        -   `unitCostInCdf` (double, required)
+        -   `totalValueInCdf` (double, required)
+    -   Response: `201 Created` with the created stock transaction object.
+-   **`GET /api/inventory/stock-transactions/{id}`**: Get a specific stock transaction by ID.
+    -   Response: `200 OK` with the stock transaction object or `404 Not Found`.
+
+**Note:** Stock transactions are generally immutable. Updating or deleting them directly is typically not allowed to maintain audit trails. Adjustments are made by creating new counter-transactions.
 
 ---
 This documentation should be expanded by the backend team, specifying exact request/response schemas, validation rules, and any other specific behaviors for each endpoint.

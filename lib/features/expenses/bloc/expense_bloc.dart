@@ -70,7 +70,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         id: _uuid.v4(),
         date: newExpense.date,
         type: OperationType.cashOut, // Dépense est une sortie d'argent
-        description: "Dépense: ${newExpense.description}",
+        description: "Dépense: ${newExpense.motif}", // Changed from description to motif
         amount: -newExpense.amount.abs(), // Assurer que le montant est négatif pour cashOut
         paymentMethod: newExpense.paymentMethod,
         relatedDocumentId: newExpense.id, // Lier au document de dépense
@@ -107,7 +107,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         id: _uuid.v4(),
         date: DateTime.now(), // Or originalExpense.date - using now for reversal event time
         type: OperationType.cashIn, // Reversing a cashOut
-        description: "Annulation (MàJ) Dépense: ${originalExpense.description}",
+        description: "Annulation (MàJ) Dépense: ${originalExpense.motif}", // Changed from description to motif
         amount: originalExpense.amount.abs(), // Positive amount for cashIn
         paymentMethod: originalExpense.paymentMethod,
         relatedDocumentId: originalExpense.id,
@@ -122,7 +122,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         id: _uuid.v4(),
         date: updatedExpense.date,
         type: OperationType.cashOut,
-        description: "Dépense (MàJ): ${updatedExpense.description}",
+        description: "Dépense (MàJ): ${updatedExpense.motif}", // Changed from description to motif
         amount: -updatedExpense.amount.abs(), // Negative amount for cashOut
         paymentMethod: updatedExpense.paymentMethod,
         relatedDocumentId: updatedExpense.id,
@@ -157,7 +157,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         id: _uuid.v4(),
         date: DateTime.now(), // Or expenseToDelete.date - decide on consistent date for reversal
         type: OperationType.cashIn, // Reversing a cashOut
-        description: "Annulation Dépense: ${expenseToDelete.description}",
+        description: "Annulation Dépense: ${expenseToDelete.motif}", // Changed from description to motif
         amount: expenseToDelete.amount.abs(), // Positive amount for cashIn
         paymentMethod: expenseToDelete.paymentMethod,
         relatedDocumentId: expenseToDelete.id,
