@@ -73,18 +73,25 @@ class OperationJournalRepository {
     } catch (e) {
       debugPrint("Error adding operation: $e");
       // Handle error as appropriate, potentially rethrow or use offline queue
+      throw Exception('Failed to add operation to journal: $e');
     }
   }
 
   Future<void> addOperationEntries(List<OperationJournalEntry> entries) async {
+    if (entries.isEmpty) {
+      debugPrint("No operation entries to add.");
+      return;
+    }
     try {
       // Example: Send as a list of operations. Backend needs to support this.
       await _apiService.post('journal/batch-operations', body: {
         'operations': entries.map((e) => e.toJson()).toList()
       });
+      debugPrint("Successfully added batch operations to journal.");
     } catch (e) {
       debugPrint("Error adding batch operations: $e");
       // Handle error
+      throw Exception('Failed to add batch operations to journal: $e');
     }
   }
 

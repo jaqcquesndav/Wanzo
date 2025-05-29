@@ -120,9 +120,10 @@ class OperationJournalBloc
       // However, typically adding to journal might not need specific UI error feedback
       // unless it's critical for the user flow.
       // If the current state is an error, we might want to preserve it or update it.
-      if (state is! OperationJournalError) { // Avoid overwriting existing error if not relevant
-         // emit(OperationJournalError('Erreur lors de l\'ajout de l\'entrée: $e'));
-      }
+      // if (state is! OperationJournalError) { // Avoid overwriting existing error if not relevant
+      //    emit(OperationJournalError('Erreur lors de l\'ajout de l\'entrée: ${e.toString()}'));
+      // }
+      emit(OperationJournalError('Erreur lors de l\'ajout de l\'entrée au journal: ${e.toString()}'));
     }
   }
 
@@ -131,6 +132,14 @@ class OperationJournalBloc
     AddMultipleOperationJournalEntries event,
     Emitter<OperationJournalState> emit,
   ) async {
+    if (event.entries.isEmpty) {
+      // If there are no entries, no need to do anything or refresh.
+      // Optionally, log this situation if it's unexpected.
+      if (kDebugMode) {
+        print("No entries provided to _onAddMultipleOperationJournalEntries.");
+      }
+      return;
+    }
     try {
       await _repository.addOperationEntries(event.entries);
       // After adding, refresh the journal to show the new entries
@@ -146,6 +155,7 @@ class OperationJournalBloc
         print('Erreur lors de l\'ajout de plusieurs entrées à l\'operation journal: $e');
       }
       // Optionally emit an error state
+      emit(OperationJournalError('Erreur lors de l\'ajout des entrées au journal: ${e.toString()}'));
     }
   }
 
