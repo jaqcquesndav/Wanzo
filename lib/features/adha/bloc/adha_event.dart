@@ -69,3 +69,18 @@ class StartVoiceRecognition extends AdhaEvent {
 class StopVoiceRecognition extends AdhaEvent {
   const StopVoiceRecognition();
 }
+
+/// Modification d'un message existant par l'utilisateur
+class EditMessage extends AdhaEvent {
+  /// ID du message à modifier
+  final String messageId;
+  /// Nouveau contenu du message
+  final String newContent;
+  /// Informations de contexte pour la modification
+  final AdhaContextInfo contextInfo;
+
+  const EditMessage(this.messageId, this.newContent, this.contextInfo);
+
+  @override
+  List<Object?> get props => [messageId, newContent, contextInfo];
+}

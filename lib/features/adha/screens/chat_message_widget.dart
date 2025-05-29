@@ -3,15 +3,18 @@ import '../models/adha_message.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
+import 'package:flutter/services.dart'; // Added for Clipboard
 
 /// Widget pour afficher un message dans la conversation avec Adha
 class ChatMessageWidget extends StatelessWidget {
   /// Le message à afficher
   final AdhaMessage message;
+  final Function(AdhaMessage)? onEditMessage; // Callback for edit action
 
   const ChatMessageWidget({
     super.key,
     required this.message,
+    this.onEditMessage, // Initialize in constructor
   });
 
   @override
@@ -55,6 +58,15 @@ class ChatMessageWidget extends StatelessWidget {
                       color: textColor.withAlpha((0.6 * 255).round()),
                     ),
                   ),
+
+                  // Actions for Adha's messages (Like, Dislike, Copy)
+                  if (!isUser) 
+                    _buildFeedbackActions(context),
+                  
+                  // Action for User's messages (Edit)
+                  if (isUser && onEditMessage != null)
+                    _buildEditAction(context),
+
                 ],
               ),
             ),
@@ -258,6 +270,77 @@ class ChatMessageWidget extends StatelessWidget {
         message.isUserMessage ? Icons.person : Icons.smart_toy,
         size: 18,
         color: message.isUserMessage ? Colors.blue : Colors.purple,
+      ),
+    );
+  }
+
+  /// Construit l'action d'édition pour les messages de l'utilisateur
+  Widget _buildEditAction(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end, // Align to the end for user messages
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            iconSize: 18,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            tooltip: 'Modifier le message',
+            onPressed: () {
+              if (onEditMessage != null) {
+                onEditMessage!(message);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construit les actions de feedback pour les messages d'Adha
+  Widget _buildFeedbackActions(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start, // Align actions to the start for Adha's messages
+        children: [
+          IconButton(
+            icon: const Icon(Icons.thumb_up_outlined),
+            iconSize: 18,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            tooltip: 'J\'aime',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Feedback "J\'aime" enregistré (simulation).')),
+              );
+              // TODO: Implement actual like functionality (e.g., send to backend or update state)
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.thumb_down_outlined),
+            iconSize: 18,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            tooltip: 'Je n\'aime pas',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Feedback "Je n\'aime pas" enregistré (simulation).')),
+              );
+              // TODO: Implement actual dislike functionality
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.content_copy),
+            iconSize: 18,
+            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            tooltip: 'Copier',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: message.content));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Message copié dans le presse-papiers.')),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

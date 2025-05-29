@@ -4,6 +4,7 @@ import 'package:wanzo/core/shared_widgets/wanzo_scaffold.dart';
 import '../bloc/adha_bloc.dart';
 import '../bloc/adha_event.dart';
 import '../bloc/adha_state.dart';
+import '../models/adha_message.dart'; // Added import for AdhaMessage
 import 'chat_message_widget.dart';
 import 'voice_recognition_widget.dart';
 import '../models/adha_context_info.dart'; // Added for AdhaContextInfo
@@ -18,6 +19,7 @@ class AdhaScreen extends StatefulWidget {
 class _AdhaScreenState extends State<AdhaScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  AdhaMessage? _editingMessage; // To store the message being edited
 
   @override
   void initState() {
@@ -109,7 +111,15 @@ class _AdhaScreenState extends State<AdhaScreen> {
                               itemBuilder: (context, index) {
                                 final message =
                                     state.conversation.messages[index];
-                                return ChatMessageWidget(message: message);
+                                return ChatMessageWidget(
+                                  message: message,
+                                  onEditMessage: (editedMessage) {
+                                    setState(() {
+                                      _editingMessage = editedMessage;
+                                      _messageController.text = editedMessage.content;
+                                    });
+                                  },
+                                );
                               },
                             );
                     } else if (state is AdhaConversationsList && state.conversations.isNotEmpty) {
@@ -162,7 +172,7 @@ class _AdhaScreenState extends State<AdhaScreen> {
 
     bool canSendMessage = !isProcessing && !isVoiceActive && _messageController.text.trim().isNotEmpty;
     bool canUseVoice = isConversationActive && !isProcessing;
-    bool canStartNewConversationViaButton = !isProcessing;
+    bool canStartNewConversationViaButton = !isProcessing && _editingMessage == null; // Disable new conversation if editing
     // Placeholder for base context that will be populated by the BLoC
     final AdhaBaseContext placeholderBaseContext = AdhaBaseContext(operationJournalSummary: {}, businessProfile: {});
 
@@ -202,10 +212,26 @@ class _AdhaScreenState extends State<AdhaScreen> {
                            baseContext: placeholderBaseContext, 
                            interactionContext: interactionContext,
                         );
-                        context.read<AdhaBloc>().add(NewConversation(
-                          "", 
-                          contextInfo,
-                        ));
+                        // If editing, send an EditMessage event, otherwise NewConversation
+                        if (_editingMessage != null) {
+                          // Assuming you will create an EditMessage event similar to SendMessage
+                          // For now, let's clear editing state and send as new for simplicity
+                          // Or, you might want a specific BLoC event for editing.
+                          // context.read<AdhaBloc>().add(EditMessage(_editingMessage!.id, _messageController.text.trim(), contextInfo));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('La modification du message n\'est pas encore implémentée dans le BLoC.')),
+                          );
+                          // For now, just clear editing state
+                          setState(() {
+                            _editingMessage = null;
+                            _messageController.clear();
+                          });
+                        } else {
+                          context.read<AdhaBloc>().add(NewConversation(
+                            _messageController.text.trim(), // Use text from controller if any, or empty
+                            contextInfo,
+                          ));
+                        }
                         _messageController.clear();
                       }
                     : null,
@@ -273,10 +299,21 @@ class _AdhaScreenState extends State<AdhaScreen> {
                         baseContext: placeholderBaseContext,
                         interactionContext: interactionContext,
                       );
-                      context.read<AdhaBloc>().add(SendMessage(
-                        value.trim(),
-                        contextInfo: contextInfo,
-                      ));
+                      // If editing, send an EditMessage event, otherwise SendMessage
+                      if (_editingMessage != null) {
+                        context.read<AdhaBloc>().add(EditMessage(_editingMessage!.id, value.trim(), contextInfo));
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   const SnackBar(content: Text('La modification du message n\'est pas encore implémentée dans le BLoC.')),
+                        // );
+                        setState(() {
+                          _editingMessage = null; // Reset editing state
+                        });
+                      } else {
+                        context.read<AdhaBloc>().add(SendMessage(
+                          value.trim(),
+                          contextInfo: contextInfo,
+                        ));
+                      }
                       _messageController.clear();
                       setState(() {});
                     }
@@ -341,10 +378,21 @@ class _AdhaScreenState extends State<AdhaScreen> {
                             baseContext: placeholderBaseContext,
                             interactionContext: interactionContext,
                           );
-                          context.read<AdhaBloc>().add(SendMessage(
-                            message,
-                            contextInfo: contextInfo,
-                          ));
+                          // If editing, send an EditMessage event, otherwise SendMessage
+                          if (_editingMessage != null) {
+                            context.read<AdhaBloc>().add(EditMessage(_editingMessage!.id, message, contextInfo));
+                            //  ScaffoldMessenger.of(context).showSnackBar(
+                            //   const SnackBar(content: Text('La modification du message n\'est pas encore implémentée dans le BLoC.')),
+                            // );
+                            setState(() {
+                              _editingMessage = null; // Reset editing state
+                            });
+                          } else {
+                            context.read<AdhaBloc>().add(SendMessage(
+                              message,
+                              contextInfo: contextInfo,
+                            ));
+                          }
                           _messageController.clear();
                           setState(() {});
                         }

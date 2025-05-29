@@ -32,6 +32,7 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
     on<DeleteConversation>(_onDeleteConversation);
     on<StartVoiceRecognition>(_onStartVoiceRecognition);
     on<StopVoiceRecognition>(_onStopVoiceRecognition);
+    on<EditMessage>(_onEditMessage); // Added handler for EditMessage
   }
 
   // Helper to build AdhaContextInfo
@@ -447,5 +448,92 @@ class AdhaBloc extends Bloc<AdhaEvent, AdhaState> {
       return AdhaMessageType.graph;
     }
     return AdhaMessageType.text;
+  }
+
+  // Gère la modification d\'un message par l\'utilisateur
+  Future<void> _onEditMessage(
+    EditMessage event,
+    Emitter<AdhaState> emit,
+  ) async {
+    if (state is! AdhaConversationActive) {
+      emit(const AdhaError("Impossible de modifier un message : aucune conversation active."));
+      return;
+    }
+
+    final currentState = state as AdhaConversationActive;
+    AdhaConversation currentConversation = currentState.conversation;
+
+    int messageIndex = currentConversation.messages.indexWhere((msg) => msg.id == event.messageId);
+
+    if (messageIndex == -1) {
+      emit(AdhaError("Impossible de modifier le message : ID non trouvé (${event.messageId})."));
+      return;
+    }
+
+    // Create the updated user message
+    final editedUserMessage = currentConversation.messages[messageIndex].copyWith(
+      content: event.newContent,
+      timestamp: DateTime.now(), // Update timestamp to reflect edit time
+    );
+
+    // Create a new list of messages, truncated up to the edited message
+    final List<AdhaMessage> messagesUpToEdited = List.from(currentConversation.messages.take(messageIndex));
+    messagesUpToEdited.add(editedUserMessage); // Add the edited message
+
+    final updatedConversationWithUserMsg = currentConversation.copyWith(
+      messages: messagesUpToEdited,
+      updatedAt: DateTime.now(),
+      // Optionally, update the conversation title if the first message was edited
+      title: messageIndex == 0 ? _generateConversationTitle(event.newContent) : currentConversation.title,
+    );
+
+    emit(AdhaConversationActive(
+      conversation: updatedConversationWithUserMsg,
+      isProcessing: true, // Indicate processing as we will send to API
+      isVoiceActive: currentState.isVoiceActive,
+    ));
+
+    try {
+      // Use the contextInfo from the event.
+      // The EditMessage event requires contextInfo, so it won't be null.
+      final AdhaContextInfo contextInfoForApi = event.contextInfo;
+
+      final responseContent = await adhaRepository.sendMessage(
+        conversationId: currentConversation.id, // Use existing conversation ID
+        message: event.newContent, // Send the new content
+        contextInfo: contextInfoForApi,
+        // Consider adding a parameter to sendMessage like `isEdit: true` 
+        // if the backend needs to specifically know this is a regeneration.
+      );
+
+      final adhaResponseMessage = AdhaMessage(
+        id: _uuid.v4(),
+        content: responseContent,
+        timestamp: DateTime.now(),
+        isUserMessage: false,
+        type: _detectMessageType(responseContent),
+      );
+
+      final finalMessages = List<AdhaMessage>.from(messagesUpToEdited)..add(adhaResponseMessage);
+      final finalConversation = updatedConversationWithUserMsg.copyWith(
+        messages: finalMessages,
+        updatedAt: DateTime.now(),
+      );
+
+      await adhaRepository.saveConversation(finalConversation);
+      _currentlyActiveConversationId = finalConversation.id;
+
+      emit(AdhaConversationActive(
+        conversation: finalConversation,
+        isProcessing: false,
+        isVoiceActive: currentState.isVoiceActive,
+      ));
+
+    } catch (e) {
+      emit(AdhaError("Erreur lors de la modification du message: $e"));
+      // Revert to the state before attempting to send the edited message, 
+      // but keep user's edit locally in the conversation object for the UI.
+      emit(currentState.copyWith(isProcessing: false, conversation: updatedConversationWithUserMsg));
+    }
   }
 }

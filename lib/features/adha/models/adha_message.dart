@@ -29,6 +29,22 @@ class AdhaMessage extends Equatable {
 
   @override
   List<Object?> get props => [id, content, timestamp, isUserMessage, type];
+
+  AdhaMessage copyWith({
+    String? id,
+    String? content,
+    DateTime? timestamp,
+    bool? isUserMessage,
+    AdhaMessageType? type,
+  }) {
+    return AdhaMessage(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      timestamp: timestamp ?? this.timestamp,
+      isUserMessage: isUserMessage ?? this.isUserMessage,
+      type: type ?? this.type,
+    );
+  }
 }
 
 /// Types de contenu de message supportés par Adha
