@@ -304,6 +304,56 @@ class InvoiceService {
                 ),
               ),
               
+              // Display payment status if applicable
+              if (sale.paidAmountInCdf > 0) ...[
+                pw.SizedBox(height: 5),
+                pw.Row(
+                  mainAxisSize: pw.MainAxisSize.min,
+                  mainAxisAlignment: pw.MainAxisAlignment.end, // Align to the right with other totals
+                  children: [
+                    pw.Container(
+                      width: 150,
+                      child: pw.Text(
+                        'Montant Payé:',
+                        style: pw.TextStyle(font: regularFont, fontSize: 10),
+                      ),
+                    ),
+                    pw.Container(
+                      width: 120,
+                      child: pw.Text(
+                        formatCurrency(sale.paidAmountInCdf, currency.code),
+                        style: pw.TextStyle(font: regularFont, fontSize: 10),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+                if (sale.remainingAmountInCdf > 0) ...[
+                  pw.SizedBox(height: 5),
+                  pw.Row(
+                    mainAxisSize: pw.MainAxisSize.min,
+                    mainAxisAlignment: pw.MainAxisAlignment.end, // Align to the right
+                    children: [
+                      pw.Container(
+                        width: 150,
+                        child: pw.Text(
+                          'Solde Dû:',
+                          style: pw.TextStyle(font: regularFont, fontSize: 10),
+                        ),
+                      ),
+                      pw.Container(
+                        width: 120,
+                        child: pw.Text(
+                          formatCurrency(sale.remainingAmountInCdf, currency.code),
+                          style: pw.TextStyle(font: regularFont, fontSize: 10),
+                          textAlign: pw.TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+              
               pw.SizedBox(height: 30),
               
               if (settings.defaultPaymentTerms.isNotEmpty) ...[
@@ -331,7 +381,7 @@ class InvoiceService {
                 child: pw.Column(
                   children: [
                      pw.Text(
-                        'Merci pour votre confiance!',
+                        'Merci pour votre confiance, merci pour votre achat!',
                         style: pw.TextStyle(
                           font: boldFont,
                           fontSize: 12,
@@ -669,6 +719,68 @@ class InvoiceService {
               
               pw.SizedBox(height: 10),
               
+              // Montant Reçu
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'Montant Reçu: ',
+                    style: pw.TextStyle(font: boldFont, fontSize: 10),
+                  ),
+                  pw.SizedBox(
+                    width: 80, // Adjusted width
+                    child: pw.Text(
+                      formatCurrency(sale.paidAmountInCdf, currency.code),
+                      style: pw.TextStyle(font: boldFont, fontSize: 10),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 3),
+              // Total Vente (for context)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'Total Vente: ',
+                    style: pw.TextStyle(font: regularFont, fontSize: 8),
+                  ),
+                  pw.SizedBox(
+                    width: 80, // Adjusted width
+                    child: pw.Text(
+                      formatCurrency(total, currency.code), // 'total' is the full sale amount calculated in this function
+                      style: pw.TextStyle(font: regularFont, fontSize: 8),
+                      textAlign: pw.TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Solde Restant (if any)
+              if (sale.remainingAmountInCdf > 0) ...[
+                pw.SizedBox(height: 3),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'Solde Restant: ',
+                      style: pw.TextStyle(font: regularFont, fontSize: 8),
+                    ),
+                    pw.SizedBox(
+                      width: 80, // Adjusted width
+                      child: pw.Text(
+                        formatCurrency(sale.remainingAmountInCdf, currency.code),
+                        style: pw.TextStyle(font: regularFont, fontSize: 8),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              
+              pw.SizedBox(height: 10),
+              
               if (settings.defaultInvoiceNotes.isNotEmpty) ...[
                 pw.Text(
                   settings.defaultInvoiceNotes,
@@ -679,7 +791,7 @@ class InvoiceService {
               ],
               
               pw.Text(
-                'Merci pour votre achat!',
+                'Merci pour votre confiance, merci pour votre achat!',
                 style: pw.TextStyle(font: boldFont, fontSize: 9),
                 textAlign: pw.TextAlign.center,
               ),

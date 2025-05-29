@@ -15,6 +15,8 @@ import 'package:wanzo/features/settings/presentation/cubit/currency_settings_cub
 import 'package:wanzo/features/invoice/services/invoice_service.dart';
 import 'package:pdf/pdf.dart'; // Added import
 import 'package:printing/printing.dart'; // Added import for Printing
+import 'package:share_plus/share_plus.dart'; // Added for Share.shareXFiles
+import 'package:cross_file/cross_file.dart'; // Added for XFile
 
 /// Écran de détails d'une vente
 class SaleDetailsScreen extends StatelessWidget {
@@ -76,9 +78,11 @@ class SaleDetailsScreen extends StatelessWidget {
               } else if (value == "delete") {
                 _showDeleteConfirmation(context);
               } else if (value == "print") {
-                _printOrShareInvoice(context, print: true);
+                // _printOrShareInvoice(context, print: true);
+                _showDocumentTypeSelectionDialog(context, isPrintAction: true);
               } else if (value == "share") {
-                _printOrShareInvoice(context, print: false);
+                // _printOrShareInvoice(context, print: false);
+                _showDocumentTypeSelectionDialog(context, isPrintAction: false);
               }
             },
             itemBuilder: (context) => [
@@ -317,7 +321,8 @@ class SaleDetailsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ElevatedButton.icon(
-                onPressed: () => _printOrShareInvoice(context, print: true),
+                // onPressed: () => _printOrShareInvoice(context, print: true),
+                onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: true),
                 icon: const Icon(Icons.print),
                 label: const Text("Imprimer"),
                 style: ElevatedButton.styleFrom(
@@ -326,7 +331,8 @@ class SaleDetailsScreen extends StatelessWidget {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () => _printOrShareInvoice(context, print: false),
+                // onPressed: () => _printOrShareInvoice(context, print: false),
+                onPressed: () => _showDocumentTypeSelectionDialog(context, isPrintAction: false),
                 icon: const Icon(Icons.share),
                 label: const Text("Partager"),
                 style: ElevatedButton.styleFrom(
@@ -393,8 +399,39 @@ class SaleDetailsScreen extends StatelessWidget {
     );
   }
 
+  /// Shows a dialog to select document type (Invoice or Receipt)
+  void _showDocumentTypeSelectionDialog(BuildContext context, {required bool isPrintAction}) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isPrintAction ? "Imprimer le document" : "Partager le document"),
+        content: const Text("Quel type de document souhaitez-vous générer ?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _printOrShareInvoice(context, print: isPrintAction, documentType: 'invoice');
+            },
+            child: const Text("Facture"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _printOrShareInvoice(context, print: isPrintAction, documentType: 'receipt');
+            },
+            child: const Text("Ticket de caisse"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Annuler"),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Imprime la facture ou la partage
-  void _printOrShareInvoice(BuildContext context, {required bool print}) async {
+  void _printOrShareInvoice(BuildContext context, {required bool print, required String documentType}) async {
     final invoiceService = InvoiceService();
     // The sale object already contains all necessary currency information.
     // The InvoiceService is expected to use sale.transactionCurrencyCode, 
@@ -431,23 +468,46 @@ class SaleDetailsScreen extends StatelessWidget {
       // should be updated to use these fields (e.g., sale.transactionCurrencyCode,
       // sale.totalAmountInTransactionCurrency, sale.items[n].currencyCode, etc.)
       // The legacySettings are passed for template formatting (prefix, notes etc.)
-      if (sale.paymentMethod == 'Crédit' && sale.status != SaleStatus.completed) {
-         pdfPath = await invoiceService.generateInvoicePdf(sale, legacySettings);
+
+      if (documentType == 'invoice') {
+        pdfPath = await invoiceService.generateInvoicePdf(sale, legacySettings);
+      } else if (documentType == 'receipt') {
+        pdfPath = await invoiceService.generateReceiptPdf(sale, legacySettings);
       } else {
-         pdfPath = await invoiceService.generateReceiptPdf(sale, legacySettings);
+        // Should not happen with the dialog, but good to have a fallback or error
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Type de document non valide.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
       
-      if (pdfPath.isNotEmpty && context.mounted) {
+      // Corrected condition: Removed pdfPath != null as it was deemed redundant by the analyzer
+      if (pdfPath.isNotEmpty && context.mounted) { 
         if (print) {
-          // await invoiceService.previewDocument(pdfPath); // Or printDocument directly if preferred
           await Printing.layoutPdf(
-            onLayout: (PdfPageFormat format) async => File(pdfPath!).readAsBytes(),
+            onLayout: (PdfPageFormat format) async => File(pdfPath!).readAsBytes(), // pdfPath is not null here due to isNotEmpty check
+            name: documentType == 'invoice' ? 'Invoice_${sale.id.substring(0,8)}' : 'Receipt_${sale.id.substring(0,8)}',
           );
         } else {
-          // For sharing, customer phone might be needed if not in sale object or if it can be different
-          // Assuming sale.customerPhoneNumber exists or can be retrieved if necessary for sharing.
-          // For now, InvoiceService.shareInvoice is expected to handle this.
-          await invoiceService.shareInvoice(sale, legacySettings /*, customerPhoneNumber: sale.customerPhoneNumberIfNeeded */);
+          // Share the PDF that was actually generated by the logic above (invoice or receipt)
+          final xFile = XFile(pdfPath); // pdfPath is not null here due to isNotEmpty check
+          String subjectText = documentType == 'invoice' 
+              ? 'Facture N° ${sale.id.substring(0,8)}' 
+              : 'Ticket N° ${sale.id.substring(0,8)}';
+          String bodyText = documentType == 'invoice' 
+              ? 'Voici votre facture N° ${sale.id.substring(0,8)} concernant ${sale.items.first.productName}.'
+              : 'Voici votre ticket de caisse N° ${sale.id.substring(0,8)} concernant ${sale.items.first.productName}.';
+
+          await Share.shareXFiles(
+            [xFile],
+            text: bodyText,
+            subject: subjectText,
+          );
         }
       } else if (context.mounted) {
          ScaffoldMessenger.of(context).showSnackBar(
