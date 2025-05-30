@@ -19,18 +19,18 @@ class SaleAdapter extends TypeAdapter<Sale> {
     return Sale(
       id: fields[0] as String,
       date: fields[1] as DateTime,
-      customerId: fields[2] as String,
+      customerId: fields[2] as String?,
       customerName: fields[3] as String,
       items: (fields[4] as List).cast<SaleItem>(),
       totalAmountInCdf: fields[5] as double,
       paidAmountInCdf: fields[6] as double,
-      paymentMethod: fields[7] as String,
+      paymentMethod: fields[7] as String?,
       status: fields[8] as SaleStatus,
-      notes: fields[9] as String,
-      transactionCurrencyCode: fields[10] as String,
-      transactionExchangeRate: fields[11] as double,
-      totalAmountInTransactionCurrency: fields[12] as double,
-      paidAmountInTransactionCurrency: fields[13] as double,
+      notes: fields[9] as String?,
+      transactionCurrencyCode: fields[10] as String?,
+      transactionExchangeRate: fields[11] as double?,
+      totalAmountInTransactionCurrency: fields[12] as double?,
+      paidAmountInTransactionCurrency: fields[13] as double?,
     );
   }
 
@@ -134,43 +134,71 @@ class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
 
 Sale _$SaleFromJson(Map<String, dynamic> json) => Sale(
       id: json['id'] as String,
+      localId: json['localId'] as String?,
       date: DateTime.parse(json['date'] as String),
-      customerId: json['customerId'] as String,
+      dueDate: json['dueDate'] == null
+          ? null
+          : DateTime.parse(json['dueDate'] as String),
+      customerId: json['customerId'] as String?,
       customerName: json['customerName'] as String,
       items: (json['items'] as List<dynamic>)
           .map((e) => SaleItem.fromJson(e as Map<String, dynamic>))
           .toList(),
       totalAmountInCdf: (json['totalAmountInCdf'] as num).toDouble(),
       paidAmountInCdf: (json['paidAmountInCdf'] as num).toDouble(),
-      paymentMethod: json['paymentMethod'] as String,
+      totalAmountInUsd: (json['totalAmountInUsd'] as num?)?.toDouble(),
+      paidAmountInUsd: (json['paidAmountInUsd'] as num?)?.toDouble(),
+      paymentMethod: json['paymentMethod'] as String?,
       status: $enumDecode(_$SaleStatusEnumMap, json['status']),
+      invoiceNumber: json['invoiceNumber'] as String?,
       notes: json['notes'] as String? ?? '',
-      transactionCurrencyCode: json['transactionCurrencyCode'] as String,
+      transactionCurrencyCode: json['transactionCurrencyCode'] as String?,
       transactionExchangeRate:
-          (json['transactionExchangeRate'] as num).toDouble(),
+          (json['transactionExchangeRate'] as num?)?.toDouble(),
       totalAmountInTransactionCurrency:
-          (json['totalAmountInTransactionCurrency'] as num).toDouble(),
+          (json['totalAmountInTransactionCurrency'] as num?)?.toDouble(),
       paidAmountInTransactionCurrency:
-          (json['paidAmountInTransactionCurrency'] as num).toDouble(),
+          (json['paidAmountInTransactionCurrency'] as num?)?.toDouble(),
+      userId: json['userId'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$SaleToJson(Sale instance) => <String, dynamic>{
       'id': instance.id,
+      if (instance.localId case final value?) 'localId': value,
       'date': instance.date.toIso8601String(),
-      'customerId': instance.customerId,
+      if (instance.dueDate?.toIso8601String() case final value?)
+        'dueDate': value,
+      if (instance.customerId case final value?) 'customerId': value,
       'customerName': instance.customerName,
       'items': instance.items.map((e) => e.toJson()).toList(),
       'totalAmountInCdf': instance.totalAmountInCdf,
       'paidAmountInCdf': instance.paidAmountInCdf,
-      'paymentMethod': instance.paymentMethod,
+      if (instance.totalAmountInUsd case final value?)
+        'totalAmountInUsd': value,
+      if (instance.paidAmountInUsd case final value?) 'paidAmountInUsd': value,
+      if (instance.paymentMethod case final value?) 'paymentMethod': value,
       'status': _$SaleStatusEnumMap[instance.status]!,
-      'notes': instance.notes,
-      'transactionCurrencyCode': instance.transactionCurrencyCode,
-      'transactionExchangeRate': instance.transactionExchangeRate,
-      'totalAmountInTransactionCurrency':
-          instance.totalAmountInTransactionCurrency,
-      'paidAmountInTransactionCurrency':
-          instance.paidAmountInTransactionCurrency,
+      if (instance.invoiceNumber case final value?) 'invoiceNumber': value,
+      if (instance.notes case final value?) 'notes': value,
+      if (instance.transactionCurrencyCode case final value?)
+        'transactionCurrencyCode': value,
+      if (instance.transactionExchangeRate case final value?)
+        'transactionExchangeRate': value,
+      if (instance.totalAmountInTransactionCurrency case final value?)
+        'totalAmountInTransactionCurrency': value,
+      if (instance.paidAmountInTransactionCurrency case final value?)
+        'paidAmountInTransactionCurrency': value,
+      if (instance.userId case final value?) 'userId': value,
+      if (instance.createdAt?.toIso8601String() case final value?)
+        'createdAt': value,
+      if (instance.updatedAt?.toIso8601String() case final value?)
+        'updatedAt': value,
     };
 
 const _$SaleStatusEnumMap = {

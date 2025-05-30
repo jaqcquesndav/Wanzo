@@ -44,10 +44,10 @@ class WanzoScaffold extends StatelessWidget {
         route: '/dashboard',
       ),
       BottomNavItem(
-        icon: Icons.shopping_cart,
-        activeIcon: Icons.shopping_cart_outlined,
-        label: 'Ventes',
-        route: '/sales',
+        icon: Icons.swap_horiz, // Changed icon to represent operations
+        activeIcon: Icons.swap_horiz_outlined, // Changed icon
+        label: 'Opérations', // Changed label from 'Ventes' to 'Opérations'
+        route: '/operations', // Changed route from '/sales' to '/operations'
       ),
       BottomNavItem(
         icon: Icons.inventory,
@@ -90,7 +90,7 @@ class WanzoScaffold extends StatelessWidget {
                     context.go('/dashboard');
                     break;
                   case 1:
-                    context.go('/sales');
+                    context.go('/operations'); // Changed route from '/sales' to '/operations'
                     break;
                   case 2:
                     context.go('/inventory');

@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:wanzo/l10n/app_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Ensure this is not duplicated
 
 import 'package:wanzo/utils/theme.dart';
 
@@ -12,11 +13,13 @@ import 'package:wanzo/core/services/api_client.dart';
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
 import 'package:wanzo/core/utils/hive_setup.dart';
+import 'package:wanzo/core/services/image_upload_service.dart'; // Added
 
 import 'package:wanzo/core/services/sync_service.dart';
 import 'package:wanzo/core/services/product_api_service.dart';
 import 'package:wanzo/core/services/customer_api_service.dart';
 import 'package:wanzo/core/services/sale_api_service.dart';
+import 'package:wanzo/features/expenses/services/expense_api_service.dart'; // Added import for ExpenseApiService
 
 import 'package:wanzo/features/auth/services/auth0_service.dart';
 import 'package:wanzo/features/auth/services/offline_auth_service.dart';
@@ -55,10 +58,12 @@ import 'package:wanzo/features/dashboard/bloc/dashboard_bloc.dart';
 
 import 'package:wanzo/features/settings/bloc/settings_event.dart';
 import 'package:wanzo/features/settings/bloc/settings_state.dart' as settings_bloc_state;
-import 'package:wanzo/features/settings/models/settings.dart' as settings_models;
+import 'package:wanzo/features/settings/models/settings.dart' as settings_models; // Ensure this import and alias are present
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env"); // Load .env file first
+  
   await Hive.initFlutter();
 
   await initializeHiveAdapters();
@@ -76,6 +81,8 @@ Future<void> main() async {
   final productApiService = ProductApiService(apiClient: apiClient);
   final customerApiService = CustomerApiService(apiClient: apiClient);
   final saleApiService = SaleApiService(apiClient: apiClient);
+  final imageUploadService = ImageUploadService(); 
+  final expenseApiService = ExpenseApiServiceImpl(apiClient, imageUploadService);
 
   final offlineAuthService = OfflineAuthService(
     secureStorage: secureStorage,
@@ -117,7 +124,7 @@ Future<void> main() async {
   final operationJournalRepository = OperationJournalRepository();
   await operationJournalRepository.init();
 
-  final expenseRepository = ExpenseRepository();
+  final expenseRepository = ExpenseRepository(expenseApiService: expenseApiService); // Passed expenseApiService
   await expenseRepository.init();
 
   final financingRepository = FinancingRepository();
@@ -166,7 +173,9 @@ Future<void> main() async {
   
   final expenseBloc = ExpenseBloc(
       expenseRepository: expenseRepository,
-      operationJournalBloc: operationJournalBloc);
+      operationJournalBloc: operationJournalBloc,
+      // expenseApiService: expenseApiService, // expenseApiService is now in ExpenseRepository
+      );
   
   final subscriptionBloc =
       SubscriptionBloc(subscriptionRepository: subscriptionRepository);
@@ -215,6 +224,8 @@ Future<void> main() async {
     financingRepository: financingRepository,
     notificationRepository: notificationRepository, // Added
     transactionRepository: transactionRepository, // Added
+    // Pass API services that might be needed directly by widgets or for on-the-fly repo instantiation
+    expenseApiService: expenseApiService, // Added ExpenseApiService
   ));
 }
 
@@ -249,6 +260,7 @@ class MyApp extends StatelessWidget {
   final FinancingRepository financingRepository;
   final NotificationRepository notificationRepository; // Added
   final TransactionRepository transactionRepository; // Added
+  final ExpenseApiService expenseApiService; // Added ExpenseApiService field
 
   const MyApp({
     super.key,
@@ -281,26 +293,28 @@ class MyApp extends StatelessWidget {
     required this.financingRepository,
     required this.notificationRepository, // Added
     required this.transactionRepository, // Added
+    required this.expenseApiService, // Added ExpenseApiService to constructor
   });
 
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<SettingsRepository>.value(value: settingsRepository),
-        RepositoryProvider<AuthRepository>.value(value: authRepository),
-        RepositoryProvider<InventoryRepository>.value(value: inventoryRepository),
-        RepositoryProvider<SalesRepository>.value(value: salesRepository),
-        RepositoryProvider<AdhaRepository>.value(value: adhaRepository),
-        RepositoryProvider<CustomerRepository>.value(value: customerRepository),
-        RepositoryProvider<SupplierRepository>.value(value: supplierRepository),
-        RepositoryProvider<OperationJournalRepository>.value(value: operationJournalRepository),
-        RepositoryProvider<ExpenseRepository>.value(value: expenseRepository),
-        RepositoryProvider<SubscriptionRepository>.value(value: subscriptionRepository),
-        RepositoryProvider<FinancingRepository>.value(value: financingRepository),
-        RepositoryProvider<NotificationRepository>.value(value: notificationRepository), // Added
-        RepositoryProvider<TransactionRepository>.value(value: transactionRepository), // Added
-        RepositoryProvider<CurrencyService>.value(value: currencyService), // Added
+        RepositoryProvider.value(value: authRepository),
+        RepositoryProvider.value(value: inventoryRepository),
+        RepositoryProvider.value(value: salesRepository),
+        RepositoryProvider.value(value: adhaRepository),
+        RepositoryProvider.value(value: customerRepository),
+        RepositoryProvider.value(value: supplierRepository),
+        RepositoryProvider.value(value: settingsRepository),
+        RepositoryProvider.value(value: operationJournalRepository),
+        RepositoryProvider.value(value: expenseRepository),
+        RepositoryProvider.value(value: subscriptionRepository),
+        RepositoryProvider.value(value: financingRepository),
+        RepositoryProvider.value(value: notificationRepository), 
+        RepositoryProvider.value(value: transactionRepository), 
+        RepositoryProvider.value(value: expenseApiService),
+        RepositoryProvider<CurrencyService>.value(value: currencyService),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -318,45 +332,43 @@ class MyApp extends StatelessWidget {
           BlocProvider.value(value: dashboardBloc),
           BlocProvider.value(value: notificationsBloc),
           BlocProvider<CurrencySettingsCubit>(
-            create: (context) => CurrencySettingsCubit(currencyService)..loadSettings(), 
+            create: (context) => CurrencySettingsCubit(currencyService)..loadSettings(),
           ),
         ],
         child: BlocBuilder<SettingsBloc, settings_bloc_state.SettingsState>(
           builder: (context, settingsState) {
-            ThemeMode themeMode = ThemeMode.system;
-            // Check if the state is SettingsLoaded or SettingsUpdated and has settings
-            if (settingsState is settings_bloc_state.SettingsLoaded || settingsState is settings_bloc_state.SettingsUpdated) {
-              final currentSettings = (settingsState is settings_bloc_state.SettingsLoaded)
-                  ? settingsState.settings
-                  : (settingsState as settings_bloc_state.SettingsUpdated).settings;
-              switch (currentSettings.themeMode) {
-                case settings_models.AppThemeMode.light:
-                  themeMode = ThemeMode.light;
-                  break;
-                case settings_models.AppThemeMode.dark:
-                  themeMode = ThemeMode.dark;
-                  break;
-                case settings_models.AppThemeMode.system:
-                  themeMode = ThemeMode.system;
-                  break;
-              }
-            }
+            settings_models.AppThemeMode themeMode = settings_models.AppThemeMode.light; // Default
+            Locale? currentLocale;
 
-            Locale currentLocale = const Locale('fr'); // Default to French
-            if (settingsState is settings_bloc_state.SettingsLoaded || settingsState is settings_bloc_state.SettingsUpdated) {
-              final currentSettings = (settingsState is settings_bloc_state.SettingsLoaded)
-                  ? settingsState.settings
-                  : (settingsState as settings_bloc_state.SettingsUpdated).settings;
-              currentLocale = Locale(currentSettings.language); // Set locale from settings
+            if (settingsState is settings_bloc_state.SettingsLoaded) {
+              themeMode = settingsState.settings.themeMode;
+              if (settingsState.settings.language.isNotEmpty) {
+                currentLocale = Locale(settingsState.settings.language);
+              }
+            } else if (settingsState is settings_bloc_state.SettingsInitial) {
+               context.read<SettingsBloc>().add(const LoadSettings());
+            }
+            
+            ThemeMode materialThemeMode;
+            switch (themeMode) {
+              case settings_models.AppThemeMode.light:
+                materialThemeMode = ThemeMode.light;
+                break;
+              case settings_models.AppThemeMode.dark:
+                materialThemeMode = ThemeMode.dark;
+                break;
+              case settings_models.AppThemeMode.system:
+                materialThemeMode = ThemeMode.system;
+                break;
             }
 
             return MaterialApp.router(
-              routerConfig: appRouter.router,
+              debugShowCheckedModeBanner: false,
               title: 'Wanzo',
               theme: WanzoTheme.lightTheme,
               darkTheme: WanzoTheme.darkTheme,
-              themeMode: themeMode,
-              locale: currentLocale, // Use the locale from settings
+              themeMode: materialThemeMode,
+              locale: currentLocale,
               localizationsDelegates: const [
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,
@@ -364,11 +376,28 @@ class MyApp extends StatelessWidget {
                 GlobalCupertinoLocalizations.delegate,
               ],
               supportedLocales: AppLocalizations.supportedLocales,
+              routerConfig: appRouter.router,
             );
           },
         ),
       ),
     );
+  }
+}
+
+class AuthObserver extends NavigatorObserver {
+  final AuthBloc authBloc;
+
+  AuthObserver(this.authBloc);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    authBloc.add(const AuthCheckRequested()); // Corrected: Use AuthCheckRequested
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    authBloc.add(const AuthCheckRequested()); // Corrected: Use AuthCheckRequested
   }
 }
 

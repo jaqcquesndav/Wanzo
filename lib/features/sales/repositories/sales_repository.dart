@@ -2,6 +2,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/sale.dart';
+import '../models/sale_item.dart'; // Import SaleItem and SaleItemType
 
 /// Repository pour la gestion des ventes
 class SalesRepository {
@@ -43,21 +44,31 @@ class SalesRepository {
 
   /// Ajouter une nouvelle vente
   Future<Sale> addSale(Sale sale) async {
+    final newSaleId = _uuid.v4();
     final newSale = Sale(
-      id: _uuid.v4(),
+      id: newSaleId, // Use the generated ID
       date: sale.date,
       customerId: sale.customerId,
       customerName: sale.customerName,
-      items: sale.items, // Assuming SaleItem objects within sale.items are already correctly populated with new currency fields
-      totalAmountInCdf: sale.totalAmountInCdf, // Use new field
-      paidAmountInCdf: sale.paidAmountInCdf, // Use new field
+      items: sale.items.map((item) {
+        // TODO: [ITEM_TYPE_INTEGRATION] Ensure stock is only updated for products
+        if (item.itemType == SaleItemType.product) {
+          // Here, you would typically interact with an InventoryRepository or similar
+          // to update the stock quantity for item.productId by item.quantity.
+          // For now, we'll just log it as a placeholder for the actual stock update logic.
+          print('Stock update needed for product ${item.productId}: reduce by ${item.quantity}');
+        }
+        return item; // Return the item, possibly after stock update
+      }).toList(),
+      totalAmountInCdf: sale.totalAmountInCdf,
+      paidAmountInCdf: sale.paidAmountInCdf,
       paymentMethod: sale.paymentMethod,
       status: sale.status,
       notes: sale.notes,
-      transactionCurrencyCode: sale.transactionCurrencyCode, // Add new field
-      transactionExchangeRate: sale.transactionExchangeRate, // Add new field
-      totalAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency, // Add new field
-      paidAmountInTransactionCurrency: sale.paidAmountInTransactionCurrency, // Add new field
+      transactionCurrencyCode: sale.transactionCurrencyCode,
+      transactionExchangeRate: sale.transactionExchangeRate,
+      totalAmountInTransactionCurrency: sale.totalAmountInTransactionCurrency,
+      paidAmountInTransactionCurrency: sale.paidAmountInTransactionCurrency,
     );
     
     await _salesBox.put(newSale.id, newSale);

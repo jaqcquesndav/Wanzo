@@ -1,29 +1,38 @@
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
-import 'package:json_annotation/json_annotation.dart'; // Added import
+import 'package:json_annotation/json_annotation.dart';
 
 part 'sale_item.g.dart';
 
-/// Modèle représentant un élément de vente (un produit vendu avec sa quantité et son prix)
+@HiveType(typeId: 50) // New unique typeId for SaleItemType enum
+enum SaleItemType {
+  @HiveField(0)
+  product,
+
+  @HiveField(1)
+  service,
+}
+
+/// Modèle représentant un élément de vente (un produit ou service vendu avec sa quantité et son prix)
 @HiveType(typeId: 41) // Unique typeId for SaleItem
-@JsonSerializable(explicitToJson: true) // Added annotation
+@JsonSerializable(explicitToJson: true)
 class SaleItem extends Equatable {
-  /// Identifiant du produit
+  /// Identifiant du produit ou service
   @HiveField(0)
   final String productId;
-  
-  /// Nom du produit
+
+  /// Nom du produit ou service
   @HiveField(1)
   final String productName;
-  
+
   /// Quantité vendue
   @HiveField(2)
   final int quantity;
-  
+
   /// Prix unitaire (in transaction currency)
   @HiveField(3)
   final double unitPrice;
-  
+
   /// Montant total pour cet article (prix unitaire * quantité, in transaction currency)
   @HiveField(4)
   final double totalPrice;
@@ -44,7 +53,11 @@ class SaleItem extends Equatable {
   /// Montant total pour cet article en CDF
   @HiveField(8)
   final double totalPriceInCdf;
-  
+
+  /// Type d'élément (produit ou service)
+  @HiveField(9) // New HiveField index
+  final SaleItemType itemType;
+
   /// Constructeur
   const SaleItem({
     required this.productId,
@@ -56,12 +69,12 @@ class SaleItem extends Equatable {
     required this.exchangeRate,
     required this.unitPriceInCdf,
     required this.totalPriceInCdf,
+    required this.itemType, // Added itemType
   });
-  
-  // Added fromJson factory and toJson method for JsonSerializable
+
   factory SaleItem.fromJson(Map<String, dynamic> json) => _$SaleItemFromJson(json);
   Map<String, dynamic> toJson() => _$SaleItemToJson(this);
-  
+
   /// Méthode pour créer un item avec le total calculé automatiquement
   factory SaleItem.withCalculatedTotal({
     required String productId,
@@ -70,6 +83,7 @@ class SaleItem extends Equatable {
     required double unitPrice,
     required String currencyCode,
     required double exchangeRate, // Rate to convert currencyCode to CDF
+    required SaleItemType itemType, // Added itemType
   }) {
     final calculatedTotalPrice = quantity * unitPrice;
     return SaleItem(
@@ -82,9 +96,10 @@ class SaleItem extends Equatable {
       exchangeRate: exchangeRate,
       unitPriceInCdf: unitPrice * exchangeRate,
       totalPriceInCdf: calculatedTotalPrice * exchangeRate,
+      itemType: itemType, // Added itemType
     );
   }
-  
+
   /// Méthode pour créer une copie de cet item avec des valeurs modifiées
   SaleItem copyWith({
     String? productId,
@@ -96,6 +111,7 @@ class SaleItem extends Equatable {
     double? exchangeRate,
     double? unitPriceInCdf,
     double? totalPriceInCdf,
+    SaleItemType? itemType, // Added itemType
   }) {
     return SaleItem(
       productId: productId ?? this.productId,
@@ -107,19 +123,21 @@ class SaleItem extends Equatable {
       exchangeRate: exchangeRate ?? this.exchangeRate,
       unitPriceInCdf: unitPriceInCdf ?? this.unitPriceInCdf,
       totalPriceInCdf: totalPriceInCdf ?? this.totalPriceInCdf,
+      itemType: itemType ?? this.itemType, // Added itemType
     );
   }
-  
+
   @override
   List<Object?> get props => [
-    productId, 
-    productName, 
-    quantity, 
-    unitPrice, 
-    totalPrice,
-    currencyCode,
-    exchangeRate,
-    unitPriceInCdf,
-    totalPriceInCdf,
-  ];
+        productId,
+        productName,
+        quantity,
+        unitPrice,
+        totalPrice,
+        currencyCode,
+        exchangeRate,
+        unitPriceInCdf,
+        totalPriceInCdf,
+        itemType, // Added itemType
+      ];
 }

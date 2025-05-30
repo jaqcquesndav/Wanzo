@@ -1483,564 +1483,564 @@ class AppLocalizationsSw extends AppLocalizations {
   String get monthJul => 'Julai';
 
   @override
-  String get monthAug => 'August';
+  String get monthAug => 'Agosti';
 
   @override
-  String get monthSep => 'September';
+  String get monthSep => 'Septemba';
 
   @override
-  String get monthOct => 'October';
+  String get monthOct => 'Oktoba';
 
   @override
-  String get monthNov => 'November';
+  String get monthNov => 'Novemba';
 
   @override
-  String get monthDec => 'December';
+  String get monthDec => 'Desemba';
 
   @override
-  String get changeLogo => 'Change Logo';
+  String get changeLogo => 'Badilisha Nembo';
 
   @override
-  String get companyName => 'Company Name';
+  String get companyName => 'Jina la Kampuni';
 
   @override
-  String get companyNameRequired => 'Company name is required';
+  String get companyNameRequired => 'Jina la kampuni linahitajika';
 
   @override
-  String get email => 'Email';
+  String get email => 'Barua Pepe';
 
   @override
-  String get invalidEmail => 'Invalid email address';
+  String get invalidEmail => 'Anwani ya barua pepe si sahihi';
 
   @override
-  String get phoneNumber => 'Phone Number';
+  String get phoneNumber => 'Nambari ya Simu';
 
   @override
-  String get address => 'Address';
+  String get address => 'Anwani';
 
   @override
   String get rccm => 'RCCM';
 
   @override
-  String get rccmHelperText => 'Trade and Personal Property Credit Register';
+  String get rccmHelperText => 'Rejista ya Biashara na Mikopo ya Mali Binafsi';
 
   @override
-  String get taxId => 'Tax ID';
+  String get taxId => 'Namba ya Utambulisho wa Mlipakodi (NIM)';
 
   @override
-  String get taxIdHelperText => 'National Tax Identification Number';
+  String get taxIdHelperText => 'Nambari ya Utambulisho wa Mlipakodi ya Kitaifa';
 
   @override
-  String get website => 'Website';
+  String get website => 'Tovuti';
 
   @override
-  String get invoiceSettings => 'Invoice Settings';
+  String get invoiceSettings => 'Mipangilio ya Ankara';
 
   @override
-  String get invoiceSettingsSubtitle => 'Manage your invoice preferences';
+  String get invoiceSettingsSubtitle => 'Dhibiti mapendeleo yako ya ankara';
 
   @override
-  String get defaultInvoiceFooter => 'Default Invoice Footer';
+  String get defaultInvoiceFooter => 'Kijachini Chaguo-msingi cha Ankara';
 
   @override
-  String get defaultInvoiceFooterHint => 'e.g., Thank you for your business!';
+  String get defaultInvoiceFooterHint => 'k.m., Asante kwa biashara yako!';
 
   @override
-  String get showTotalInWords => 'Show Total in Words';
+  String get showTotalInWords => 'Onyesha Jumla kwa Maneno';
 
   @override
-  String get exchangeRate => 'Exchange Rate (USD to Local)';
+  String get exchangeRate => 'Kiwango cha Ubadilishaji (USD kwenda Sarafu ya Ndani)';
 
   @override
-  String get inventorySettings => 'Inventory Settings';
+  String get inventorySettings => 'Mipangilio ya Mali';
 
   @override
-  String get inventorySettingsSubtitle => 'Manage your inventory preferences';
+  String get inventorySettingsSubtitle => 'Dhibiti mapendeleo yako ya mali';
 
   @override
-  String get generalSettings => 'General Settings';
+  String get generalSettings => 'Mipangilio ya Jumla';
 
   @override
-  String get defaultCategory => 'Default Category';
+  String get defaultCategory => 'Kategoria Chaguo-msingi';
 
   @override
-  String get defaultCategoryRequired => 'Default category is required';
+  String get defaultCategoryRequired => 'Kategoria chaguo-msingi inahitajika';
 
   @override
-  String get lowStockAlert => 'Low Stock Alert';
+  String get lowStockAlert => 'Tahadhari ya Hisa Chini';
 
   @override
-  String get lowStockAlertHint => 'Quantity at which to trigger alert';
+  String get lowStockAlertHint => 'Kiasi ambacho tahadhari itatolewa';
 
   @override
-  String get trackInventory => 'Track Inventory';
+  String get trackInventory => 'Fuatilia Mali';
 
   @override
-  String get allowNegativeStock => 'Allow Negative Stock';
+  String get allowNegativeStock => 'Ruhusu Hisa Hasi';
 
   @override
-  String get saveChanges => 'Save Changes';
+  String get saveChanges => 'Hifadhi Mabadiliko';
 
   @override
-  String get settingsUpdatedSuccessfully => 'Settings updated successfully';
+  String get settingsUpdatedSuccessfully => 'Mipangilio imesasishwa kikamilifu';
 
   @override
-  String get errorUpdatingSettings => 'Error updating settings';
+  String get errorUpdatingSettings => 'Hitilafu kusasisha mipangilio';
 
   @override
-  String get changesSaved => 'Changes saved successfully!';
+  String get changesSaved => 'Mabadiliko yamehifadhiwa kikamilifu!';
 
   @override
-  String get errorSavingChanges => 'Error saving changes';
+  String get errorSavingChanges => 'Hitilafu kuhifadhi mabadiliko';
 
   @override
-  String get selectTheme => 'Select Theme';
+  String get selectTheme => 'Chagua Mandhari';
 
   @override
-  String get selectLanguage => 'Select Language';
+  String get selectLanguage => 'Chagua Lugha';
 
   @override
-  String get selectDateFormat => 'Select Date Format';
+  String get selectDateFormat => 'Chagua Umbizo la Tarehe';
 
   @override
-  String get displaySettings => 'Display Settings';
+  String get displaySettings => 'Mipangilio ya Onyesho';
 
   @override
-  String get displaySettingsDescription => 'Manage display settings.';
+  String get displaySettingsDescription => 'Dhibiti mipangilio ya onyesho.';
 
   @override
-  String get companySettings => 'Company Settings';
+  String get companySettings => 'Mipangilio ya Kampuni';
 
   @override
-  String get companySettingsDescription => 'Manage company settings.';
+  String get companySettingsDescription => 'Dhibiti mipangilio ya kampuni.';
 
   @override
-  String get invoiceSettingsDescription => 'Manage invoice settings.';
+  String get invoiceSettingsDescription => 'Dhibiti mipangilio ya ankara.';
 
   @override
-  String get inventorySettingsDescription => 'Manage inventory settings.';
+  String get inventorySettingsDescription => 'Dhibiti mipangilio ya mali.';
 
   @override
   String minValue(double minValue) {
-    return 'Min value: $minValue';
+    return 'Thamani ya chini: $minValue';
   }
 
   @override
   String maxValue(double maxValue) {
-    return 'Max value: $maxValue';
+    return 'Thamani ya juu: $maxValue';
   }
 
   @override
-  String get valueMustBeNumber => 'Value must be a number';
+  String get valueMustBeNumber => 'Thamani lazima iwe nambari';
 
   @override
-  String get valueMustBePositive => 'Value must be positive';
+  String get valueMustBePositive => 'Thamani lazima iwe chanya';
 
   @override
-  String get fieldRequired => 'This field is required';
+  String get fieldRequired => 'Sehemu hii inahitajika';
 
   @override
-  String get settingsGeneral => 'General';
+  String get settingsGeneral => 'Jumla';
 
   @override
-  String get settingsCompany => 'Company';
+  String get settingsCompany => 'Kampuni';
 
   @override
-  String get settingsInvoice => 'Invoice';
+  String get settingsInvoice => 'Ankara';
 
   @override
-  String get settingsInventory => 'Inventory';
+  String get settingsInventory => 'Mali';
 
   @override
-  String get settingsAppearance => 'Appearance';
+  String get settingsAppearance => 'Muonekano';
 
   @override
-  String get searchSettings => 'Search settings...';
+  String get searchSettings => 'Tafuta mipangilio...';
 
   @override
-  String get backupAndReports => 'Backup and Reports';
+  String get backupAndReports => 'Nakala na Ripoti';
 
   @override
-  String get backupAndReportsSubtitle => 'Manage data backup and generate reports';
+  String get backupAndReportsSubtitle => 'Dhibiti nakala ya data na toa ripoti';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'Arifa';
 
   @override
-  String get notificationsSubtitle => 'Manage app notifications';
+  String get notificationsSubtitle => 'Dhibiti arifa za programu';
 
   @override
-  String get resetSettings => 'Reset Settings';
+  String get resetSettings => 'Weka Upya Mipangilio';
 
   @override
-  String get confirmResetSettings => 'Are you sure you want to reset all settings to their default values? This action cannot be undone.';
+  String get confirmResetSettings => 'Una uhakika unataka kuweka upya mipangilio yote kuwa chaguomsingi? Kitendo hiki hakiwezi kutenduliwa.';
 
   @override
-  String get reset => 'Reset';
+  String get reset => 'Weka Upya';
 
   @override
-  String get taxIdentificationNumber => 'Tax Identification Number';
+  String get taxIdentificationNumber => 'Nambari ya Utambulisho wa Mlipakodi';
 
   @override
-  String get rccmNumber => 'RCCM Number';
+  String get rccmNumber => 'Nambari ya RCCM';
 
   @override
-  String get idNatNumber => 'National ID Number';
+  String get idNatNumber => 'Nambari ya Kitambulisho cha Taifa';
 
   @override
-  String get idNatHelperText => 'National Identification Number';
+  String get idNatHelperText => 'Nambari ya Utambulisho wa Kitaifa';
 
   @override
-  String get selectImageSource => 'Select Image Source';
+  String get selectImageSource => 'Chagua Chanzo cha Picha';
 
   @override
-  String get gallery => 'Gallery';
+  String get gallery => 'Matunzio';
 
   @override
-  String get camera => 'Camera';
+  String get camera => 'Kamera';
 
   @override
-  String get deleteCurrentLogo => 'Delete Current Logo';
+  String get deleteCurrentLogo => 'Futa Nembo ya Sasa';
 
   @override
-  String get logoDeleted => 'Logo deleted.';
+  String get logoDeleted => 'Nembo imefutwa.';
 
   @override
-  String get logoUpdatedSuccessfully => 'Logo updated successfully.';
+  String get logoUpdatedSuccessfully => 'Nembo imesasishwa kikamilifu.';
 
   @override
   String errorSelectingLogo(String errorDetails) {
-    return 'Error selecting logo: $errorDetails';
+    return 'Hitilafu kuchagua nembo: $errorDetails';
   }
 
   @override
-  String get defaultProductCategory => 'Default Product Category';
+  String get defaultProductCategory => 'Kategoria Chaguo-msingi ya Bidhaa';
 
   @override
-  String get stockAlerts => 'Stock Alerts';
+  String get stockAlerts => 'Tahadhari za Hisa';
 
   @override
-  String get lowStockAlertDays => 'Low Stock Alert Days';
+  String get lowStockAlertDays => 'Siku za Tahadhari ya Hisa Chini';
 
   @override
-  String get days => 'Days';
+  String get days => 'Siku';
 
   @override
-  String get enterValidNumber => 'Please enter a valid number.';
+  String get enterValidNumber => 'Tafadhali ingiza nambari sahihi.';
 
   @override
-  String get lowStockAlertDescription => 'Receive alerts when product stock is low for a specified number of days.';
+  String get lowStockAlertDescription => 'Pokea tahadhari wakati hisa ya bidhaa iko chini kwa idadi maalum ya siku.';
 
   @override
-  String get productCategories => 'Product Categories';
+  String get productCategories => 'Kategoria za Bidhaa';
 
   @override
-  String get manageYourProductCategories => 'Manage your product categories.';
+  String get manageYourProductCategories => 'Dhibiti kategoria zako za bidhaa.';
 
   @override
-  String get addCategory => 'Add Category';
+  String get addCategory => 'Ongeza Kategoria';
 
   @override
-  String get editCategory => 'Edit Category';
+  String get editCategory => 'Hariri Kategoria';
 
   @override
-  String get deleteCategory => 'Delete Category';
+  String get deleteCategory => 'Futa Kategoria';
 
   @override
-  String get categoryName => 'Category Name';
+  String get categoryName => 'Jina la Kategoria';
 
   @override
-  String get categoryNameCannotBeEmpty => 'Category name cannot be empty.';
+  String get categoryNameCannotBeEmpty => 'Jina la kategoria haliwezi kuwa tupu.';
 
   @override
-  String get categoryAdded => 'Category added';
+  String get categoryAdded => 'Kategoria imeongezwa';
 
   @override
-  String get categoryUpdated => 'Category updated';
+  String get categoryUpdated => 'Kategoria imesasishwa';
 
   @override
-  String get categoryDeleted => 'Category deleted';
+  String get categoryDeleted => 'Kategoria imefutwa';
 
   @override
-  String get confirmDeleteCategory => 'Are you sure you want to delete this category?';
+  String get confirmDeleteCategory => 'Una uhakika unataka kufuta kategoria hii?';
 
   @override
-  String get deleteCategoryMessage => 'This action cannot be undone.';
+  String get deleteCategoryMessage => 'Kitendo hiki hakiwezi kutenduliwa.';
 
   @override
   String errorAddingCategory(Object error) {
-    return 'Error adding category: $error';
+    return 'Hitilafu kuongeza kategoria: $error';
   }
 
   @override
   String errorUpdatingCategory(Object error) {
-    return 'Error updating category: $error';
+    return 'Hitilafu kusasisha kategoria: $error';
   }
 
   @override
   String errorDeletingCategory(Object error) {
-    return 'Error deleting category: $error';
+    return 'Hitilafu kufuta kategoria: $error';
   }
 
   @override
   String errorFetchingCategories(Object error) {
-    return 'Error fetching categories: $error';
+    return 'Hitilafu kupata kategoria: $error';
   }
 
   @override
-  String get noCategoriesFound => 'No categories found. Add one to get started!';
+  String get noCategoriesFound => 'Hakuna kategoria zilizopatikana. Ongeza moja ili kuanza!';
 
   @override
-  String get signupScreenTitle => 'Create Business Account';
+  String get signupScreenTitle => 'Fungua Akaunti ya Biashara';
 
   @override
-  String get signupStepIdentity => 'Identity';
+  String get signupStepIdentity => 'Utambulisho';
 
   @override
-  String get signupStepCompany => 'Company';
+  String get signupStepCompany => 'Kampuni';
 
   @override
-  String get signupStepConfirmation => 'Confirmation';
+  String get signupStepConfirmation => 'Uthibitisho';
 
   @override
-  String get signupPersonalInfoTitle => 'Your Personal Information';
+  String get signupPersonalInfoTitle => 'Taarifa Zako Binafsi';
 
   @override
-  String get signupOwnerNameLabel => 'Full Name of Owner';
+  String get signupOwnerNameLabel => 'Jina Kamili la Mmiliki';
 
   @override
-  String get signupOwnerNameHint => 'Enter your full name';
+  String get signupOwnerNameHint => 'Ingiza jina lako kamili';
 
   @override
-  String get signupOwnerNameValidation => 'Please enter the owner\'s name';
+  String get signupOwnerNameValidation => 'Tafadhali ingiza jina la mmiliki';
 
   @override
-  String get signupEmailLabel => 'Email Address';
+  String get signupEmailLabel => 'Anwani ya Barua Pepe';
 
   @override
-  String get signupEmailHint => 'Enter your email address';
+  String get signupEmailHint => 'Ingiza anwani yako ya barua pepe';
 
   @override
-  String get signupEmailValidationRequired => 'Please enter your email';
+  String get signupEmailValidationRequired => 'Tafadhali ingiza barua pepe yako';
 
   @override
-  String get signupEmailValidationInvalid => 'Please enter a valid email';
+  String get signupEmailValidationInvalid => 'Tafadhali ingiza barua pepe sahihi';
 
   @override
-  String get signupPhoneLabel => 'Phone Number';
+  String get signupPhoneLabel => 'Nambari ya Simu';
 
   @override
-  String get signupPhoneHint => 'Enter your phone number';
+  String get signupPhoneHint => 'Ingiza nambari yako ya simu';
 
   @override
-  String get signupPhoneValidation => 'Please enter your phone number';
+  String get signupPhoneValidation => 'Tafadhali ingiza nambari yako ya simu';
 
   @override
-  String get signupPasswordLabel => 'Password';
+  String get signupPasswordLabel => 'Nenosiri';
 
   @override
-  String get signupPasswordHint => 'Enter your password (min. 8 characters)';
+  String get signupPasswordHint => 'Ingiza nenosiri lako (angalau herufi 8)';
 
   @override
-  String get signupPasswordValidationRequired => 'Please enter a password';
+  String get signupPasswordValidationRequired => 'Tafadhali ingiza nenosiri';
 
   @override
-  String get signupPasswordValidationLength => 'Password must be at least 8 characters';
+  String get signupPasswordValidationLength => 'Nenosiri lazima liwe na angalau herufi 8';
 
   @override
-  String get signupConfirmPasswordLabel => 'Confirm Password';
+  String get signupConfirmPasswordLabel => 'Thibitisha Nenosiri';
 
   @override
-  String get signupConfirmPasswordHint => 'Confirm your password';
+  String get signupConfirmPasswordHint => 'Thibitisha nenosiri lako';
 
   @override
-  String get signupConfirmPasswordValidationRequired => 'Please confirm your password';
+  String get signupConfirmPasswordValidationRequired => 'Tafadhali thibitisha nenosiri lako';
 
   @override
-  String get signupConfirmPasswordValidationMatch => 'Passwords do not match';
+  String get signupConfirmPasswordValidationMatch => 'Manenosiri hayafanani';
 
   @override
-  String get signupRequiredFields => '* Required fields';
+  String get signupRequiredFields => '* Sehemu zinazohitajika';
 
   @override
-  String get signupCompanyInfoTitle => 'Your Company Information';
+  String get signupCompanyInfoTitle => 'Taarifa za Kampuni Yako';
 
   @override
-  String get signupCompanyNameLabel => 'Company Name';
+  String get signupCompanyNameLabel => 'Jina la Kampuni';
 
   @override
-  String get signupCompanyNameHint => 'Enter your company name';
+  String get signupCompanyNameHint => 'Ingiza jina la kampuni yako';
 
   @override
-  String get signupCompanyNameValidation => 'Please enter the company name';
+  String get signupCompanyNameValidation => 'Tafadhali ingiza jina la kampuni';
 
   @override
-  String get signupRccmLabel => 'RCCM Number / Business Registration';
+  String get signupRccmLabel => 'Nambari ya RCCM / Usajili wa Biashara';
 
   @override
-  String get signupRccmHint => 'Enter your RCCM number or equivalent';
+  String get signupRccmHint => 'Ingiza nambari yako ya RCCM au sawa';
 
   @override
-  String get signupRccmValidation => 'Please enter the RCCM number';
+  String get signupRccmValidation => 'Tafadhali ingiza nambari ya RCCM';
 
   @override
-  String get signupAddressLabel => 'Address / Location';
+  String get signupAddressLabel => 'Anwani / Mahali';
 
   @override
-  String get signupAddressHint => 'Enter your company address';
+  String get signupAddressHint => 'Ingiza anwani ya kampuni yako';
 
   @override
-  String get signupAddressValidation => 'Please enter your company address';
+  String get signupAddressValidation => 'Tafadhali ingiza anwani ya kampuni yako';
 
   @override
-  String get signupActivitySectorLabel => 'Business Sector';
+  String get signupActivitySectorLabel => 'Sekta ya Biashara';
 
   @override
-  String get signupTermsAndConditionsTitle => 'Summary and Terms';
+  String get signupTermsAndConditionsTitle => 'Muhtasari na Masharti';
 
   @override
-  String get signupInfoSummaryPersonal => 'Personal Information:';
+  String get signupInfoSummaryPersonal => 'Taarifa Binafsi:';
 
   @override
-  String get signupInfoSummaryName => 'Name:';
+  String get signupInfoSummaryName => 'Jina:';
 
   @override
-  String get signupInfoSummaryEmail => 'Email:';
+  String get signupInfoSummaryEmail => 'Barua Pepe:';
 
   @override
-  String get signupInfoSummaryPhone => 'Phone:';
+  String get signupInfoSummaryPhone => 'Simu:';
 
   @override
-  String get signupInfoSummaryCompany => 'Company Information:';
+  String get signupInfoSummaryCompany => 'Taarifa za Kampuni:';
 
   @override
-  String get signupInfoSummaryCompanyName => 'Company Name:';
+  String get signupInfoSummaryCompanyName => 'Jina la Kampuni:';
 
   @override
   String get signupInfoSummaryRccm => 'RCCM:';
 
   @override
-  String get signupInfoSummaryAddress => 'Address:';
+  String get signupInfoSummaryAddress => 'Anwani:';
 
   @override
-  String get signupInfoSummaryActivitySector => 'Activity Sector:';
+  String get signupInfoSummaryActivitySector => 'Sekta ya Shughuli:';
 
   @override
-  String get signupAgreeToTerms => 'I have read and agree to the';
+  String get signupAgreeToTerms => 'Nimesoma na kukubaliana na';
 
   @override
-  String get signupTermsOfUse => 'Terms of Use';
+  String get signupTermsOfUse => 'Masharti ya Matumizi';
 
   @override
-  String get andConnector => 'and';
+  String get andConnector => 'na';
 
   @override
-  String get signupPrivacyPolicy => 'Privacy Policy';
+  String get signupPrivacyPolicy => 'Sera ya Faragha';
 
   @override
-  String get signupAgreeToTermsConfirmation => 'By checking this box, you confirm that you have read, understood, and accepted our terms of service and privacy policy.';
+  String get signupAgreeToTermsConfirmation => 'Kwa kuweka tiki hapa, unathibitisha kuwa umesoma, umeelewa, na umekubali masharti yetu ya huduma na sera ya faragha.';
 
   @override
-  String get signupButtonPrevious => 'Previous';
+  String get signupButtonPrevious => 'Nyuma';
 
   @override
-  String get signupButtonNext => 'Next';
+  String get signupButtonNext => 'Mbele';
 
   @override
-  String get signupButtonRegister => 'Register';
+  String get signupButtonRegister => 'Jisajili';
 
   @override
-  String get signupAlreadyHaveAccount => 'Already have an account? Log in';
+  String get signupAlreadyHaveAccount => 'Tayari una akaunti? Ingia';
 
   @override
-  String get signupErrorFillFields => 'Please fill in all required fields correctly for the current step.';
+  String get signupErrorFillFields => 'Tafadhali jaza sehemu zote zinazohitajika kwa usahihi kwa hatua ya sasa.';
 
   @override
-  String get signupErrorAgreeToTerms => 'You must agree to the terms and conditions to register.';
+  String get signupErrorAgreeToTerms => 'Lazima ukubaliane na masharti na kanuni ili kujisajili.';
 
   @override
-  String get signupSuccessMessage => 'Registration successful! Logging you in...';
+  String get signupSuccessMessage => 'Usajili umefanikiwa! Tunakuingiza...';
 
   @override
   String signupErrorRegistration(String error) {
-    return 'Registration failed: $error';
+    return 'Usajili umeshindwa: $error';
   }
 
   @override
-  String get sectorAgricultureName => 'Agriculture and Agri-food';
+  String get sectorAgricultureName => 'Kilimo na Chakula';
 
   @override
-  String get sectorAgricultureDescription => 'Agricultural production, food processing, livestock';
+  String get sectorAgricultureDescription => 'Uzalishaji wa kilimo, usindikaji wa chakula, mifugo';
 
   @override
-  String get sectorCommerceName => 'Trade and Distribution';
+  String get sectorCommerceName => 'Biashara na Usambazaji';
 
   @override
-  String get sectorCommerceDescription => 'Retail, distribution, import-export';
+  String get sectorCommerceDescription => 'Rejareja, usambazaji, uagizaji-usafirishaji';
 
   @override
-  String get sectorServicesName => 'Services';
+  String get sectorServicesName => 'Huduma';
 
   @override
-  String get sectorServicesDescription => 'Business and personal services';
+  String get sectorServicesDescription => 'Huduma za biashara na binafsi';
 
   @override
-  String get sectorTechnologyName => 'Technology and Innovation';
+  String get sectorTechnologyName => 'Teknolojia na Ubunifu';
 
   @override
-  String get sectorTechnologyDescription => 'Software development, telecommunications, fintech';
+  String get sectorTechnologyDescription => 'Uendelezaji wa programu, mawasiliano, teknolojia ya kifedha';
 
   @override
-  String get sectorManufacturingName => 'Manufacturing and Industry';
+  String get sectorManufacturingName => 'Utengenezaji na Viwanda';
 
   @override
-  String get sectorManufacturingDescription => 'Industrial production, crafts, textiles';
+  String get sectorManufacturingDescription => 'Uzalishaji wa viwandani, ufundi, nguo';
 
   @override
-  String get sectorConstructionName => 'Construction and Real Estate';
+  String get sectorConstructionName => 'Ujenzi na Mali isiyohamishika';
 
   @override
-  String get sectorConstructionDescription => 'Construction, real estate development, architecture';
+  String get sectorConstructionDescription => 'Ujenzi, uendelezaji wa mali isiyohamishika, usanifu majengo';
 
   @override
-  String get sectorTransportationName => 'Transport and Logistics';
+  String get sectorTransportationName => 'Usafiri na Usafirishaji';
 
   @override
-  String get sectorTransportationDescription => 'Freight transport, logistics, warehousing';
+  String get sectorTransportationDescription => 'Usafirishaji wa mizigo, usafirishaji, uhifadhi';
 
   @override
-  String get sectorEnergyName => 'Energy and Natural Resources';
+  String get sectorEnergyName => 'Nishati na Maliasili';
 
   @override
-  String get sectorEnergyDescription => 'Energy production, mining, water';
+  String get sectorEnergyDescription => 'Uzalishaji wa nishati, uchimbaji madini, maji';
 
   @override
-  String get sectorTourismName => 'Tourism and Hospitality';
+  String get sectorTourismName => 'Utalii na Ukarimu';
 
   @override
-  String get sectorTourismDescription => 'Hotels, restaurants, tourism';
+  String get sectorTourismDescription => 'Hoteli, migahawa, utalii';
 
   @override
-  String get sectorEducationName => 'Education and Training';
+  String get sectorEducationName => 'Elimu na Mafunzo';
 
   @override
-  String get sectorEducationDescription => 'Teaching, vocational training';
+  String get sectorEducationDescription => 'Ufundishaji, mafunzo ya ufundi';
 
   @override
-  String get sectorHealthName => 'Health and Medical Services';
+  String get sectorHealthName => 'Afya na Huduma za Matibabu';
 
   @override
-  String get sectorHealthDescription => 'Medical care, pharmacy, medical equipment';
+  String get sectorHealthDescription => 'Huduma za matibabu, duka la dawa, vifaa vya matibabu';
 
   @override
-  String get sectorFinanceName => 'Financial Services';
+  String get sectorFinanceName => 'Huduma za Kifedha';
 
   @override
-  String get sectorFinanceDescription => 'Banking, insurance, microfinance';
+  String get sectorFinanceDescription => 'Benki, bima, fedha ndogo';
 
   @override
-  String get sectorOtherName => 'Other';
+  String get sectorOtherName => 'Nyingine';
 
   @override
-  String get sectorOtherDescription => 'Other business sectors';
+  String get sectorOtherDescription => 'Sekta zingine za biashara';
 }

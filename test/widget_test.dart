@@ -19,8 +19,10 @@ import 'package:wanzo/features/auth/models/user.dart'; // Import User model
 import 'package:wanzo/core/utils/connectivity_service.dart';
 import 'package:wanzo/core/services/database_service.dart';
 import 'package:wanzo/core/services/api_client.dart';
+import 'package:wanzo/core/services/image_upload_service.dart'; // Added import
 import 'package:wanzo/features/notifications/services/notification_service.dart';
 import 'package:wanzo/core/services/currency_service.dart'; // Added import
+import 'package:wanzo/features/expenses/services/expense_api_service.dart'; // Added import
 
 // Import Repositories
 import 'package:wanzo/features/settings/repositories/settings_repository.dart';
@@ -89,7 +91,9 @@ void main() {
     final authBloc = AuthBloc(authRepository: authRepository);
     final appRouter = AppRouter(authBloc: authBloc);
     final apiClient = ApiClient(); 
+    final imageUploadService = ImageUploadService(); // Added: Instantiate ImageUploadService
     final notificationService = NotificationService(); 
+    final expenseApiService = ExpenseApiServiceImpl(apiClient, imageUploadService); // Updated: Passed imageUploadService
 
     // Instantiate Repositories
     final settingsRepository = SettingsRepository();
@@ -108,7 +112,7 @@ void main() {
     await notificationRepository.init();
     final operationJournalRepository = OperationJournalRepository();
     await operationJournalRepository.init();
-    final expenseRepository = ExpenseRepository();
+    final expenseRepository = ExpenseRepository(expenseApiService: expenseApiService); // Passed expenseApiService
     await expenseRepository.init();
     final financingRepository = FinancingRepository();
     await financingRepository.init();
@@ -185,6 +189,7 @@ void main() {
       subscriptionRepository: subscriptionRepository,
       transactionRepository: transactionRepository, 
       currencyService: currencyService, 
+      expenseApiService: expenseApiService, // Passed expenseApiService to MyApp
     ));
 
     // Verify that the app launches and shows MaterialApp

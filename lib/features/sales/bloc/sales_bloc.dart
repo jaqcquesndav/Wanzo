@@ -2,6 +2,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../models/sale.dart';
+import '../models/sale_item.dart'; // Ensure SaleItem and SaleItemType are imported
 import '../repositories/sales_repository.dart';
 import '../../dashboard/models/operation_journal_entry.dart';
 import '../../dashboard/bloc/operation_journal_bloc.dart'; // Imports events too
@@ -110,9 +111,9 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
 
       // Déterminer le type d'opération de vente
       OperationType saleType;
-      if (event.sale.paymentMethod.toLowerCase().contains('crédit')) {
+      if (event.sale.paymentMethod?.toLowerCase().contains('crédit') ?? false) {
         saleType = OperationType.saleCredit;
-      } else if (event.sale.paymentMethod.toLowerCase().contains('échelonné')) {
+      } else if (event.sale.paymentMethod?.toLowerCase().contains('échelonné') ?? false) {
         saleType = OperationType.saleInstallment;
       } else {
         saleType = OperationType.saleCash;
@@ -147,17 +148,20 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
 
       // Enregistrer les sorties de stock pour chaque article vendu
       for (var item in event.sale.items) {
-        journalEntries.add(OperationJournalEntry(
-          id: _uuid.v4(),
-          date: event.sale.date,
-          description: 'Sortie stock: ${item.quantity} x ${item.productName} (Vente #${event.sale.id.substring(0, 6)})',
-          type: OperationType.stockOut,
-          amount: 0, // Cost of goods sold would be calculated and used here in a full system
-          relatedDocumentId: event.sale.id,
-          isDebit: true, // COGS is a debit (expense), Inventory is credited
-          isCredit: false, // This entry reflects the COGS/Inventory reduction part
-          balanceAfter: 0, // Placeholder
-        ));
+        // Only create stock out journal entries for products
+        if (item.itemType == SaleItemType.product) {
+          journalEntries.add(OperationJournalEntry(
+            id: _uuid.v4(),
+            date: event.sale.date,
+            description: 'Sortie stock: ${item.quantity} x ${item.productName} (Vente #${event.sale.id.substring(0, 6)})',
+            type: OperationType.stockOut,
+            amount: 0, // Cost of goods sold would be calculated and used here in a full system
+            relatedDocumentId: event.sale.id,
+            isDebit: true, // COGS is a debit (expense), Inventory is credited
+            isCredit: false, // This entry reflects the COGS/Inventory reduction part
+            balanceAfter: 0, // Placeholder
+          ));
+        }
       }
 
       // await _journalRepository.addOperationEntries(journalEntries); // Removed direct repository call

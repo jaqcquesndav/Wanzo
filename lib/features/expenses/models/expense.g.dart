@@ -136,6 +136,7 @@ class ExpenseCategoryAdapter extends TypeAdapter<ExpenseCategory> {
 
 Expense _$ExpenseFromJson(Map<String, dynamic> json) => Expense(
       id: json['id'] as String,
+      localId: json['localId'] as String?,
       date: DateTime.parse(json['date'] as String),
       motif: json['motif'] as String,
       amount: (json['amount'] as num).toDouble(),
@@ -145,10 +146,20 @@ Expense _$ExpenseFromJson(Map<String, dynamic> json) => Expense(
           ?.map((e) => e as String)
           .toList(),
       supplierId: json['supplierId'] as String?,
+      beneficiary: json['beneficiary'] as String?,
+      notes: json['notes'] as String?,
+      userId: json['userId'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$ExpenseToJson(Expense instance) => <String, dynamic>{
       'id': instance.id,
+      if (instance.localId case final value?) 'localId': value,
       'date': instance.date.toIso8601String(),
       'motif': instance.motif,
       'amount': instance.amount,
@@ -156,6 +167,13 @@ Map<String, dynamic> _$ExpenseToJson(Expense instance) => <String, dynamic>{
       if (instance.paymentMethod case final value?) 'paymentMethod': value,
       if (instance.attachmentUrls case final value?) 'attachmentUrls': value,
       if (instance.supplierId case final value?) 'supplierId': value,
+      if (instance.beneficiary case final value?) 'beneficiary': value,
+      if (instance.notes case final value?) 'notes': value,
+      if (instance.userId case final value?) 'userId': value,
+      if (instance.createdAt?.toIso8601String() case final value?)
+        'createdAt': value,
+      if (instance.updatedAt?.toIso8601String() case final value?)
+        'updatedAt': value,
     };
 
 const _$ExpenseCategoryEnumMap = {

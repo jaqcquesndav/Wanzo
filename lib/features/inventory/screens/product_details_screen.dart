@@ -744,7 +744,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> with Single
 
   /// Naviguer vers l'écran de modification du produit
   void _navigateToEditProduct(BuildContext context, Product product) {
-    context.push('/inventory/edit-product/${product.id}', extra: product);
+    context.push('/inventory/edit/${product.id}', extra: product);
   }
 
   /// Obtenir le nom de la catégorie

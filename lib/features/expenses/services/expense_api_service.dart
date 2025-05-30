@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:wanzo/core/services/api_client.dart';
+import 'package:wanzo/core/services/image_upload_service.dart';
 import 'package:wanzo/features/expenses/models/expense.dart';
 
 // Removed: part 'expense_api_service.g.dart';
@@ -27,7 +27,7 @@ abstract class ExpenseApiService {
     String categoryId,
     String paymentMethod,
     String? supplierId, {
-    List<File>? attachments, // Changed from MultipartFile to File
+    List<File>? attachments, // Ensure this is the parameter name and type
   });
 
   Future<Expense> getExpenseById(String id);
@@ -40,7 +40,7 @@ abstract class ExpenseApiService {
     String? categoryId,
     String? paymentMethod,
     String? supplierId, {
-    List<File>? attachments, // Changed from MultipartFile to File
+    List<File>? newAttachments, // Ensure this is the parameter name for new files
     List<String>? attachmentUrlsToRemove,
   });
 
@@ -49,8 +49,10 @@ abstract class ExpenseApiService {
 
 class ExpenseApiServiceImpl implements ExpenseApiService {
   final ApiClient _apiClient;
+  final ImageUploadService _imageUploadService; // Added
 
-  ExpenseApiServiceImpl(this._apiClient);
+  // Updated constructor to accept ImageUploadService
+  ExpenseApiServiceImpl(this._apiClient, this._imageUploadService);
 
   @override
   Future<List<Expense>> getExpenses({
@@ -72,7 +74,7 @@ class ExpenseApiServiceImpl implements ExpenseApiService {
       if (sortOrder != null) 'sortOrder': sortOrder,
     };
     final response = await _apiClient.get('expenses', queryParameters: queryParameters, requiresAuth: true);
-    final List<dynamic> data = response as List<dynamic>; // Assuming response is List
+    final List<dynamic> data = response as List<dynamic>;
     return data.map((json) => Expense.fromJson(json as Map<String, dynamic>)).toList();
   }
 
@@ -84,8 +86,13 @@ class ExpenseApiServiceImpl implements ExpenseApiService {
     String categoryId,
     String paymentMethod,
     String? supplierId, {
-    List<File>? attachments,
+    List<File>? attachments, // Matches abstract class
   }) async {
+    List<String>? attachmentUrls;
+    if (attachments != null && attachments.isNotEmpty) {
+      attachmentUrls = await _imageUploadService.uploadImages(attachments);
+    }
+
     final request = http.MultipartRequest('POST', Uri.parse('${_apiClient.baseUrl}/expenses'));
     request.headers.addAll(await _apiClient.getHeaders(requiresAuth: true));
 
@@ -98,10 +105,15 @@ class ExpenseApiServiceImpl implements ExpenseApiService {
       request.fields['supplierId'] = supplierId;
     }
 
-    if (attachments != null) {
-      for (var attachment in attachments) {
-        request.files.add(await http.MultipartFile.fromPath('attachments', attachment.path));
+    // Send URLs to the backend
+    if (attachmentUrls != null && attachmentUrls.isNotEmpty) {
+      for (int i = 0; i < attachmentUrls.length; i++) {
+        // Assuming backend expects fields like attachmentUrls[0], attachmentUrls[1]
+        // or a single field with comma-separated values, adjust as per backend API
+        request.fields['attachmentUrls[$i]'] = attachmentUrls[i];
       }
+      // If backend expects a single field with a list of URLs (e.g., JSON string or comma-separated):
+      // request.fields['attachmentUrls'] = jsonEncode(attachmentUrls); // Example for JSON array
     }
 
     final streamedResponse = await request.send();
@@ -125,9 +137,14 @@ class ExpenseApiServiceImpl implements ExpenseApiService {
     String? categoryId,
     String? paymentMethod,
     String? supplierId, {
-    List<File>? attachments,
+    List<File>? newAttachments, // Matches abstract class
     List<String>? attachmentUrlsToRemove,
   }) async {
+    List<String>? newUploadedAttachmentUrls;
+    if (newAttachments != null && newAttachments.isNotEmpty) {
+      newUploadedAttachmentUrls = await _imageUploadService.uploadImages(newAttachments);
+    }
+
     final request = http.MultipartRequest('PUT', Uri.parse('${_apiClient.baseUrl}/expenses/$id'));
     request.headers.addAll(await _apiClient.getHeaders(requiresAuth: true));
 
@@ -137,17 +154,21 @@ class ExpenseApiServiceImpl implements ExpenseApiService {
     if (categoryId != null) request.fields['categoryId'] = categoryId;
     if (paymentMethod != null) request.fields['paymentMethod'] = paymentMethod;
     if (supplierId != null) request.fields['supplierId'] = supplierId;
-    if (attachmentUrlsToRemove != null) {
-      // Backend needs to know how to handle this, e.g., "attachmentUrlsToRemove[]"
+    
+    if (attachmentUrlsToRemove != null && attachmentUrlsToRemove.isNotEmpty) {
       for (int i = 0; i < attachmentUrlsToRemove.length; i++) {
         request.fields['attachmentUrlsToRemove[$i]'] = attachmentUrlsToRemove[i];
       }
     }
 
-    if (attachments != null) {
-      for (var attachment in attachments) {
-        request.files.add(await http.MultipartFile.fromPath('attachments', attachment.path));
+    // Send newly uploaded URLs to the backend
+    if (newUploadedAttachmentUrls != null && newUploadedAttachmentUrls.isNotEmpty) {
+      for (int i = 0; i < newUploadedAttachmentUrls.length; i++) {
+         // Assuming backend expects fields like newAttachmentUrls[0], newAttachmentUrls[1]
+        request.fields['newAttachmentUrls[$i]'] = newUploadedAttachmentUrls[i];
       }
+      // If backend expects a single field with a list of URLs:
+      // request.fields['newAttachmentUrls'] = jsonEncode(newUploadedAttachmentUrls); // Example
     }
 
     final streamedResponse = await request.send();

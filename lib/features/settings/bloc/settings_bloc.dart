@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repositories/settings_repository.dart';
+import '../models/settings.dart'; // Added import for Settings model
 import 'settings_event.dart';
 import 'settings_state.dart';
 
@@ -48,8 +49,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: event.settings,
         message: 'Paramètres mis à jour avec succès',
       ));
+      emit(SettingsLoaded(event.settings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -61,7 +68,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     emit(const SettingsLoading());
     
     try {
-      final currentSettings = await settingsRepository.getSettings();      final updatedSettings = currentSettings.copyWith(
+      final currentSettings = await settingsRepository.getSettings();
+      final updatedSettings = currentSettings.copyWith(
         companyName: event.companyName,
         companyAddress: event.companyAddress,
         companyPhone: event.companyPhone,
@@ -77,8 +85,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Informations de l\'entreprise mises à jour',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des informations de l\'entreprise: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -105,8 +119,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Paramètres de facturation mis à jour',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres de facturation: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -130,8 +150,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Paramètres d\'affichage mis à jour',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres d\'affichage: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -154,8 +180,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Paramètres de stock mis à jour',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres de stock: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -179,8 +211,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Paramètres de sauvegarde mis à jour',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres de sauvegarde: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 
@@ -189,12 +227,24 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     UpdateNotificationSettings event,
     Emitter<SettingsState> emit,
   ) async {
-    if (state is! SettingsLoaded) {
-      emit(const SettingsError('Impossible de mettre à jour les paramètres: données non chargées'));
-      return;
+    // Get current settings from state if possible, otherwise load them.
+    Settings currentSettings;
+    if (state is SettingsLoaded) {
+      currentSettings = (state as SettingsLoaded).settings;
+    } else if (state is SettingsUpdated) { // Also consider SettingsUpdated as a source of current settings
+      currentSettings = (state as SettingsUpdated).settings;
+    } else {
+      // If settings are not loaded, emit loading and fetch them.
+      emit(const SettingsLoading());
+      try {
+        currentSettings = await settingsRepository.getSettings();
+        emit(SettingsLoaded(currentSettings));
+      } catch (e) {
+        emit(SettingsError('Erreur lors du chargement des paramètres avant mise à jour: $e'));
+        return;
+      }
     }
     
-    final currentSettings = (state as SettingsLoaded).settings;
     final updatedSettings = currentSettings.copyWith(
       pushNotificationsEnabled: event.pushNotificationsEnabled,
       inAppNotificationsEnabled: event.inAppNotificationsEnabled,
@@ -202,7 +252,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       soundNotificationsEnabled: event.soundNotificationsEnabled,
     );
     
-    emit(const SettingsLoading());
+    // Emit loading before the save operation for this specific update
+    emit(const SettingsLoading()); 
     
     try {
       await settingsRepository.saveSettings(updatedSettings);
@@ -210,8 +261,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: updatedSettings,
         message: 'Paramètres de notification mis à jour avec succès',
       ));
+      emit(SettingsLoaded(updatedSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la mise à jour des paramètres de notification: $e'));
+      // Revert to previously known good settings on error
+      emit(SettingsLoaded(currentSettings)); 
     }
   }
 
@@ -228,8 +282,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         settings: defaultSettings,
         message: 'Paramètres réinitialisés aux valeurs par défaut',
       ));
+      emit(SettingsLoaded(defaultSettings)); // Emit SettingsLoaded
     } catch (e) {
       emit(SettingsError('Erreur lors de la réinitialisation des paramètres: $e'));
+      if (state is SettingsLoaded) {
+        emit(SettingsLoaded((state as SettingsLoaded).settings));
+      } else {
+        add(const LoadSettings());
+      }
     }
   }
 }

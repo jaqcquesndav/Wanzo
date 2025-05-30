@@ -1582,10 +1582,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get saveChanges => 'Enregistrer les modifications';
 
   @override
-  String get settingsUpdatedSuccessfully => 'Settings updated successfully';
+  String get settingsUpdatedSuccessfully => 'Paramètres mis à jour avec succès';
 
   @override
-  String get errorUpdatingSettings => 'Error updating settings';
+  String get errorUpdatingSettings => 'Erreur lors de la mise à jour des paramètres';
 
   @override
   String get changesSaved => 'Modifications enregistrées avec succès !';

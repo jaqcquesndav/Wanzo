@@ -1,6 +1,9 @@
+import 'dart:io'; // Import for File
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart'; // Import image_picker
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../constants/constants.dart';
@@ -22,6 +25,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   DateTime _selectedDate = DateTime.now();
   ExpenseCategory _selectedCategory = ExpenseCategory.other;
   String? _selectedPaymentMethod;
+  List<File> _imageFiles = []; // To store selected image files
+  final ImagePicker _picker = ImagePicker(); // ImagePicker instance
 
   final List<String> _paymentMethods = ['Espèce', 'Mobile Money', 'Carte Bancaire', 'Chèque', 'Virement'];
 
@@ -40,6 +45,29 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFiles.add(File(pickedFile.path));
+        });
+      }
+    } catch (e) {
+      // Handle exceptions, e.g., permission denied
+      debugPrint('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection de l\'image: $e')),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
+  }
+
   void _submitExpense() {
     if (_formKey.currentState!.validate()) {
       final amount = double.tryParse(_amountController.text);
@@ -50,17 +78,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         return;
       }
 
+      // The TODO below is now handled by the ExpenseBloc/ExpenseRepository/ExpenseApiService flow.
+      // Images are passed as File objects to the bloc, and the service layer handles uploads.
       final newExpense = Expense(
-        id: const Uuid().v4(),
+        id: const Uuid().v4(), // Client-side ID generation for initial object, API might override or use its own.
         date: _selectedDate,
         motif: _descriptionController.text,
         amount: amount,
-        category: _selectedCategory, // Use the ExpenseCategory enum value directly
+        category: _selectedCategory,
         paymentMethod: _selectedPaymentMethod ?? 'N/A',
-        // attachmentUrls and supplierId are optional and will use defaults if not provided
+        attachmentUrls: [], // Placeholder: Will be updated after image upload
+        // supplierId is optional
       );
 
-      context.read<ExpenseBloc>().add(AddExpense(newExpense));
+      // Pass _imageFiles to the bloc event if it's designed to handle uploads
+      context.read<ExpenseBloc>().add(AddExpense(newExpense, imageFiles: _imageFiles));
     }
   }
 
@@ -75,7 +107,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
-            context.pop(); // Go back after success
+            context.pop(true); // MODIFIED: Pop with true
           } else if (state is ExpenseError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Erreur: ${state.message}')),
@@ -152,6 +184,69 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     });
                   },
                 ),
+                const SizedBox(height: WanzoSpacing.md),
+                // Image picking section
+                Text('Pièces justificatives (Optionnel)', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: WanzoSpacing.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Galerie'),
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade200, foregroundColor: Colors.black87),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Caméra'),
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade200, foregroundColor: Colors.black87),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: WanzoSpacing.md),
+                if (_imageFiles.isNotEmpty)
+                  Container(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _imageFiles.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: WanzoSpacing.sm),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(WanzoRadius.md),
+                                child: Image.file(
+                                  _imageFiles[index],
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: InkWell(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withOpacity(0.8),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 const SizedBox(height: WanzoSpacing.xl),
                 ElevatedButton(
                   onPressed: _submitExpense,

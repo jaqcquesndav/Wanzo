@@ -368,6 +368,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: l10n.dashboardScreenTitle, 
       body: _buildDashboardContent(context, l10n, settings, displayCurrencyCode), 
       floatingActionButton: FloatingActionButton(
+        heroTag: 'dashboard_fab', // Added unique heroTag
         onPressed: () {
           _showQuickActionsMenu(context, l10n);
         },

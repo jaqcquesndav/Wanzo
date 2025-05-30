@@ -16,7 +16,7 @@ import 'package:wanzo/features/invoice/services/invoice_service.dart';
 import 'package:pdf/pdf.dart'; // Added import
 import 'package:printing/printing.dart'; // Added import for Printing
 import 'package:share_plus/share_plus.dart'; // Added for Share.shareXFiles
-import 'package:cross_file/cross_file.dart'; // Added for XFile
+// Added for XFile
 
 /// Écran de détails d'une vente
 class SaleDetailsScreen extends StatelessWidget {
@@ -32,7 +32,7 @@ class SaleDetailsScreen extends StatelessWidget {
     // Access currency settings
     final currencySettingsState = context.watch<CurrencySettingsCubit>().state;
     final Currency appDefaultCurrency = currencySettingsState.settings.activeCurrency; // Corrected: activeCurrency is the app's default/active
-    final String transactionCurrencyCode = sale.transactionCurrencyCode;
+    final String transactionCurrencyCode = sale.transactionCurrencyCode ?? appDefaultCurrency.code; // Provide a default value
 
     Color statusColor;
     String statusText;
@@ -212,7 +212,7 @@ class SaleDetailsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          formatCurrency(sale.totalAmountInTransactionCurrency, transactionCurrencyCode),
+                          formatCurrency(sale.totalAmountInTransactionCurrency ?? 0.0, transactionCurrencyCode),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -235,7 +235,7 @@ class SaleDetailsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Payé"),
-                        Text(formatCurrency(sale.paidAmountInTransactionCurrency, transactionCurrencyCode)),
+                        Text(formatCurrency(sale.paidAmountInTransactionCurrency ?? 0.0, transactionCurrencyCode)),
                       ],
                     ),
                      if (transactionCurrencyCode != appDefaultCurrency.code)
@@ -258,16 +258,16 @@ class SaleDetailsScreen extends StatelessWidget {
                         Text(
                           "Reste à payer",
                           style: TextStyle(
-                            color: (sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency).abs() < 0.001 || sale.paidAmountInTransactionCurrency >= sale.totalAmountInTransactionCurrency
+                            color: ((sale.totalAmountInTransactionCurrency ?? 0.0) - (sale.paidAmountInTransactionCurrency ?? 0.0)).abs() < 0.001 || (sale.paidAmountInTransactionCurrency ?? 0.0) >= (sale.totalAmountInTransactionCurrency ?? 0.0)
                                 ? Colors.green
                                 : Colors.red,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          formatCurrency(sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency, transactionCurrencyCode),
+                          formatCurrency((sale.totalAmountInTransactionCurrency ?? 0.0) - (sale.paidAmountInTransactionCurrency ?? 0.0), transactionCurrencyCode),
                           style: TextStyle(
-                           color: (sale.totalAmountInTransactionCurrency - sale.paidAmountInTransactionCurrency).abs() < 0.001 || sale.paidAmountInTransactionCurrency >= sale.totalAmountInTransactionCurrency
+                           color: ((sale.totalAmountInTransactionCurrency ?? 0.0) - (sale.paidAmountInTransactionCurrency ?? 0.0)).abs() < 0.001 || (sale.paidAmountInTransactionCurrency ?? 0.0) >= (sale.totalAmountInTransactionCurrency ?? 0.0)
                                 ? Colors.green
                                 : Colors.red,
                             fontWeight: FontWeight.bold,

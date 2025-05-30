@@ -626,7 +626,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 },
                 child: RichText(
                   text: TextSpan(
-                    text: l10n.signupAgreeToTerms + ' ', // Add space
+                    text: '${l10n.signupAgreeToTerms} ', // Add space
                     style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     children: [
                       TextSpan(

@@ -285,7 +285,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
     final products = lowStockOnly
         ? state.products.where((p) => p.stockQuantity <= p.alertThreshold).toList()
         : state.products;
-    
+
     if (products.isEmpty) {
       return Center(
         child: Column(
@@ -294,7 +294,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             Icon(
               lowStockOnly ? Icons.check_circle : Icons.inventory_2,
               size: 64,
-              color: lowStockOnly ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()), // Use theme color
+              color: lowStockOnly ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurface.withAlpha((0.4 * 255).round()),
             ),
             const SizedBox(height: 16),
             Text(
@@ -315,9 +315,17 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
         ),
       );
     }
-    
+
     final currencyService = context.read<CurrencyService>();
-    
+    final currencySettingsState = context.watch<CurrencySettingsCubit>().state;
+
+    Currency appActiveDisplayCurrency = Currency.CDF; // Default
+    if (currencySettingsState.status == CurrencySettingsStatus.loaded) {
+      appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
+    } else if (currencySettingsState.status == CurrencySettingsStatus.initial && currencySettingsState.settings.activeCurrency != null) {
+      appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(WanzoSpacing.md),
       itemCount: products.length,
@@ -326,81 +334,33 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
         final product = products[index];
         final isLowStock = product.stockQuantity <= product.alertThreshold;
 
-        double displaySellingPrice = product.sellingPriceInCdf;
-        String displayCurrencyCode = Currency.CDF.code;
-        final activeAppCurrency = Currency.values.firstWhere((c) => c.code == _activeCurrencyCode, orElse: () => Currency.CDF);
+        final displayCurrencyCode = appActiveDisplayCurrency.code;
+        // Selling price in active display currency
+        // First, ensure product.sellingPriceInCdf is not null
+        final sellingPriceCdf = product.sellingPriceInCdf;
+        // Convert from CDF to the active display currency
+        final displaySellingPrice = currencyService.convertFromCdf(sellingPriceCdf, appActiveDisplayCurrency);
 
-        if (_activeCurrencyCode != Currency.CDF.code) {
-          // Ensure _exchangeRates is available and contains the target currency, or handle appropriately
-          if (_exchangeRates.containsKey(activeAppCurrency)) {
-            displaySellingPrice = currencyService.convertFromCdf(product.sellingPriceInCdf, activeAppCurrency);
-          } else {
-            // Fallback or error handling if exchange rate for activeAppCurrency is not found
-            // For now, defaulting to CDF price if rate is missing
-            displaySellingPrice = product.sellingPriceInCdf;
-            displayCurrencyCode = Currency.CDF.code;
-          }
-          displayCurrencyCode = _activeCurrencyCode;
-        }
-        
-        Widget? leadingWidget;
-        if (product.imagePath != null && product.imagePath!.isNotEmpty) {
-          leadingWidget = SizedBox(
-            width: 50, // Define a fixed width for the image
-            height: 50, // Define a fixed height for the image
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(WanzoSpacing.sm), // Optional: for rounded corners
-              child: Image.file(
-                File(product.imagePath!),
-                fit: BoxFit.cover, // Ensure the image covers the space
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback for image loading errors
-                  return CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
-                    child: Text(
-                      product.name.isNotEmpty ? product.name[0].toUpperCase() : l10n.productInitialFallback,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
-        } else {
-          // Fallback if no image path is available
-          leadingWidget = CircleAvatar(
-            radius: 25,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest, // Use theme color
-            child: Text(
-              product.name.isNotEmpty ? product.name[0].toUpperCase() : l10n.productInitialFallback,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold), // Use theme color
-            ),
-          );
-        }
-        
         return ListTile(
-          leading: leadingWidget, // Added leading widget for the image
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: WanzoSpacing.sm,
-            horizontal: WanzoSpacing.md,
-          ),
-          title: Text(
-            product.name,
-            style: const TextStyle(
-              fontWeight: WanzoTypography.fontWeightMedium,
-            ),
-          ),
+          leading: product.imagePath != null && product.imagePath!.isNotEmpty
+              ? Image.file(
+                  File(product.imagePath!),
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50),
+                )
+              : const Icon(Icons.inventory_2, size: 50), // Placeholder icon
+          title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: WanzoSpacing.xs),
               Text('${l10n.priceLabel}: ${formatCurrency(displaySellingPrice, displayCurrencyCode)} (${l10n.inputPriceLabel}: ${formatCurrency(product.sellingPriceInInputCurrency, product.inputCurrencyCode)}) '),
               Text(
                 '${l10n.stockLabel}: ${product.stockQuantity} ${_getUnitName(product.unit, l10n)}',
                 style: TextStyle(
-                  color: isLowStock ? Theme.of(context).colorScheme.error : null, // Use theme color
-                  fontWeight: isLowStock ? WanzoTypography.fontWeightBold : null,
+                  color: isLowStock ? Theme.of(context).colorScheme.error : null,
+                  fontWeight: isLowStock ? FontWeight.bold : null, // Corrected to FontWeight.bold
                 ),
               ),
             ],
@@ -410,7 +370,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
             children: [
               IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => context.push('/inventory/edit/${product.id}'),
+                onPressed: () => context.push('/inventory/edit/${product.id}', extra: product),
               ),
               IconButton(
                 icon: const Icon(Icons.add_box),
@@ -418,7 +378,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
               ),
             ],
           ),
-          onTap: () => context.push('/inventory/${product.id}'), // Added missing parenthesis
+          onTap: () => context.push('/inventory/product/${product.id}', extra: product),
         );
       },
     );
@@ -447,36 +407,32 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
     }
 
     final currencyService = context.read<CurrencyService>();
+    final currencySettingsState = context.watch<CurrencySettingsCubit>().state;
+    Currency appActiveDisplayCurrency = Currency.CDF; // Default
+
+    if (currencySettingsState.status == CurrencySettingsStatus.loaded) {
+      appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
+    } else if (currencySettingsState.status == CurrencySettingsStatus.initial && currencySettingsState.settings.activeCurrency != null) {
+       appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
+    }
+
 
     return ListView.builder(
       padding: const EdgeInsets.all(WanzoSpacing.md),
       itemCount: transactions.length,
       itemBuilder: (context, index) {
         final transaction = transactions[index];
-        // Accessing inventoryRepository through the bloc as it's a private field in the bloc
-        final product = context.read<InventoryBloc>().inventoryRepository.getProductById(transaction.productId); 
+        final product = context.read<InventoryBloc>().inventoryRepository.getProductById(transaction.productId);
 
-        double displayValue = transaction.totalValueInCdf;
-        String displayCurrencyCode = Currency.CDF.code;
-        final activeAppCurrency = Currency.values.firstWhere((c) => c.code == _activeCurrencyCode, orElse: () => Currency.CDF);
-
-        if (_activeCurrencyCode != Currency.CDF.code) {
-          // Ensure _exchangeRates is available and contains the target currency
-           if (_exchangeRates.containsKey(activeAppCurrency)) {
-            displayValue = currencyService.convertFromCdf(transaction.totalValueInCdf, activeAppCurrency);
-          } else {
-            // Fallback or error handling if exchange rate for activeAppCurrency is not found
-            displayValue = transaction.totalValueInCdf; // Default to CDF value
-            displayCurrencyCode = Currency.CDF.code;
-          }
-          displayCurrencyCode = _activeCurrencyCode;
-        }
+        // Convert transaction total value to active display currency
+        final displayValue = currencyService.convertFromCdf(transaction.totalValueInCdf, appActiveDisplayCurrency);
+        final displayCurrencyCode = appActiveDisplayCurrency.code;
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: WanzoSpacing.xs),
           child: ListTile(
             title: Text("${_getTransactionTypeName(transaction.type, l10n)}: ${product?.name ?? l10n.unknownProductLabel}"),
-            subtitle: Text("${l10n.quantityLabel}: ${transaction.quantity}, ${l10n.dateLabel}: ${formatDate(transaction.date, l10n)}\n${l10n.valueLabel}: ${formatCurrency(displayValue, displayCurrencyCode)} (${formatCurrency(transaction.totalValueInCdf, Currency.CDF.code)})" ),
+            subtitle: Text("${l10n.quantityLabel}: ${transaction.quantity}, ${l10n.dateLabel}: ${formatDate(transaction.date, l10n)}\\n${l10n.valueLabel}: ${formatCurrency(displayValue, displayCurrencyCode)} (${formatCurrency(transaction.totalValueInCdf, Currency.CDF.code)})" ),
             leading: Icon(transaction.quantity > 0 ? Icons.arrow_upward : Icons.arrow_downward,
                 color: transaction.quantity > 0 ? Colors.green : Colors.red),
           ),

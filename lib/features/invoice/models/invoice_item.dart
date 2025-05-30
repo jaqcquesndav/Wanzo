@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:wanzo/features/inventory/models/product.dart'; // Assuming product might be linked
+// Assuming product might be linked
 
 part 'invoice_item.g.dart';
 

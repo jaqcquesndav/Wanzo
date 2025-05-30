@@ -26,13 +26,14 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
       exchangeRate: fields[6] as double,
       unitPriceInCdf: fields[7] as double,
       totalPriceInCdf: fields[8] as double,
+      itemType: fields[9] as SaleItemType,
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleItem obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.productId)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
       ..writeByte(7)
       ..write(obj.unitPriceInCdf)
       ..writeByte(8)
-      ..write(obj.totalPriceInCdf);
+      ..write(obj.totalPriceInCdf)
+      ..writeByte(9)
+      ..write(obj.itemType);
   }
 
   @override
@@ -60,6 +63,45 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SaleItemAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class SaleItemTypeAdapter extends TypeAdapter<SaleItemType> {
+  @override
+  final int typeId = 50;
+
+  @override
+  SaleItemType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return SaleItemType.product;
+      case 1:
+        return SaleItemType.service;
+      default:
+        return SaleItemType.product;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, SaleItemType obj) {
+    switch (obj) {
+      case SaleItemType.product:
+        writer.writeByte(0);
+        break;
+      case SaleItemType.service:
+        writer.writeByte(1);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SaleItemTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -78,6 +120,7 @@ SaleItem _$SaleItemFromJson(Map<String, dynamic> json) => SaleItem(
       exchangeRate: (json['exchangeRate'] as num).toDouble(),
       unitPriceInCdf: (json['unitPriceInCdf'] as num).toDouble(),
       totalPriceInCdf: (json['totalPriceInCdf'] as num).toDouble(),
+      itemType: $enumDecode(_$SaleItemTypeEnumMap, json['itemType']),
     );
 
 Map<String, dynamic> _$SaleItemToJson(SaleItem instance) => <String, dynamic>{
@@ -90,4 +133,10 @@ Map<String, dynamic> _$SaleItemToJson(SaleItem instance) => <String, dynamic>{
       'exchangeRate': instance.exchangeRate,
       'unitPriceInCdf': instance.unitPriceInCdf,
       'totalPriceInCdf': instance.totalPriceInCdf,
+      'itemType': _$SaleItemTypeEnumMap[instance.itemType]!,
     };
+
+const _$SaleItemTypeEnumMap = {
+  SaleItemType.product: 'product',
+  SaleItemType.service: 'service',
+};

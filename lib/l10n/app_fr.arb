@@ -1192,5 +1192,13 @@
   "sectorFinanceName": "Services financiers",
   "sectorFinanceDescription": "Banque, assurance, microfinance",
   "sectorOtherName": "Autre",
-  "sectorOtherDescription": "Autres secteurs d'activité"
+  "sectorOtherDescription": "Autres secteurs d'activité",
+  "settingsUpdatedSuccessfully": "Paramètres mis à jour avec succès",
+  "@settingsUpdatedSuccessfully": {
+    "description": "Message de succès lors de la mise à jour des paramètres"
+  },
+  "errorUpdatingSettings": "Erreur lors de la mise à jour des paramètres",
+  "@errorUpdatingSettings": {
+    "description": "Message d'erreur en cas d'échec de la mise à jour des paramètres"
+  }
 }

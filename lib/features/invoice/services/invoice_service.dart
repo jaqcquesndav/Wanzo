@@ -571,7 +571,8 @@ class InvoiceService {
 
               pw.SizedBox(height: 5),
               pw.Text(
-                'Ticket N°: ${sale.id.substring(0, 8)}',
+                // MODIFIED: Make substring safe
+                'Ticket N°: ${sale.id.length >= 8 ? sale.id.substring(0, 8) : sale.id}',
                 style: pw.TextStyle(font: regularFont, fontSize: 8),
               ),
               pw.Text(

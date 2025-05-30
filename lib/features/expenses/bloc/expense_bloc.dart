@@ -1,3 +1,5 @@
+import 'dart:io'; // Import for File, used by ExpenseEvent
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
@@ -26,6 +28,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     on<AddExpense>(_onAddExpense);
     on<UpdateExpense>(_onUpdateExpense);
     on<DeleteExpense>(_onDeleteExpense);
+    on<LoadExpenseById>(_onLoadExpenseById);
   }
 
   Future<void> _onLoadExpenses(LoadExpenses event, Emitter<ExpenseState> emit) async {
@@ -64,24 +67,30 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   Future<void> _onAddExpense(AddExpense event, Emitter<ExpenseState> emit) async {
     emit(const ExpenseLoading());
     try {
-      final newExpense = await _expenseRepository.addExpense(event.expense);
+      // The repository now handles image uploads via the API service.
+      // We pass the expense object and the imageFiles directly.
+      final newExpense = await _expenseRepository.addExpense(
+        event.expense, 
+        imageFiles: event.imageFiles,
+      );
 
+      // Journal entry creation remains the same.
       final journalEntry = OperationJournalEntry(
         id: _uuid.v4(),
         date: newExpense.date,
-        type: OperationType.cashOut, // Dépense est une sortie d'argent
-        description: "Dépense: ${newExpense.motif}", // Changed from description to motif
-        amount: -newExpense.amount.abs(), // Assurer que le montant est négatif pour cashOut
+        type: OperationType.cashOut,
+        description: "Dépense: ${newExpense.motif}",
+        amount: -newExpense.amount.abs(),
         paymentMethod: newExpense.paymentMethod,
-        relatedDocumentId: newExpense.id, // Lier au document de dépense
-        isDebit: true, // Expenses are debits to the business
+        relatedDocumentId: newExpense.id,
+        isDebit: true,
         isCredit: false,
-        balanceAfter: 0, // This will be calculated by the journal service/bloc normally
+        balanceAfter: 0, 
       );
-      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
+      _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
 
-      emit(ExpenseOperationSuccess('Dépense ajoutée avec succès et enregistrée au journal.'));
-      add(const LoadExpenses()); // Recharger la liste des dépenses
+      emit(const ExpenseOperationSuccess('Dépense ajoutée avec succès et enregistrée au journal.'));
+      add(const LoadExpenses()); 
     } catch (e) {
       emit(ExpenseError("Erreur lors de l'ajout de la dépense: ${e.toString()}"));
     }
@@ -146,7 +155,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       final expenseToDelete = await _expenseRepository.getExpenseById(event.expenseId);
 
       if (expenseToDelete == null) {
-        emit(ExpenseError("Dépense non trouvée pour l'annulation du journal."));
+        emit(const ExpenseError("Dépense non trouvée pour l'annulation du journal."));
         return;
       }
 
@@ -171,6 +180,20 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       add(const LoadExpenses());
     } catch (e) {
       emit(ExpenseError("Erreur lors de la suppression de la dépense: ${e.toString()}"));
+    }
+  }
+
+  Future<void> _onLoadExpenseById(LoadExpenseById event, Emitter<ExpenseState> emit) async {
+    emit(const ExpenseLoading());
+    try {
+      final expense = await _expenseRepository.getExpenseById(event.expenseId);
+      if (expense != null) {
+        emit(ExpenseLoaded(expense: expense));
+      } else {
+        emit(const ExpenseError("Dépense non trouvée."));
+      }
+    } catch (e) {
+      emit(ExpenseError("Erreur de chargement de la dépense: ${e.toString()}"));
     }
   }
 }

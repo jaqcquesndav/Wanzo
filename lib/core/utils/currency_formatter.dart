@@ -30,7 +30,7 @@ String formatCurrency(double amount, String currencyCode) {
 
   // Specific formatting for CDF and FCFA to place symbol after the amount with a space.
   if (currency == Currency.CDF || currency == Currency.FCFA) {
-    final String pattern = "#,##0${decimalDigits > 0 ? '.' + ''.padRight(decimalDigits, '0') : ''}";
+    final String pattern = "#,##0${decimalDigits > 0 ? '.${''.padRight(decimalDigits, '0')}' : ''}";
     final NumberFormat numberFormatter = NumberFormat(pattern, locale);
     return '${numberFormatter.format(amount)} $symbol'; // Changed \u00A0 to a regular space
   }
@@ -46,6 +46,6 @@ String formatCurrency(double amount, String currencyCode) {
 
 // Example of a more generic number formatter if needed elsewhere
 String formatNumber(double number, {int decimalDigits = 2, String locale = 'en_US'}) {
-  final NumberFormat formatter = NumberFormat("#,##0${decimalDigits > 0 ? '.' + ''.padRight(decimalDigits, '0') : ''}", locale);
+  final NumberFormat formatter = NumberFormat("#,##0${decimalDigits > 0 ? '.${''.padRight(decimalDigits, '0')}' : ''}", locale);
   return formatter.format(number);
 }

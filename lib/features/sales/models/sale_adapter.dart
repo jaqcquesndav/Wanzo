@@ -22,7 +22,7 @@ class SaleStatusAdapter extends TypeAdapter<SaleStatus> {
 /// Adaptateur Hive pour la classe SaleItem
 class SaleItemAdapter extends TypeAdapter<SaleItem> {
   @override
-  final int typeId = 2; // Matches @HiveType(typeId: 41) in SaleItem if it's a typo, otherwise this is a different SaleItem
+  final int typeId = 41; // Corrected to match @HiveType(typeId: 41) in SaleItem model
 
   @override
   SaleItem read(BinaryReader reader) {
@@ -30,41 +30,43 @@ class SaleItemAdapter extends TypeAdapter<SaleItem> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    // Ensure all required fields for SaleItem constructor are present
     return SaleItem(
       productId: fields[0] as String,
       productName: fields[1] as String,
-      quantity: fields[2] as int, // Corrected type from double to int
+      quantity: fields[2] as int,
       unitPrice: fields[3] as double,
       totalPrice: fields[4] as double,
-      currencyCode: fields[5] as String, // Added field
-      exchangeRate: fields[6] as double, // Added field
-      unitPriceInCdf: fields[7] as double, // Added field
-      totalPriceInCdf: fields[8] as double, // Added field
+      currencyCode: fields[5] as String,
+      exchangeRate: fields[6] as double,
+      unitPriceInCdf: fields[7] as double,
+      totalPriceInCdf: fields[8] as double,
+      itemType: fields[9] as SaleItemType, // Added itemType
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleItem obj) {
-    writer.writeByte(9); // Updated field count
+    writer.writeByte(10); // Updated field count to 10
     writer.writeByte(0);
     writer.write(obj.productId);
     writer.writeByte(1);
     writer.write(obj.productName);
     writer.writeByte(2);
-    writer.write(obj.quantity); // Ensure obj.quantity is int
+    writer.write(obj.quantity);
     writer.writeByte(3);
     writer.write(obj.unitPrice);
     writer.writeByte(4);
     writer.write(obj.totalPrice);
-    writer.writeByte(5); // Added field
+    writer.writeByte(5);
     writer.write(obj.currencyCode);
-    writer.writeByte(6); // Added field
+    writer.writeByte(6);
     writer.write(obj.exchangeRate);
-    writer.writeByte(7); // Added field
+    writer.writeByte(7);
     writer.write(obj.unitPriceInCdf);
-    writer.writeByte(8); // Added field
+    writer.writeByte(8);
     writer.write(obj.totalPriceInCdf);
+    writer.writeByte(9); // Added itemType
+    writer.write(obj.itemType); // Added itemType
   }
 
   @override

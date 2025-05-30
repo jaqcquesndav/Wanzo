@@ -76,9 +76,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     setState(() {
       _defaultCurrency = settings.activeCurrency;
       _selectedTransactionCurrency = settings.activeCurrency; 
-      // TODO: This needs to be fixed. Exchange rates are not part of CurrencySettings directly.
-      // _exchangeRates = settings.exchangeRates; 
-      // For now, let's assume a default map or fetch it from somewhere else.
+      // The following lines correctly initialize _exchangeRates
       _exchangeRates = {
         Currency.USD: settings.usdToCdfRate,
         Currency.FCFA: settings.fcfaToCdfRate,
@@ -160,7 +158,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('ID de vente manquant, impossible de générer le document.')),
                   );
-                  if (mounted) Navigator.of(context).pop();
+                  if (mounted) Navigator.of(context).pop(true);
                 }
               } else if (state is SalesError) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -270,7 +268,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                           labelText: 'Nom du client *',
                           border: const OutlineInputBorder(),
                           filled: _foundCustomer != null,
-                          fillColor: _foundCustomer != null ? Color.fromRGBO(Colors.green.red, Colors.green.green, Colors.green.blue, 0.05) : null,
+                          fillColor: _foundCustomer != null ? Colors.green.withAlpha((0.05 * 255).round()) : null,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -459,7 +457,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm, horizontal: WanzoSpacing.md),
                           decoration: BoxDecoration(
-                            color: Color.fromRGBO(_getPaymentStatusColor().red, _getPaymentStatusColor().green, _getPaymentStatusColor().blue, 0.1),
+                            color: _getPaymentStatusColor().withAlpha((0.1 * 255).round()),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: _getPaymentStatusColor()),
                           ),
@@ -574,7 +572,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erreur: Paramètres (anciens) non chargés pour la génération du document.')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // MODIFIED: Pop with true
       }
       return;
     }
@@ -616,10 +614,12 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     if (pdfPath.isNotEmpty) { // Simplified from: pdfPath != null && pdfPath.isNotEmpty
       _showDocumentOptions(pdfPath, documentType, saleForPdf, currentLegacySettings);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible de générer le $documentType. Chemin non valide.')),
-      );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de générer le $documentType. Chemin non valide.')),
+        );
+        Navigator.of(context).pop(true); // MODIFIED: Pop with true
+      }
     }
   }
 
@@ -637,8 +637,8 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 onTap: () async {
                   Navigator.pop(bc);
                   // await invoiceService.previewDocument(pdfPath); // Commented out as method is not defined
-                  print('Preview document: $pdfPath'); // Placeholder
-                  if (mounted) Navigator.of(context).pop(); 
+                  // Placeholder removed
+                  if (mounted) Navigator.of(context).pop(true); // MODIFIED: Pop with true
                 },
               ),
               ListTile(
@@ -647,7 +647,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 onTap: () async {
                   Navigator.pop(bc);
                   await invoiceService.printDocument(pdfPath);
-                   if (mounted) Navigator.of(context).pop();
+                   if (mounted) Navigator.of(context).pop(true); // MODIFIED: Pop with true
                 },
               ),
               ListTile(
@@ -656,7 +656,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 onTap: () async {
                   Navigator.pop(bc);
                   await invoiceService.shareInvoice(sale, settings, customerPhoneNumber: _customerPhoneController.text);
-                   if (mounted) Navigator.of(context).pop();
+                   if (mounted) Navigator.of(context).pop(true); // MODIFIED: Pop with true
                 },
               ),
               ListTile(
@@ -664,7 +664,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 title: const Text('Fermer et continuer'),
                 onTap: () {
                   Navigator.pop(bc);
-                  if (mounted) Navigator.of(context).pop();
+                  if (mounted) Navigator.of(context).pop(true); // MODIFIED: Pop with true
                 },
               ),
             ],
@@ -684,7 +684,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
           padding: const EdgeInsets.symmetric(vertical: WanzoSpacing.sm),
           child: Row(
             children: [
-              Expanded(flex: 3, child: Text('Produit', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))),
+              Expanded(flex: 3, child: Text('Article/Service', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold))), // MODIFIED
               Expanded(flex: 1, child: Text('Qté', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
               Expanded(flex: 2, child: Text('Prix U. ($currencySymbol)', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
               const SizedBox(width: WanzoSpacing.md), // For delete icon
@@ -699,9 +699,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
           separatorBuilder: (context, index) => const Divider(),
           itemBuilder: (context, index) {
             final item = _items[index];
+            // TODO: [ITEM_TYPE_INTEGRATION] Display item type (Product/Service) if needed in the list
             return Row(
               children: [
-                Expanded(flex: 3, child: Text(item.productName)),
+                Expanded(flex: 3, child: Text(item.productName)), // Keep as productName for now, represents item name
                 Expanded(flex: 1, child: Text('${item.quantity.toInt()}', textAlign: TextAlign.center)),
                 Expanded(flex: 2, child: Text(formatCurrency(item.unitPrice, item.currencyCode), textAlign: TextAlign.right)),
                 IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _removeItem(index)),
@@ -729,11 +730,14 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
 
   void _showAddItemDialog() {
     final productNameController = TextEditingController();
-    final productIdController = TextEditingController();
+    final productIdController = TextEditingController(); // Still useful for products
     final quantityController = TextEditingController(text: '1');
     final unitPriceController = TextEditingController();
     Product? selectedProductForDialog;
     final GlobalKey<FormState> addItemFormKey = GlobalKey<FormState>();
+
+    // TODO: [ITEM_TYPE_INTEGRATION] Add state for selected item type in dialog
+    SaleItemType currentItemType = SaleItemType.product; // Default to product
 
     final dialogCurrency = _selectedTransactionCurrency;
     if (dialogCurrency == null) {
@@ -757,7 +761,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             if (qty != null && price != null) calculatedTotalPrice = qty * price;
 
             return AlertDialog(
-              title: const Text('Ajouter un article'),
+              title: const Text('Ajouter un article/service'), // MODIFIED
               content: Form(
                 key: addItemFormKey,
                 child: SingleChildScrollView(
@@ -765,71 +769,104 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BlocBuilder<InventoryBloc, InventoryState>(
-                        builder: (context, state) {
-                          List<Product> productSuggestions = state is ProductsLoaded ? state.products : [];
-                          return Autocomplete<Product>(
-                            displayStringForOption: (Product option) => option.name,
-                            optionsBuilder: (TextEditingValue textEditingValue) {
-                              if (textEditingValue.text.isEmpty) return const Iterable<Product>.empty();
-                              return productSuggestions.where((Product p) => p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
-                            },
-                            onSelected: (Product selection) {
-                              setStateDialog(() {
-                                selectedProductForDialog = selection;
-                                productNameController.text = selection.name;
-                                productIdController.text = selection.id;
-                                if (currentTransactionExchangeRateToCdf > 0) {
-                                   unitPriceController.text = (selection.sellingPriceInCdf / currentTransactionExchangeRateToCdf).toStringAsFixed(2);
-                                } else {
-                                   unitPriceController.text = selection.sellingPriceInCdf.toStringAsFixed(2);
-                                }
-                                if (quantityController.text.isEmpty || quantityController.text == '0') quantityController.text = '1';
-                              });
-                            },
-                            fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
-                              return TextFormField(
-                                controller: productNameController,
-                                focusNode: focusNode,
-                                decoration: const InputDecoration(labelText: 'Nom du produit', border: OutlineInputBorder(), hintText: 'Rechercher...'),
-                                onChanged: (value) {
-                                  if (selectedProductForDialog != null && selectedProductForDialog!.name != value) {
-                                      setStateDialog((){
-                                        selectedProductForDialog = null;
-                                        productIdController.clear(); 
-                                      });
+                      // TODO: [ITEM_TYPE_INTEGRATION] Add SegmentedButton or Radio buttons for Product/Service
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: WanzoSpacing.md),
+                        child: SegmentedButton<SaleItemType>(
+                          segments: const <ButtonSegment<SaleItemType>>[
+                            ButtonSegment<SaleItemType>(value: SaleItemType.product, label: Text('Produit'), icon: Icon(Icons.inventory_2)),
+                            ButtonSegment<SaleItemType>(value: SaleItemType.service, label: Text('Service'), icon: Icon(Icons.miscellaneous_services)),
+                          ],
+                          selected: <SaleItemType>{currentItemType},
+                          onSelectionChanged: (Set<SaleItemType> newSelection) {
+                            setStateDialog(() {
+                              currentItemType = newSelection.first;
+                              // Clear product specific fields if switching to service
+                              if (currentItemType == SaleItemType.service) {
+                                selectedProductForDialog = null;
+                                productIdController.clear();
+                                // Optionally clear product name if it was auto-filled
+                                // productNameController.clear(); 
+                              }
+                            });
+                          },
+                        ),
+                      ),
+
+                      if (currentItemType == SaleItemType.product)
+                        BlocBuilder<InventoryBloc, InventoryState>(
+                          builder: (context, state) {
+                            List<Product> productSuggestions = state is ProductsLoaded ? state.products : [];
+                            return Autocomplete<Product>(
+                              displayStringForOption: (Product option) => option.name,
+                              optionsBuilder: (TextEditingValue textEditingValue) {
+                                if (textEditingValue.text.isEmpty) return const Iterable<Product>.empty();
+                                return productSuggestions.where((Product p) => p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                              },
+                              onSelected: (Product selection) {
+                                setStateDialog(() {
+                                  selectedProductForDialog = selection;
+                                  productNameController.text = selection.name;
+                                  productIdController.text = selection.id;
+                                  if (currentTransactionExchangeRateToCdf > 0) {
+                                    unitPriceController.text = (selection.sellingPriceInCdf / currentTransactionExchangeRateToCdf).toStringAsFixed(2);
+                                  } else {
+                                    unitPriceController.text = selection.sellingPriceInCdf.toStringAsFixed(2);
                                   }
-                                },
-                                validator: (v) => v == null || v.isEmpty ? 'Nom requis' : null,
-                              );
-                            },
-                            optionsViewBuilder: (ctx, onSelected, options) {
-                              return Align(
-                                alignment: Alignment.topLeft,
-                                child: Material(
-                                  elevation: 4.0,
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxHeight: 200),
-                                    child: ListView.builder(
-                                      padding: EdgeInsets.zero, shrinkWrap: true, itemCount: options.length,
-                                      itemBuilder: (BuildContext context, int index) {
-                                        final Product option = options.elementAt(index);
-                                        String displayPrice;
-                                        if (currentTransactionExchangeRateToCdf > 0) {
-                                            displayPrice = formatCurrency(option.sellingPriceInCdf / currentTransactionExchangeRateToCdf, dialogCurrencyCode);
-                                        } else {
-                                            displayPrice = formatCurrency(option.sellingPriceInCdf, _defaultCurrency.code) + " (CDF)";
-                                        }
-                                        return InkWell(onTap: () => onSelected(option), child: ListTile(title: Text(option.name), subtitle: Text('Stock: ${option.stockQuantity}, Prix: $displayPrice')));
-                                      },
+                                  if (quantityController.text.isEmpty || quantityController.text == '0') quantityController.text = '1';
+                                });
+                              },
+                              fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
+                                // Use productNameController for the field view
+                                return TextFormField(
+                                  controller: productNameController, // MODIFIED to use existing controller
+                                  focusNode: focusNode,
+                                  decoration: const InputDecoration(labelText: 'Nom du produit', border: OutlineInputBorder(), hintText: 'Rechercher produit...'),
+                                  onChanged: (value) {
+                                    if (selectedProductForDialog != null && selectedProductForDialog!.name != value) {
+                                        setStateDialog((){
+                                          selectedProductForDialog = null;
+                                          productIdController.clear(); 
+                                        });
+                                    }
+                                  },
+                                  validator: (v) => v == null || v.isEmpty ? 'Nom du produit requis' : null,
+                                );
+                              },
+                              optionsViewBuilder: (ctx, onSelected, options) {
+                                return Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Material(
+                                    elevation: 4.0,
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(maxHeight: 200),
+                                      child: ListView.builder(
+                                        padding: EdgeInsets.zero, shrinkWrap: true, itemCount: options.length,
+                                        itemBuilder: (BuildContext context, int index) {
+                                          final Product option = options.elementAt(index);
+                                          String displayPrice;
+                                          if (currentTransactionExchangeRateToCdf > 0) {
+                                              displayPrice = formatCurrency(option.sellingPriceInCdf / currentTransactionExchangeRateToCdf, dialogCurrencyCode);
+                                          } else {
+                                              displayPrice = "${formatCurrency(option.sellingPriceInCdf, _defaultCurrency.code)} (CDF)";
+                                          }
+                                          return InkWell(onTap: () => onSelected(option), child: ListTile(title: Text(option.name), subtitle: Text('Stock: ${option.stockQuantity}, Prix: $displayPrice')));
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                                );
+                              },
+                            );
+                          },
+                        )
+                      else // Service specific input
+                        TextFormField(
+                          controller: productNameController,
+                          decoration: const InputDecoration(labelText: 'Nom du service', border: OutlineInputBorder()),
+                          validator: (v) => v == null || v.isEmpty ? 'Nom du service requis' : null,
+                        ),
+
                       const SizedBox(height: WanzoSpacing.md),
                       TextFormField(
                         controller: quantityController,
@@ -840,7 +877,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                           if (v == null || v.isEmpty) return 'Quantité requise';
                           final q = int.tryParse(v);
                           if (q == null || q <= 0) return 'Quantité invalide';
-                          if (selectedProductForDialog != null && q > selectedProductForDialog!.stockQuantity) return 'Stock insuffisant (${selectedProductForDialog!.stockQuantity})';
+                          // TODO: [ITEM_TYPE_INTEGRATION] Only check stock for products
+                          if (currentItemType == SaleItemType.product && selectedProductForDialog != null && q > selectedProductForDialog!.stockQuantity) {
+                            return 'Stock insuffisant (${selectedProductForDialog!.stockQuantity})';
+                          }
                           return null;
                         },
                         onChanged: (_) => setStateDialog(() {}),
@@ -879,7 +919,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       final String productName = productNameController.text;
                       final int currentQuantity = int.parse(quantityController.text);
                       final double unitPriceInSelectedCurrency = double.parse(unitPriceController.text);
-                      final String resolvedProductId = selectedProductForDialog?.id ?? productIdController.text.takeIf((it) => it.isNotEmpty) ?? 'manual-${DateTime.now().millisecondsSinceEpoch}';
+                      // TODO: [ITEM_TYPE_INTEGRATION] Adjust productId for services
+                      final String resolvedProductId = currentItemType == SaleItemType.product 
+                                                      ? (selectedProductForDialog?.id ?? productIdController.text.takeIf((it) => it.isNotEmpty) ?? 'manual_prod-${DateTime.now().millisecondsSinceEpoch}')
+                                                      : 'service-${DateTime.now().millisecondsSinceEpoch}';
                       final totalPriceInSelectedCurrency = currentQuantity * unitPriceInSelectedCurrency;
                       final unitPriceInCdf = unitPriceInSelectedCurrency * currentTransactionExchangeRateToCdf;
                       final totalPriceInCdf = totalPriceInSelectedCurrency * currentTransactionExchangeRateToCdf;
@@ -895,6 +938,8 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                           exchangeRate: currentTransactionExchangeRateToCdf,
                           unitPriceInCdf: unitPriceInCdf,
                           totalPriceInCdf: totalPriceInCdf,
+                          // TODO: [ITEM_TYPE_INTEGRATION] Set itemType
+                          itemType: currentItemType, 
                         ),
                       );
                       Navigator.pop(dialogContext);
@@ -979,3 +1024,6 @@ extension StringExtension on String {
 
 // TODO: Update currency_formatter.dart to use CurrencyEnum instead of old CurrencyType.
 // For now, formatCurrency(double amount, String currencyCodeOrSymbol) is assumed to work.
+
+// TODO: [ITEM_TYPE_INTEGRATION] Ensure SaleItemType is correctly imported and used.
+// Check if SaleItem model in sale_item.dart has the itemType field and SaleItemType enum.

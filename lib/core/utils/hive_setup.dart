@@ -36,6 +36,9 @@ import '../../features/documents/models/document.dart' as document_model;
 // Adha models
 import '../../features/adha/models/adha_adapters.dart' as adha_adapters;
 
+// Expense models
+import '../../features/expenses/models/expense.dart'; // Added for Expense and ExpenseCategory
+
 
 void _registerAdapterIfNotExists<T>(TypeAdapter<T> adapter) {
   if (!Hive.isAdapterRegistered(adapter.typeId)) {
@@ -64,6 +67,7 @@ Future<void> initializeHiveAdapters() async {
   // Sales
   _registerAdapterIfNotExists(SaleAdapter());
   _registerAdapterIfNotExists(sale_item_model.SaleItemAdapter()); // Use aliased import
+  _registerAdapterIfNotExists(sale_item_model.SaleItemTypeAdapter()); // Added
   _registerAdapterIfNotExists(SaleStatusAdapter());
   _registerAdapterIfNotExists(PaymentMethodAdapter());
   
@@ -90,6 +94,10 @@ Future<void> initializeHiveAdapters() async {
   // Adha
   _registerAdapterIfNotExists(adha_adapters.AdhaMessageAdapter());
   _registerAdapterIfNotExists(adha_adapters.AdhaConversationAdapter());
+
+  // Register Expense adapters
+  _registerAdapterIfNotExists(ExpenseAdapter()); // Added
+  _registerAdapterIfNotExists(ExpenseCategoryAdapter()); // Added
 }
 
 // Helper function to open all necessary boxes
@@ -106,6 +114,7 @@ Future<void> openHiveBoxes() async {
   await Hive.openBox<Settings>('settingsBox');
   await Hive.openBox<NotificationModel>('notificationsBox');
   await Hive.openBox<String>('syncStatusBox'); 
+  await Hive.openBox<Expense>('expenses'); // Added to open the expenses box
   // Add other boxes if they were in main.dart and are not covered:
   // e.g. await Hive.openBox<global_product.Product>('globalProductsBox'); if needed
   // await Hive.openBox<document_model.Document>('documentsBox'); // Example if needed
