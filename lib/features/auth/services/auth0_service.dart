@@ -5,14 +5,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../../../core/utils/connectivity_service.dart';
+import '../../../core/config/env_config.dart'; // Import pour la configuration d'environnement
+import '../../../core/utils/token_validator.dart'; // Import pour la validation des tokens
 import 'offline_auth_service.dart';
 
 /// Service pour gérer l'authentification avec Auth0
 class Auth0Service {
-  static const String _auth0Domain = 'dev-wanzo.us.auth0.com'; // Utiliser AppConfig dans un environnement réel
-  static const String _auth0ClientId = 'Xm7YJXs0LGX5iG1KLR8wPlmK8gnjVrns'; // Utiliser AppConfig dans un environnement réel
-  static const String _auth0RedirectUri = 'com.wanzo.app://login-callback';
-  static const String _auth0Audience = 'https://$_auth0Domain';
+  // Configuration Auth0 à partir de EnvConfig
+  String get _auth0Domain => EnvConfig.auth0Domain;
+  String get _auth0ClientId => EnvConfig.auth0ClientId;
+  String get _auth0RedirectUri => EnvConfig.auth0RedirectUri;
+  String get _auth0Audience => EnvConfig.auth0Audience;
 
   // Clés pour le stockage sécurisé
   static const String _accessTokenKey = 'access_token';
@@ -109,9 +112,7 @@ class Auth0Service {
   Future<User> login() async {
     try {
       debugPrint("Auth0Service: Attempting standard Auth0 login. Clearing demo user flag.");
-      await _secureStorage.delete(key: _demoUserKey); // Clear demo user flag if any
-
-      final TokenResponse result = await _appAuth.authorizeAndExchangeCode(
+      await _secureStorage.delete(key: _demoUserKey); // Clear demo user flag if any      final TokenResponse result = await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           _auth0ClientId,
           _auth0RedirectUri,

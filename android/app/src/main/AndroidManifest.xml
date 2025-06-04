@@ -27,6 +27,26 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            
+            <!-- Configuration pour Auth0 - Login Callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="com.wanzo.app"
+                    android:host="login-callback" />
+            </intent-filter>
+            
+            <!-- Configuration pour Auth0 - Logout Callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="com.wanzo.app"
+                    android:host="logout-callback" />
+            </intent-filter>
         </activity>
 
         <!-- Add this activity for image_cropper -->

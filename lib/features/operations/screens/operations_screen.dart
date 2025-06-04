@@ -384,7 +384,7 @@ class _OperationsViewState extends State<_OperationsView>
                           value: status,
                           child: Text(status.displayName),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (SaleStatus? newValue) {
                       stfSetState(() {

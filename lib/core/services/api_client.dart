@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Added for token storage
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/env_config.dart'; // Import pour la configuration d'environnement
+import '../../features/auth/services/auth0_service.dart'; // Import pour le service Auth0
 
 // TODO: Consider a more robust error handling strategy (custom exceptions)
 class ApiException implements Exception {
@@ -18,39 +20,64 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  final String _baseUrl = 'http://localhost:3000/api';
+  final String _baseUrl;
   final http.Client _httpClient;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(); // Added
+  Auth0Service? _auth0Service; // Changed to nullable
 
   // Public getter for baseUrl
   String get baseUrl => _baseUrl;
 
   // Private constructor
-  ApiClient._internal({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  ApiClient._internal({
+    http.Client? httpClient,
+    Auth0Service? auth0Service,
+    bool useApiGateway = true, // Default to use API Gateway
+  })  : _httpClient = httpClient ?? http.Client(),
+        _baseUrl = EnvConfig.getBaseUrl(useApiGateway: useApiGateway);
 
-  // Singleton instance
-  static final ApiClient _instance = ApiClient._internal();
+  // Singleton instance with Auth0Service
+  static final ApiClient _instance = ApiClient._internal(
+    auth0Service: null, // This will be set in configure method
+    useApiGateway: true,
+  );
+  
+  // Configure the instance with Auth0Service
+  static void configure({Auth0Service? auth0Service}) {
+    _instance._auth0Service = auth0Service;
+  }
 
   // Factory constructor to return the singleton instance
   factory ApiClient() => _instance;
-
-  Future<Map<String, String>> getHeaders({bool requiresAuth = false}) async { // Renamed from _getHeaders
+  Future<Map<String, String>> getHeaders({bool requiresAuth = false}) async {
     final headers = <String, String>{
       HttpHeaders.contentTypeHeader: 'application/json; charset=UTF-8',
       HttpHeaders.acceptHeader: 'application/json',
     };
-    if (requiresAuth) {
-      String? token = await _secureStorage.read(key: 'auth_token');
-      if (token != null) {
-        headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+    
+    if (requiresAuth) {      if (_auth0Service != null) {
+        // Utiliser Auth0Service pour obtenir le token d'accès (recommandé)
+        final String? token = await _auth0Service?.getAccessToken();
+        if (token != null) {
+          headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+        }
+      } else {
+        // Fallback à la méthode précédente
+        String? token = await _secureStorage.read(key: 'auth_token');
+        if (token != null) {
+          headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+        }
       }
     }
+    
     return headers;
   }
 
   Future<dynamic> get(String endpoint, {Map<String, String>? queryParameters, bool requiresAuth = false}) async { // Added queryParameters
-    final url = Uri.parse('$baseUrl/$endpoint').replace(queryParameters: queryParameters); // Use queryParameters
+    // Adapter l'URL pour les appareils physiques si nécessaire
+    final String deviceCompatibleBaseUrl = EnvConfig.getDeviceCompatibleUrl(baseUrl);
+    
+    final url = Uri.parse('$deviceCompatibleBaseUrl/$endpoint').replace(queryParameters: queryParameters); // Use queryParameters
     try {
       final response = await _httpClient.get(
         url,
@@ -69,7 +96,10 @@ class ApiClient {
   }
 
   Future<dynamic> post(String endpoint, {dynamic body, bool requiresAuth = false}) async {
-    final url = Uri.parse('$baseUrl/$endpoint');
+    // Adapter l'URL pour les appareils physiques si nécessaire
+    final String deviceCompatibleBaseUrl = EnvConfig.getDeviceCompatibleUrl(baseUrl);
+    
+    final url = Uri.parse('$deviceCompatibleBaseUrl/$endpoint');
     try {
       final response = await _httpClient.post(
         url,
@@ -89,7 +119,10 @@ class ApiClient {
   }
 
   Future<dynamic> put(String endpoint, {dynamic body, bool requiresAuth = false}) async {
-    final url = Uri.parse('$baseUrl/$endpoint');
+    // Adapter l'URL pour les appareils physiques si nécessaire
+    final String deviceCompatibleBaseUrl = EnvConfig.getDeviceCompatibleUrl(baseUrl);
+    
+    final url = Uri.parse('$deviceCompatibleBaseUrl/$endpoint');
     try {
       final response = await _httpClient.put(
         url,
@@ -109,7 +142,10 @@ class ApiClient {
   }
 
   Future<dynamic> delete(String endpoint, {bool requiresAuth = false}) async { // Added requiresAuth
-    final url = Uri.parse('$baseUrl/$endpoint');
+    // Adapter l'URL pour les appareils physiques si nécessaire
+    final String deviceCompatibleBaseUrl = EnvConfig.getDeviceCompatibleUrl(baseUrl);
+    
+    final url = Uri.parse('$deviceCompatibleBaseUrl/$endpoint');
     try {
       final response = await _httpClient.delete(
         url,
@@ -128,7 +164,10 @@ class ApiClient {
   }
 
   Future<http.Response> postMultipart(String endpoint, {required File file, required String fileField, Map<String, String>? fields, bool requiresAuth = false}) async {
-    final url = Uri.parse('$baseUrl/$endpoint');
+    // Adapter l'URL pour les appareils physiques si nécessaire
+    final String deviceCompatibleBaseUrl = EnvConfig.getDeviceCompatibleUrl(baseUrl);
+    
+    final url = Uri.parse('$deviceCompatibleBaseUrl/$endpoint');
     try {
       var request = http.MultipartRequest('POST', url);
       request.headers.addAll(await getHeaders(requiresAuth: requiresAuth));

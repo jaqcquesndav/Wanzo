@@ -76,14 +76,8 @@ Future<void> main() async {
 
   final databaseService = DatabaseService();
   final secureStorage = const FlutterSecureStorage();
-  final apiClient = ApiClient();
-
-  final productApiService = ProductApiService(apiClient: apiClient);
-  final customerApiService = CustomerApiService(apiClient: apiClient);
-  final saleApiService = SaleApiService(apiClient: apiClient);
-  final imageUploadService = ImageUploadService(); 
-  final expenseApiService = ExpenseApiServiceImpl(apiClient, imageUploadService);
-
+  
+  // Initialisation des services d'authentification
   final offlineAuthService = OfflineAuthService(
     secureStorage: secureStorage,
     databaseService: databaseService,
@@ -92,6 +86,17 @@ Future<void> main() async {
 
   final auth0Service = Auth0Service(offlineAuthService: offlineAuthService);
   await auth0Service.init();
+  
+  // Initialisation de l'API client avec Auth0Service
+  final apiClient = ApiClient();
+  ApiClient.configure(auth0Service: auth0Service);
+
+  // Initialisation des services API
+  final productApiService = ProductApiService(apiClient: apiClient);
+  final customerApiService = CustomerApiService(apiClient: apiClient);
+  final saleApiService = SaleApiService(apiClient: apiClient);
+  final imageUploadService = ImageUploadService(); 
+  final expenseApiService = ExpenseApiServiceImpl(apiClient, imageUploadService);
 
   final notificationService = NotificationService();
 

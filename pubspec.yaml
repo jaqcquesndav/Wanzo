@@ -45,9 +45,10 @@ dependencies:
   image_cropper: ^9.1.0 # Upgraded from ^6.0.0
   connectivity_plus: ^6.1.4 # Upgraded from ^5.0.2
   http: ^1.2.0
-      # Authentication
+    # Authentication
   flutter_appauth: ^9.0.0
   flutter_secure_storage: ^9.2.0 # Upgraded from ^4.2.1
+  jwt_decoder: ^2.0.1 # Pour décoder et analyser les JWT tokens
   
   # Display and rendering
   flutter_markdown: ^0.7.1

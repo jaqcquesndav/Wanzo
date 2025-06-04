@@ -25,7 +25,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   DateTime _selectedDate = DateTime.now();
   ExpenseCategory _selectedCategory = ExpenseCategory.other;
   String? _selectedPaymentMethod;
-  List<File> _imageFiles = []; // To store selected image files
+  final List<File> _imageFiles = []; // To store selected image files
   final ImagePicker _picker = ImagePicker(); // ImagePicker instance
 
   final List<String> _paymentMethods = ['Espèce', 'Mobile Money', 'Carte Bancaire', 'Chèque', 'Virement'];
@@ -207,7 +207,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
                 const SizedBox(height: WanzoSpacing.md),
                 if (_imageFiles.isNotEmpty)
-                  Container(
+                  SizedBox(
                     height: 120,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,

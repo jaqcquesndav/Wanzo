@@ -322,7 +322,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
     Currency appActiveDisplayCurrency = Currency.CDF; // Default
     if (currencySettingsState.status == CurrencySettingsStatus.loaded) {
       appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
-    } else if (currencySettingsState.status == CurrencySettingsStatus.initial && currencySettingsState.settings.activeCurrency != null) {
+    } else if (currencySettingsState.status == CurrencySettingsStatus.initial) {
       appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
     }
 
@@ -412,7 +412,7 @@ class _InventoryScreenState extends State<InventoryScreen> with SingleTickerProv
 
     if (currencySettingsState.status == CurrencySettingsStatus.loaded) {
       appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
-    } else if (currencySettingsState.status == CurrencySettingsStatus.initial && currencySettingsState.settings.activeCurrency != null) {
+    } else if (currencySettingsState.status == CurrencySettingsStatus.initial) {
        appActiveDisplayCurrency = currencySettingsState.settings.activeCurrency;
     }
 
