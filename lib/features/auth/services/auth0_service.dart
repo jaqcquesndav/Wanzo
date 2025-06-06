@@ -112,7 +112,8 @@ class Auth0Service {
   Future<User> login() async {
     try {
       debugPrint("Auth0Service: Attempting standard Auth0 login. Clearing demo user flag.");
-      await _secureStorage.delete(key: _demoUserKey); // Clear demo user flag if any      final TokenResponse result = await _appAuth.authorizeAndExchangeCode(
+      await _secureStorage.delete(key: _demoUserKey); // Clear demo user flag if any
+      final TokenResponse result = await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           _auth0ClientId,
           _auth0RedirectUri,

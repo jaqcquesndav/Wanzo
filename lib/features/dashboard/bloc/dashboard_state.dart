@@ -13,21 +13,23 @@ class DashboardInitial extends DashboardState {}
 class DashboardLoading extends DashboardState {}
 
 class DashboardLoaded extends DashboardState {
-  final double salesToday;
+  final double salesTodayCdf;
+  final double salesTodayUsd;
   final int clientsServedToday;
   final double receivables;
-  final int transactionsToday;
+  final double expenses;
   // Add other KPI fields as needed
 
   const DashboardLoaded({
-    required this.salesToday,
+    required this.salesTodayCdf,
+    required this.salesTodayUsd,
     required this.clientsServedToday,
     required this.receivables,
-    required this.transactionsToday,
+    required this.expenses,
   });
 
   @override
-  List<Object> get props => [salesToday, clientsServedToday, receivables, transactionsToday];
+  List<Object> get props => [salesTodayCdf, salesTodayUsd, clientsServedToday, receivables, expenses];
 }
 
 class DashboardError extends DashboardState {

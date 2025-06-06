@@ -9,6 +9,10 @@ import 'package:wanzo/features/expenses/models/expense.dart';
 import 'package:wanzo/features/sales/models/sale.dart';
 import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/sales/repositories/sales_repository.dart';
+import 'package:wanzo/features/financing/models/financing_request.dart';
+import 'package:wanzo/features/financing/repositories/financing_repository.dart';
+import 'package:wanzo/features/financing/bloc/financing_bloc.dart';
+import 'package:wanzo/features/dashboard/bloc/operation_journal_bloc.dart' hide LoadOperations;
 
 import '../bloc/operations_bloc.dart';
 
@@ -37,6 +41,7 @@ class OperationsScreen extends StatelessWidget {
       create: (context) => OperationsBloc(
         salesRepository: context.read<SalesRepository>(),
         expenseRepository: context.read<ExpenseRepository>(),
+        financingRepository: context.read<FinancingRepository>(),
       )..add(const LoadOperations()), // Initial load
       child: const _OperationsView(),
     );
@@ -54,11 +59,10 @@ class _OperationsViewState extends State<_OperationsView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   VoidCallback? _tabListener;
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabListener = () {
       if (mounted) {
         setState(() {}); // To rebuild FAB if its properties change with tab
@@ -92,13 +96,13 @@ class _OperationsViewState extends State<_OperationsView>
         ),
       ],
       body: Column(
-        children: [
-          TabBar(
+        children: [          TabBar(
             controller: _tabController,
             tabs: const [
               Tab(text: 'Tout'),
               Tab(text: 'Ventes'),
               Tab(text: 'Dépenses'),
+              Tab(text: 'Financements'),
             ],
             labelColor: Theme.of(context).primaryColor,
             unselectedLabelColor: Colors.grey,
@@ -108,14 +112,13 @@ class _OperationsViewState extends State<_OperationsView>
               builder: (context, state) {
                 if (state is OperationsLoading) {
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (state is OperationsLoaded) {
-                  return TabBarView(
+                }                if (state is OperationsLoaded) {                  return TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildAllOperationsView(context, state.sales, state.expenses),
+                      _buildAllOperationsView(context, state.sales, state.expenses, state.financingRequests),
                       _buildSalesView(context, state.sales),
                       _buildExpensesView(context, state.expenses),
+                      _buildFinancingView(context, state.financingRequests),
                     ],
                   );
                 }
@@ -160,8 +163,7 @@ class _OperationsViewState extends State<_OperationsView>
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
+      ),      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final operationsBloc = context.read<OperationsBloc>();
           bool shouldRefresh = false;
@@ -188,6 +190,14 @@ class _OperationsViewState extends State<_OperationsView>
             if (result == true) {
               shouldRefresh = true;
             }
+          } else if (_tabController.index == 3) { // "Financements" tab            // ignore: avoid_print
+            print('[OperationsScreen FAB] Navigating to add_financing_from_operations...');
+            result = await context.pushNamed('add_financing_from_operations');
+            // ignore: avoid_print
+            print('[OperationsScreen FAB] Result from add_financing_from_operations: $result');
+            if (result == true) {
+              shouldRefresh = true;
+            }
           }
 
           // ignore: avoid_print
@@ -203,20 +213,43 @@ class _OperationsViewState extends State<_OperationsView>
             // ignore: avoid_print
             print('[OperationsScreen FAB] Not refreshing, result was not true or no action taken.');
           }
-        },
-        label: const Text('Ajouter'),
+        },        label: const Text('Ajouter'),
         icon: const Icon(Icons.add),
-        tooltip: _tabController.index <= 1 ? 'Ajouter une vente' : 'Ajouter une dépense', // Dynamic tooltip
+        tooltip: _tabController.index <= 1 
+            ? 'Ajouter une vente' 
+            : (_tabController.index == 2 
+                ? 'Ajouter une dépense' 
+                : 'Ajouter un financement'), // Dynamic tooltip
       ),
     );
   }
-
-  Widget _buildAllOperationsView(BuildContext context, List<Sale> sales, List<Expense> expenses) {
-    List<dynamic> allOperations = [...sales, ...expenses];
+  Widget _buildAllOperationsView(BuildContext context, List<Sale> sales, List<Expense> expenses, List<FinancingRequest> financingRequests) {
+    List<dynamic> allOperations = [...sales, ...expenses, ...financingRequests];
     allOperations.sort((a, b) {
-      DateTime dateA = a is Sale ? a.date : (a as Expense).date;
-      DateTime dateB = b is Sale ? b.date : (b as Expense).date;
-      return dateB.compareTo(dateA);
+      DateTime dateA;
+      DateTime dateB;
+      
+      if (a is Sale) {
+        dateA = a.date;
+      } else if (a is Expense) {
+        dateA = a.date;
+      } else if (a is FinancingRequest) {
+        dateA = a.requestDate;
+      } else {
+        dateA = DateTime.now();
+      }
+      
+      if (b is Sale) {
+        dateB = b.date;
+      } else if (b is Expense) {
+        dateB = b.date;
+      } else if (b is FinancingRequest) {
+        dateB = b.requestDate;
+      } else {
+        dateB = DateTime.now();
+      }
+      
+      return dateB.compareTo(dateA); // Sort in descending order (newest first)
     });
 
     if (allOperations.isEmpty) {
@@ -231,6 +264,8 @@ class _OperationsViewState extends State<_OperationsView>
           return _buildSaleListItem(context, item);
         } else if (item is Expense) {
           return _buildExpenseListItem(context, item);
+        } else if (item is FinancingRequest) {
+          return _buildFinancingListItem(context, item);
         }
         return const SizedBox.shrink();
       },
@@ -259,6 +294,19 @@ class _OperationsViewState extends State<_OperationsView>
       itemBuilder: (context, index) {
         final expense = expenses[index];
         return _buildExpenseListItem(context, expense);
+      },
+    );
+  }
+
+  Widget _buildFinancingView(BuildContext context, List<FinancingRequest> financingRequests) {
+    if (financingRequests.isEmpty) {
+      return const Center(child: Text('Aucun financement à afficher.'));
+    }
+    return ListView.builder(
+      itemCount: financingRequests.length,
+      itemBuilder: (context, index) {
+        final financing = financingRequests[index];
+        return _buildFinancingListItem(context, financing);
       },
     );
   }
@@ -298,6 +346,63 @@ class _OperationsViewState extends State<_OperationsView>
               const SnackBar(content: Text('Erreur: Impossible d\'ouvrir les détails de cette dépense.')),
             );
           }
+        },
+      ),
+    );
+  }
+
+  Widget _buildFinancingListItem(BuildContext context, FinancingRequest financing) {
+    // Fonction pour obtenir la couleur selon le statut
+    Color getStatusColor(String status) {
+      switch (status) {
+        case 'approved':
+          return Colors.green;
+        case 'pending':
+          return Colors.orange;
+        case 'disbursed':
+        case 'repaying':
+          return Colors.blue;
+        case 'fully_repaid':
+          return Colors.purple;
+        case 'rejected':
+          return Colors.red;
+        default:
+          return Colors.grey;
+      }
+    }
+
+    // Fonction pour obtenir le texte à afficher selon le statut
+    String getStatusText(String status) {
+      switch (status) {
+        case 'approved':
+          return 'Approuvé';
+        case 'pending':
+          return 'En attente';
+        case 'disbursed':
+          return 'Décaissé';
+        case 'repaying':
+          return 'En remboursement';
+        case 'fully_repaid':
+          return 'Remboursé';
+        case 'rejected':
+          return 'Rejeté';
+        default:
+          return 'Inconnu';
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        title: Text('${financing.type.displayName} - ${financing.institution.displayName}'),
+        subtitle: Text('Montant: ${NumberFormat.currency(locale: 'fr_FR', symbol: financing.currency).format(financing.amount)} - ${DateFormat('dd/MM/yyyy').format(financing.requestDate)}'),
+        trailing: Text(
+          getStatusText(financing.status),
+          style: TextStyle(color: getStatusColor(financing.status)),
+        ),
+        onTap: () {
+          // Naviguer vers les détails du financement
+          context.pushNamed('financing_detail', pathParameters: {'id': financing.id}, extra: financing);
         },
       ),
     );

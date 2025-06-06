@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'dart:io'; // Added for File support
 import 'package:uuid/uuid.dart'; // Added for Uuid
 import '../../../constants/spacing.dart';
-import '../../../constants/typography.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
 import '../bloc/inventory_bloc.dart';
 import '../bloc/inventory_event.dart';

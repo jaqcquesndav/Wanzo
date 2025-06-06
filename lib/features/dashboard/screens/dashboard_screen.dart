@@ -24,16 +24,18 @@ enum _ExpandedView { none, recentSales, operationsJournal }
 
 // Model for KPI data
 class KpiData {
-  final double salesToday;
+  final double salesTodayCdf;
+  final double salesTodayUsd;
   final int clientsServed;
   final double receivables;
-  final int transactions;
+  final double expenses;
 
   KpiData({
-    required this.salesToday,
+    required this.salesTodayCdf,
+    required this.salesTodayUsd,
     required this.clientsServed,
     required this.receivables,
-    required this.transactions,
+    required this.expenses,
   });
 }
 
@@ -236,8 +238,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (journalState is OperationJournalLoaded) {
       if (_selectedStartDate == null || _selectedEndDate == null) {
-        // Store context before async gap
-        final currentContext = context;
         await _selectDateRangeInternal(context, l10n, (start, end) async {
           if (!mounted) return;
           final file = await _journalService.generateJournalPdf(
@@ -249,13 +249,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             settings
           );
           if (!mounted) return;
-          ScaffoldMessenger.of(currentContext).showSnackBar( // Use stored context
+          // Utiliser le context actuel car mounted a été vérifié
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(file != null ? l10n.dashboardJournalExportSuccessMessage : l10n.dashboardJournalExportFailureMessage)),
           );
         });
       } else {
-        // Store context before async gap
-        final currentContext = context;
         if (!mounted) return;
         final file = await _journalService.generateJournalPdf(
           journalState.operations,
@@ -266,7 +265,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           settings
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(currentContext).showSnackBar( // Use stored context
+        // Utiliser le context actuel car mounted a été vérifié
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(file != null ? l10n.dashboardJournalExportSuccessMessage : l10n.dashboardJournalExportFailureMessage)),
         );
       }
@@ -493,9 +493,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisSize: MainAxisSize.min, 
           children: [
             Container(
-              padding: EdgeInsets.all(iconContainerPadding),
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.15), // Tinted background for the icon
+              padding: EdgeInsets.all(iconContainerPadding),              decoration: BoxDecoration(
+                color: iconColor.withAlpha(38), // 0.15 * 255 = 38 - Utilisé withAlpha au lieu de withOpacity
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -533,14 +532,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         
         if (salesState is SalesError && dashboardState is! DashboardError) { 
           return Center(child: Text('${l10n.commonErrorDataUnavailable}: ${salesState.message}'));
-        }
-
-        if (dashboardState is DashboardLoaded) {
+        }        if (dashboardState is DashboardLoaded) {
           final kpiData = KpiData(
-            salesToday: dashboardState.salesToday,
+            salesTodayCdf: dashboardState.salesTodayCdf,
+            salesTodayUsd: dashboardState.salesTodayUsd,
             clientsServed: dashboardState.clientsServedToday,
             receivables: dashboardState.receivables,
-            transactions: dashboardState.transactionsToday
+            expenses: dashboardState.expenses
           );
 
           List<Sale> recentSales = [];
@@ -578,55 +576,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Center(child: Text(l10n.commonLoading)); 
       }, 
     ); 
-  }
-
-  Widget _buildHeaderStats(BuildContext context, KpiData kpiData, AppLocalizations l10n, String displayCurrencyCode) {
+  }  Widget _buildHeaderStats(BuildContext context, KpiData kpiData, AppLocalizations l10n, String displayCurrencyCode) {
     return GridView.count(
       crossAxisCount: 2, 
       crossAxisSpacing: WanzoSpacing.md,
       mainAxisSpacing: WanzoSpacing.md,
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 2.2, // Réduit la hauteur des cartes KPI (valeur plus grande = cartes plus plates)
+      physics: const NeverScrollableScrollPhysics(),      
       children: [
-        _buildStatCard(context, title: l10n.dashboardHeaderSalesToday, value: formatCurrency(kpiData.salesToday, displayCurrencyCode), icon: Icons.monetization_on, color: Colors.green, l10n: l10n),
-        _buildStatCard(context, title: l10n.dashboardHeaderClientsServed, value: kpiData.clientsServed.toString(), icon: Icons.people, color: Colors.blue, l10n: l10n),
-        _buildStatCard(context, title: l10n.dashboardHeaderReceivables, value: formatCurrency(kpiData.receivables, displayCurrencyCode), icon: Icons.receipt, color: Colors.orange, l10n: l10n),
-        _buildStatCard(context, title: l10n.dashboardHeaderTransactions, value: kpiData.transactions.toString(), icon: Icons.compare_arrows, color: Colors.purple, l10n: l10n),
+        _buildStatCard(context, title: l10n.dashboardHeaderSalesToday + ' (CDF)', value: formatCurrency(kpiData.salesTodayCdf, 'CDF'), icon: Icons.monetization_on, color: Colors.green, l10n: l10n),
+        _buildStatCard(context, title: l10n.dashboardHeaderSalesToday + ' (USD)', value: formatCurrency(kpiData.salesTodayUsd, 'USD'), icon: Icons.monetization_on, color: Colors.blue, l10n: l10n),
+        _buildStatCard(context, title: l10n.dashboardHeaderClientsServed, value: kpiData.clientsServed.toString(), icon: Icons.people, color: Colors.orange, l10n: l10n),
+        _buildStatCard(context, title: 'Dépenses', value: formatCurrency(kpiData.expenses, displayCurrencyCode), icon: Icons.money_off, color: Colors.red, l10n: l10n),
       ],
     );
   }
-
   Widget _buildStatCard(BuildContext context, {required String title, required String value, required IconData icon, required Color color, required AppLocalizations l10n}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(WanzoBorderRadius.md)),
       child: Padding(
-        padding: const EdgeInsets.all(WanzoSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: WanzoSpacing.md, vertical: WanzoSpacing.xs), // Réduit le padding vertical
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min, // Minimise la taille de la colonne
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                Icon(icon, color: color, size: 20),
+                Expanded(
+                  child: Text(
+                    title, 
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11, // Réduit la taille du titre
+                    ), 
+                    overflow: TextOverflow.ellipsis
+                  )
+                ),
+                Icon(icon, color: color, size: 16), // Réduits la taille de l'icône
               ],
             ),
-            const SizedBox(height: WanzoSpacing.xs),
-            Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: WanzoSpacing.xs),
+            const SizedBox(height: WanzoSpacing.xs / 2), // Réduit l'espace entre le titre et la valeur
+            // Utiliser un SingleChildScrollView horizontal pour les grands nombres
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                value, 
+                style: value.length > 10
+                    ? Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold, 
+                        color: color,
+                        fontSize: 16, // Réduit la taille pour tous les nombres
+                      )
+                    : Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold, 
+                        color: color,
+                        fontSize: 18, // Réduit la taille pour les nombres courts
+                      ),
+              ),
+            ),
+            const SizedBox(height: WanzoSpacing.xs / 2), // Réduit l'espace entre la valeur et le lien
             InkWell(
               onTap: () {
                 // TODO: Implement actual navigation or details view
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${l10n.dashboardCardViewDetails} for $title')));
               },
-              child: Text(l10n.dashboardCardViewDetails, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).primaryColor)),
+              child: Text(
+                l10n.dashboardCardViewDetails, 
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: 10, // Réduit la taille du texte du lien
+                )
+              ),
             ),
           ],
-        ), // Closes Column
-      ), // Closes Padding
-    ); // Closes Card
+        ),
+      ),
+    );
   }
 
   Widget _buildSalesChart(BuildContext context, List<Sale> salesData, AppLocalizations l10n, String displayCurrencyCode) {
@@ -681,10 +710,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       touchTooltipData: LineTouchTooltipData(
                         getTooltipItems: (List<LineBarSpot> touchedBarSpots) { 
                           return touchedBarSpots.map((barSpot) {
-                            final flSpot = barSpot;
-                            return LineTooltipItem(
+                            final flSpot = barSpot;                              return LineTooltipItem(
                               formatCurrency(flSpot.y, displayCurrencyCode),
-                              TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold),
+                              TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimaryContainer, 
+                                fontWeight: FontWeight.bold,
+                                fontSize: flSpot.y > 1000000 ? 10 : 12, // Réduire la taille pour les grands nombres
+                              ),
                             );
                           }).toList();
                         },
@@ -720,7 +752,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
     return dailySales.entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value)).toList()..sort((a,b)=> a.x.compareTo(b.x));
   }
-
   Widget _buildTabbedRecentSalesAndJournal(BuildContext context, List<Sale> recentSales, AppLocalizations l10n, String displayCurrencyCode) {
     return DefaultTabController(
       length: 2,
@@ -732,17 +763,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()), // Updated to use withAlpha
             indicatorColor: Theme.of(context).colorScheme.primary,
             tabs: [
+              Tab(text: l10n.dashboardOperationsJournalTitle), // Moved to first position for priority
               Tab(text: l10n.dashboardRecentSalesTitle),
-              Tab(text: l10n.dashboardOperationsJournalTitle),
             ],
-          ),
-          SizedBox(
-            // Adjust height as needed, or use Flexible/Expanded if inside a Column with constraints
-            height: 400, // Example height, might need adjustment
+          ),          SizedBox(
+            // Ajusté après optimisation des cartes KPI
+            height: 420, // Revenu à 420px après avoir réduit la taille des cartes KPI
             child: TabBarView(
               children: [
+                _buildOperationsJournal(context, false, l10n, displayCurrencyCode), // Moved to first position
                 _buildRecentSalesList(context, recentSales, false, l10n, displayCurrencyCode),
-                _buildOperationsJournal(context, false, l10n, displayCurrencyCode),
               ],
             ),
           ),
@@ -793,12 +823,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
                       child: Text(clientName.isNotEmpty ? clientName[0].toUpperCase() : l10n.commonAnonymousClientInitial),
-                    ),
-                    title: Text(clientName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                    ),                    title: Text(clientName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
                     subtitle: Text(saleDate, style: Theme.of(context).textTheme.bodySmall),
-                    trailing: Text(
-                      formatCurrency(sale.totalAmountInCdf, displayCurrencyCode),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                    trailing: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 120),
+                        child: Text(
+                          formatCurrency(sale.totalAmountInCdf, displayCurrencyCode),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold, 
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: sale.totalAmountInCdf > 1000000 ? 12 : 14, // Réduire la taille pour les grands nombres
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
                     ),
                     onTap: () {
                       // if (sale.id != null) context.push(\\'${AppRoutes.saleDetails}/${sale.id}\\'); // AppRoutes missing
@@ -837,8 +877,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: WanzoSpacing.sm),
-            BlocBuilder<OperationJournalBloc, OperationJournalState>(
-              builder: (context, journalState) {
+            BlocBuilder<OperationJournalBloc, OperationJournalState>(              builder: (context, journalState) {
                 if (journalState is OperationJournalLoading) {
                   return Center(child: CircularProgressIndicator(semanticsLabel: l10n.commonLoading));
                 } else if (journalState is OperationJournalError) {
@@ -850,63 +889,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Center(child: Text(l10n.dashboardOperationsJournalNoData)),
                     );
                   }
-                  final entriesToShow = isExpanded ? journalState.operations : journalState.operations.take(5).toList();
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: entriesToShow.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, thickness: 1, indent: 72, endIndent: 16),
-                    itemBuilder: (context, index) {
-                      final entry = entriesToShow[index];
-                      final entryCurrencyCode = entry.currencyCode ?? displayCurrencyCode;
-                      
-                      String amountDisplay = "";
-                      Color amountColor = Theme.of(context).colorScheme.onSurface;
-
-                      if (entry.isDebit) {
-                        amountDisplay = "- ${formatCurrency(entry.amount.abs(), entryCurrencyCode)}";
-                        amountColor = Colors.redAccent;
-                      } else if (entry.isCredit) {
-                        amountDisplay = "+ ${formatCurrency(entry.amount.abs(), entryCurrencyCode)}";
-                        amountColor = Colors.green;
-                      } else {
-                         amountDisplay = formatCurrency(entry.amount, entryCurrencyCode);
-                      }
-
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          entry.type.icon, 
-                          size: 18,
-                          color: entry.isDebit ? Colors.redAccent : Colors.green,
-                        ),
-                        title: Text(entry.description, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis,),
-                        subtitle: Text(
-                          "${dateFormat.format(entry.date)} ${timeFormat.format(entry.date)}",
-                          style: Theme.of(context).textTheme.bodySmall
-                        ),
-                        trailing: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              amountDisplay,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: amountColor),
+                    // Limiter aux 10 dernières opérations pour la vue en miniature
+                  final entriesToShow = isExpanded 
+                      ? journalState.operations 
+                      : journalState.operations.take(10).toList();
+                  
+                  final hasMoreEntries = !isExpanded && journalState.operations.length > 10;
+                  
+                  return isExpanded
+                    ? ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: entriesToShow.length,
+                        separatorBuilder: (context, index) => const Divider(height: 0, thickness: 1, indent: 72, endIndent: 16),
+                        itemBuilder: (context, index) {
+                          final entry = entriesToShow[index];
+                          final entryCurrencyCode = entry.currencyCode ?? displayCurrencyCode;
+                          return _buildJournalEntry(context, entry, entryCurrencyCode, displayCurrencyCode, l10n, dateFormat, timeFormat);
+                        },
+                      )                    : ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 400), // Adjusted height for better spacing
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min, // Ensure column takes minimum space
+                          children: [ConstrainedBox(                            constraints: const BoxConstraints(
+                              maxHeight: 350, // Adjusted to avoid overflow
+                              minHeight: 50, // Minimum height for the list
                             ),
-                            Text(
-                              '${l10n.dashboardOperationsJournalBalanceLabel}: ${formatCurrency(entry.balanceAfter, displayCurrencyCode)}', 
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              physics: const AlwaysScrollableScrollPhysics(), // Rendre scrollable
+                              itemCount: entriesToShow.length,
+                              separatorBuilder: (context, index) => const Divider(height: 0, thickness: 1, indent: 72, endIndent: 16),
+                              itemBuilder: (context, index) {
+                                final entry = entriesToShow[index];
+                                final entryCurrencyCode = entry.currencyCode ?? displayCurrencyCode;
+                                return _buildJournalEntry(context, entry, entryCurrencyCode, displayCurrencyCode, l10n, dateFormat, timeFormat);
+                              },
+                            ),
+                          ),                          if (hasMoreEntries)
+                            InkWell(
+                              onTap: _expandOperationsJournal,
+                              child: Container(                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min, // This ensures the row takes only the space it needs
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.more_horiz, size: 14, color: Theme.of(context).colorScheme.primary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Voir plus d\'opérations',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                         onTap: () {
-                          // TODO: Implement details view for operation entry if needed
-                        },
-                      );
-                    },
-                  );
+                        ],
+                      ));
                 }
                 return Center(child: Text(l10n.commonErrorDataUnavailable)); 
               },
@@ -915,5 +959,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ), // Closes Column
       ), // Closes Padding
     ); // Closes Card
+  }
+
+  Widget _buildJournalEntry(
+    BuildContext context, 
+    OperationJournalEntry entry, 
+    String entryCurrencyCode, 
+    String displayCurrencyCode, 
+    AppLocalizations l10n, 
+    DateFormat dateFormat, 
+    DateFormat timeFormat
+  ) {
+    String amountDisplay = "";
+    Color amountColor = Theme.of(context).colorScheme.onSurface;
+
+    if (entry.isDebit) {
+      amountDisplay = "- ${formatCurrency(entry.amount.abs(), entryCurrencyCode)}";
+      amountColor = Colors.redAccent;
+    } else if (entry.isCredit) {
+      amountDisplay = "+ ${formatCurrency(entry.amount.abs(), entryCurrencyCode)}";
+      amountColor = Colors.green;
+    } else {
+      amountDisplay = formatCurrency(entry.amount, entryCurrencyCode);
+    }    return ListTile(
+      dense: true, // Rendre le ListTile plus compact
+      contentPadding: EdgeInsets.zero,
+      visualDensity: const VisualDensity(vertical: -4), // Réduire encore plus l'espacement vertical
+      minVerticalPadding: 0, // Minimiser le padding vertical
+      leading: Icon(
+        entry.type.icon, 
+        size: 16, // Réduire la taille de l'icône
+        color: entry.isDebit ? Colors.redAccent : Colors.green,
+      ),title: Text(
+        entry.description, 
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+          fontSize: 12, // Réduire la taille pour économiser de l'espace vertical
+        ), 
+        maxLines: 1, 
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        "${dateFormat.format(entry.date)} ${timeFormat.format(entry.date)}",
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: 10, // Réduire la taille pour économiser de l'espace vertical
+        ),
+      ),
+      trailing: SizedBox(
+        width: 120, // Fixed width for the trailing widget
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, // Pour réduire la hauteur de la colonne
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(                amountDisplay,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold, 
+                  color: amountColor,
+                  fontSize: entry.amount > 1000000 ? 11 : 12, // Taille réduite pour tous les montants
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                '${l10n.dashboardOperationsJournalBalanceLabel}: ${formatCurrency(entry.balanceAfter, displayCurrencyCode)}', 
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: entry.balanceAfter > 1000000 ? 9 : 10, // Taille réduite pour tous les soldes
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onTap: () {
+        // TODO: Implement details view for operation entry if needed
+      },
+    );
   }
 }

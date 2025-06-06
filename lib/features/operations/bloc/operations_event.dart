@@ -11,11 +11,17 @@ class LoadOperations extends OperationsEvent {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? paymentStatus; // e.g., "Payé", "Non Payé", "Partiellement Payé"
+  final FinancingType? financingType; // Type de financement à filtrer
 
-  const LoadOperations({this.startDate, this.endDate, this.paymentStatus});
+  const LoadOperations({
+    this.startDate, 
+    this.endDate, 
+    this.paymentStatus,
+    this.financingType,
+  });
 
   @override
-  List<Object?> get props => [startDate, endDate, paymentStatus];
+  List<Object?> get props => [startDate, endDate, paymentStatus, financingType];
 }
 
 // If you need to distinguish between loading sales and expenses,

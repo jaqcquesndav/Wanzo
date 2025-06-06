@@ -25,7 +25,9 @@ import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/notifications/screens/notification_settings_screen.dart';
 import '../../features/contacts/screens/contacts_screen.dart';
 import '../../features/expenses/screens/add_expense_screen.dart'; // Corrected import for AddExpenseScreen
-import '../../features/financing/screens/add_financing_request_screen.dart';
+import '../../features/financing/screens/add_financing_screen.dart';
+import '../../features/financing/screens/financing_detail_screen.dart';
+import '../../features/financing/models/financing_request.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/subscription/screens/subscription_screen.dart';
 import '../../features/operations/screens/operations_screen.dart';
@@ -91,10 +93,19 @@ class AppRouter {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),      GoRoute(
+        path: '/financing/add',
+        name: 'add_financing_direct',
+        builder: (context, state) => const AddFinancingScreen(),
       ),
       GoRoute(
-        path: '/financing/add',
-        builder: (context, state) => const AddFinancingRequestScreen(),
+        path: '/financing-detail/:id',
+        name: 'financing_detail',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final financing = state.extra as FinancingRequest?;
+          return FinancingDetailScreen(id: id, financing: financing);
+        },
       ),
       // Old '/sales' route is removed as OperationsScreen is the main view.
       // Navigation to add/view sales and expenses will be handled by '/operations' sub-routes
@@ -236,6 +247,11 @@ class AppRouter {
             path: 'expenses/add',
             name: 'add_expense_from_operations',
             builder: (context, state) => const AddExpenseScreen(),
+          ),
+          GoRoute(
+            path: 'financing/add',
+            name: 'add_financing_from_operations',
+            builder: (context, state) => const AddFinancingScreen(),
           ),
           // Detail screens are top-level routes accessed by ID
         ]

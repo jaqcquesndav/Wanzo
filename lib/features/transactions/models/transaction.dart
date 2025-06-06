@@ -16,6 +16,9 @@ class Transaction extends Equatable {
     required this.description,
   });
 
+  // Helper getter to determine if this transaction is an expense
+  bool get isExpense => type.toLowerCase() == 'expense';
+
   @override
   List<Object?> get props => [id, date, amount, type, description];
 }

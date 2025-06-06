@@ -1,6 +1,8 @@
+import 'dart:io'; // Import for File
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart'; // Import image_picker
 import 'package:uuid/uuid.dart';
 import '../../../constants/constants.dart';
 import '../../../core/shared_widgets/wanzo_scaffold.dart';
@@ -23,8 +25,9 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
   final _amountController = TextEditingController();
   final _reasonController = TextEditingController();
   FinancingType _selectedFinancingType = FinancingType.cashCredit;
-  FinancialInstitution _selectedInstitution = FinancialInstitution.bonneMoisson;
+  FinancialInstitution _selectedInstitution = FinancialInstitution.bonneMoisson;  String? _attachmentPath; // Added for attachment path
   final int _creditScore = 75;
+  final ImagePicker _picker = ImagePicker(); // ImagePicker instance
 
   void _showCreditScoreInfo() {
     showDialog(
@@ -68,9 +71,19 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
           const SnackBar(content: Text('Veuillez entrer un montant valide.')),
         );
         return;
+      }      
+      
+      // Vérifier si la pièce jointe existe et est accessible
+      if (_attachmentPath != null) {
+        final file = File(_attachmentPath!);
+        if (!file.existsSync()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('La pièce jointe sélectionnée n\'est pas accessible.')),
+          );
+          // Continuer quand même car la pièce jointe est optionnelle
+        }
       }
-
-      final newRequest = FinancingRequest(
+        final newRequest = FinancingRequest(
         id: const Uuid().v4(),
         amount: amount,
         currency: currency.code, // Used currency.code instead of currency.name
@@ -78,6 +91,7 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
         type: _selectedFinancingType,
         institution: _selectedInstitution,
         requestDate: DateTime.now(),
+        attachmentPaths: _attachmentPath != null ? [_attachmentPath!] : null, // Updated to use attachmentPaths
       );
 
       context.read<FinancingBloc>().add(AddFinancingRequest(newRequest));
@@ -203,7 +217,44 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
                           _selectedInstitution = newValue!;
                         });
                       },
+                    ),                    const SizedBox(height: WanzoSpacing.md),
+                    // Attachment Picker Button
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.attach_file),
+                      label: Text(_attachmentPath == null 
+                          ? 'Ajouter une pièce jointe (Optionnel)' 
+                          : 'Pièce jointe: ${_attachmentPath!.split('/').last}'),
+                      onPressed: _pickAttachment,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                      ),
                     ),
+                    if (_attachmentPath != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: WanzoSpacing.sm),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Pièce jointe acceptée: facture, devis, lettre d'intention, projet, etc.",
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+                              onPressed: () {
+                                setState(() {
+                                  _attachmentPath = null;
+                                });
+                              },
+                              tooltip: 'Supprimer la pièce jointe',
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: WanzoSpacing.xl),
                     ElevatedButton(
                       onPressed: () => _submitRequest(currentCurrency),
@@ -230,6 +281,31 @@ class _AddFinancingRequestScreenState extends State<AddFinancingRequestScreen> {
         );
       },
     );
+  }  Future<void> _pickAttachment() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85
+      );
+      
+      // Check if the widget is still mounted before using setState
+      if (!mounted) return;
+      
+      if (pickedFile != null) {
+        setState(() {
+          _attachmentPath = pickedFile.path;
+        });
+      }
+    } catch (e) {
+      // Check if the widget is still mounted before using context
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection du fichier: $e')),
+      );
+    }
   }
 
   @override
