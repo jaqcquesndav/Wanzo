@@ -13,23 +13,19 @@ class DashboardInitial extends DashboardState {}
 class DashboardLoading extends DashboardState {}
 
 class DashboardLoaded extends DashboardState {
-  final double salesTodayCdf;
-  final double salesTodayUsd;
-  final int clientsServedToday;
-  final double receivables;
-  final double expenses;
-  // Add other KPI fields as needed
+  final DashboardData dashboardData;
 
-  const DashboardLoaded({
-    required this.salesTodayCdf,
-    required this.salesTodayUsd,
-    required this.clientsServedToday,
-    required this.receivables,
-    required this.expenses,
-  });
+  const DashboardLoaded(this.dashboardData);
+
+  // Properties for backward compatibility
+  double get salesTodayCdf => dashboardData.salesTodayCdf;
+  double get salesTodayUsd => dashboardData.salesTodayUsd;
+  int get clientsServedToday => dashboardData.clientsServedToday;
+  double get receivables => dashboardData.receivables;
+  double get expenses => dashboardData.expenses;
 
   @override
-  List<Object> get props => [salesTodayCdf, salesTodayUsd, clientsServedToday, receivables, expenses];
+  List<Object> get props => [dashboardData];
 }
 
 class DashboardError extends DashboardState {

@@ -314,6 +314,16 @@ class MockOperationJournalRepository extends _i1.Mock
       ) as _i4.Future<List<_i11.OperationJournalEntry>>);
 
   @override
+  _i4.Future<Map<String, double>> getOpeningBalances(DateTime? forDate) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOpeningBalances,
+          [forDate],
+        ),
+        returnValue: _i4.Future<Map<String, double>>.value(<String, double>{}),
+      ) as _i4.Future<Map<String, double>>);
+
+  @override
   _i4.Future<double> getOpeningBalance(DateTime? forDate) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -345,6 +355,76 @@ class MockOperationJournalRepository extends _i1.Mock
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i11.OperationJournalEntry>> getSalesOperations(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSalesOperations,
+          [
+            startDate,
+            endDate,
+          ],
+        ),
+        returnValue: _i4.Future<List<_i11.OperationJournalEntry>>.value(
+            <_i11.OperationJournalEntry>[]),
+      ) as _i4.Future<List<_i11.OperationJournalEntry>>);
+
+  @override
+  _i4.Future<List<_i11.OperationJournalEntry>> getCashOperations(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getCashOperations,
+          [
+            startDate,
+            endDate,
+          ],
+        ),
+        returnValue: _i4.Future<List<_i11.OperationJournalEntry>>.value(
+            <_i11.OperationJournalEntry>[]),
+      ) as _i4.Future<List<_i11.OperationJournalEntry>>);
+
+  @override
+  _i4.Future<List<_i11.OperationJournalEntry>> getInventoryOperations(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getInventoryOperations,
+          [
+            startDate,
+            endDate,
+          ],
+        ),
+        returnValue: _i4.Future<List<_i11.OperationJournalEntry>>.value(
+            <_i11.OperationJournalEntry>[]),
+      ) as _i4.Future<List<_i11.OperationJournalEntry>>);
+
+  @override
+  _i4.Future<List<_i11.OperationJournalEntry>> getOperationsByType(
+    DateTime? startDate,
+    DateTime? endDate,
+    _i11.OperationType? type,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOperationsByType,
+          [
+            startDate,
+            endDate,
+            type,
+          ],
+        ),
+        returnValue: _i4.Future<List<_i11.OperationJournalEntry>>.value(
+            <_i11.OperationJournalEntry>[]),
+      ) as _i4.Future<List<_i11.OperationJournalEntry>>);
 
   @override
   _i4.Future<List<Map<String, dynamic>>> getRecentEntries({int? limit = 5}) =>

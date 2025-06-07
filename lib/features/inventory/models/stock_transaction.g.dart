@@ -26,13 +26,14 @@ class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
       notes: fields[6] as String?,
       unitCostInCdf: fields[7] as double,
       totalValueInCdf: fields[8] as double,
+      currencyCode: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, StockTransaction obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class StockTransactionAdapter extends TypeAdapter<StockTransaction> {
       ..writeByte(7)
       ..write(obj.unitCostInCdf)
       ..writeByte(8)
-      ..write(obj.totalValueInCdf);
+      ..write(obj.totalValueInCdf)
+      ..writeByte(9)
+      ..write(obj.currencyCode);
   }
 
   @override
@@ -153,6 +156,7 @@ StockTransaction _$StockTransactionFromJson(Map<String, dynamic> json) =>
       notes: json['notes'] as String?,
       unitCostInCdf: (json['unitCostInCdf'] as num).toDouble(),
       totalValueInCdf: (json['totalValueInCdf'] as num).toDouble(),
+      currencyCode: json['currencyCode'] as String?,
     );
 
 Map<String, dynamic> _$StockTransactionToJson(StockTransaction instance) =>
@@ -166,6 +170,7 @@ Map<String, dynamic> _$StockTransactionToJson(StockTransaction instance) =>
       if (instance.notes case final value?) 'notes': value,
       'unitCostInCdf': instance.unitCostInCdf,
       'totalValueInCdf': instance.totalValueInCdf,
+      if (instance.currencyCode case final value?) 'currencyCode': value,
     };
 
 const _$StockTransactionTypeEnumMap = {

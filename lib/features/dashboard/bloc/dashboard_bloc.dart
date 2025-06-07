@@ -1,105 +1,88 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart'; // Required for @immutable
+import 'dart:async'; // Pour le Timer
 import '../../sales/repositories/sales_repository.dart';
 import '../../customer/repositories/customer_repository.dart';
 import '../../transactions/repositories/transaction_repository.dart';
 import '../../expenses/repositories/expense_repository.dart';
+import '../services/dashboard_api_service.dart';
+import '../models/dashboard_data.dart';
 
 part 'dashboard_event.dart';
 part 'dashboard_state.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-  final SalesRepository _salesRepository;
-  final CustomerRepository _customerRepository; 
-  final TransactionRepository _transactionRepository;
-  final ExpenseRepository? _expenseRepository;
+  final DashboardApiService _dashboardApiService;
+  
+  // Timer pour la mise à jour périodique des données
+  Timer? _refreshTimer;
+  static const _refreshIntervalInSeconds = 300; // 5 minutes
 
   DashboardBloc({
     required SalesRepository salesRepository,
     required CustomerRepository customerRepository,
     required TransactionRepository transactionRepository,
     ExpenseRepository? expenseRepository,
-  }) : _salesRepository = salesRepository,
-       _customerRepository = customerRepository,
-       _transactionRepository = transactionRepository,
-       _expenseRepository = expenseRepository,
+  }) : _dashboardApiService = DashboardApiService(
+         salesRepository: salesRepository,
+         customerRepository: customerRepository,
+         transactionRepository: transactionRepository,
+         expenseRepository: expenseRepository,
+       ),
        super(DashboardInitial()) {
     on<LoadDashboardData>(_onLoadDashboardData);
+    on<RefreshDashboardData>(_onRefreshDashboardData);
+    
+    // Démarrer la mise à jour périodique
+    _startPeriodicRefresh();
   }
 
+  @override
+  Future<void> close() {
+    // Annuler le timer lors de la fermeture du bloc
+    _refreshTimer?.cancel();
+    return super.close();
+  }
+
+  void _startPeriodicRefresh() {
+    // Annuler un éventuel timer existant
+    _refreshTimer?.cancel();
+    
+    // Créer un nouveau timer pour les mises à jour périodiques
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: _refreshIntervalInSeconds), 
+      (_) => add(RefreshDashboardData(DateTime.now()))
+    );
+  }
   Future<void> _onLoadDashboardData(LoadDashboardData event, Emitter<DashboardState> emit) async {
     emit(DashboardLoading());
     try {
-      // Fetch data for KPIs
-      // Note: These are simplified examples. Actual implementation will depend on repository methods and data models.
-
-      // Sales Today
-      final todayStart = DateTime(event.date.year, event.date.month, event.date.day);
-      final todayEnd = DateTime(event.date.year, event.date.month, event.date.day, 23, 59, 59);
-      final sales = await _salesRepository.getSalesByDateRange(todayStart, todayEnd);
+      // Utiliser le service API pour récupérer les données
+      final response = await _dashboardApiService.getDashboardData(event.date);
       
-      // Separate sales in CDF and USD
-      double salesTodayCdf = 0.0;
-      double salesTodayUsd = 0.0;
-        for (final sale in sales) {
-        // Add to CDF sales only if the transaction was in CDF
-        if (sale.transactionCurrencyCode == 'CDF' || sale.transactionCurrencyCode == null) {
-          salesTodayCdf += sale.totalAmountInCdf;
-        }
-        
-        // Add to USD sales if transaction was in USD
-        if (sale.transactionCurrencyCode == 'USD') {
-          salesTodayUsd += sale.totalAmountInTransactionCurrency ?? 0.0;
-        } else if (sale.totalAmountInUsd != null && sale.transactionCurrencyCode == 'USD') {
-          // Use totalAmountInUsd if available as a fallback, but only for USD transactions
-          salesTodayUsd += sale.totalAmountInUsd!;
-        }
+      if (response.success && response.data != null) {
+        emit(DashboardLoaded(response.data!));
+      } else {
+        emit(DashboardError(response.message ?? "Erreur lors du chargement des données"));
       }
-
-      // Clients Served Today
-      final int clientsServedToday = await _customerRepository.getUniqueCustomersCountForDateRange(todayStart, todayEnd);
-
-      // Receivables - Montants à recevoir
-      final double receivables = await _salesRepository.getTotalReceivables();
-
-      // Expenses - Dépenses
-      double expenses = 0.0;
-      try {
-        // Try to get expenses from expense repository first if available
-        if (_expenseRepository != null) {
-          final todayExpenses = await _expenseRepository.getExpensesByDateRange(todayStart, todayEnd);
-          for (final expense in todayExpenses) {
-            expenses += expense.amount;
-          }
-        } else {
-          // Fallback to transaction repository
-          expenses = await _transactionRepository.getTotalExpensesForDateRange(todayStart, todayEnd);
-        }
-      } catch (e) {
-        // Fallback if the specific method is not available
-        try {
-          final transactions = await _transactionRepository.getTransactionsByDateRange(todayStart, todayEnd);
-          for (final transaction in transactions) {
-            if (transaction.isExpense) {
-              expenses += transaction.amount.abs();
-            }
-          }
-        } catch (innerE) {
-          // If all else fails, just set expenses to 0
-          expenses = 0.0;
-        }
-      }
-
-      emit(DashboardLoaded(
-        salesTodayCdf: salesTodayCdf,
-        salesTodayUsd: salesTodayUsd,
-        clientsServedToday: clientsServedToday,
-        receivables: receivables,
-        expenses: expenses,
-      ));
     } catch (e) {
       emit(DashboardError("Erreur de chargement des données du tableau de bord: ${e.toString()}"));
+    }
+  }
+
+  Future<void> _onRefreshDashboardData(RefreshDashboardData event, Emitter<DashboardState> emit) async {
+    // Ne pas afficher l'état de chargement pour ne pas perturber l'UI pendant les rafraîchissements
+    try {
+      final response = await _dashboardApiService.getDashboardData(event.date);
+      
+      if (response.success && response.data != null) {
+        emit(DashboardLoaded(response.data!));
+      }
+      // En cas d'erreur de rafraîchissement, on ne change pas l'état pour ne pas perturber l'UI
+    } catch (e) {
+      print("Erreur lors du rafraîchissement des données: ${e.toString()}");
+      // Ne pas émettre d'état d'erreur pour éviter de perturber l'interface utilisateur
     }
   }
 }

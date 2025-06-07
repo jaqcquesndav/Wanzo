@@ -61,9 +61,11 @@ class StockTransaction extends Equatable {
 
   @HiveField(7)
   final double unitCostInCdf; // Coût unitaire du produit en CDF au moment de la transaction
-
   @HiveField(8)
   final double totalValueInCdf; // Valeur totale de la transaction en CDF (quantité * coût unitaire en CDF)
+  
+  @HiveField(9)
+  final String? currencyCode; // Code de la devise de la transaction (USD, CDF, etc.)
   
   // productName and unitCost are not part of this model as per InventoryRepository
   // If needed, they should be fetched from the Product model using productId
@@ -78,13 +80,13 @@ class StockTransaction extends Equatable {
     this.notes,
     required this.unitCostInCdf,
     required this.totalValueInCdf,
+    this.currencyCode,
   });
-
   factory StockTransaction.fromJson(Map<String, dynamic> json) => _$StockTransactionFromJson(json);
   Map<String, dynamic> toJson() => _$StockTransactionToJson(this);
 
   @override
-  List<Object?> get props => [id, productId, type, quantity, date, referenceId, notes, unitCostInCdf, totalValueInCdf];
+  List<Object?> get props => [id, productId, type, quantity, date, referenceId, notes, unitCostInCdf, totalValueInCdf, currencyCode];
 
   StockTransaction copyWith({
     String? id,
@@ -96,6 +98,7 @@ class StockTransaction extends Equatable {
     String? notes,
     double? unitCostInCdf,
     double? totalValueInCdf,
+    String? currencyCode,
   }) {
     return StockTransaction(
       id: id ?? this.id,
@@ -107,6 +110,13 @@ class StockTransaction extends Equatable {
       notes: notes ?? this.notes,
       unitCostInCdf: unitCostInCdf ?? this.unitCostInCdf,
       totalValueInCdf: totalValueInCdf ?? this.totalValueInCdf,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
+}
+
+// Extension pour faciliter l'accès à la devise
+extension StockTransactionExtension on StockTransaction {
+  /// Obtient le code de devise effectif pour cette transaction (CDF par défaut)
+  String get effectiveCurrencyCode => currencyCode ?? 'CDF';
 }

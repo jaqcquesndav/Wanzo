@@ -9,7 +9,6 @@ import '../../features/customer/models/customer.dart' as customer_model; // Stan
 
 // Inventory models
 import '../../features/inventory/models/product.dart' as inventory_product;
-import '../../models/product.dart' as global_product; // For the global product adapter
 import '../../features/inventory/models/stock_transaction.dart' as stock_tx_model;
 
 // Sales models
@@ -55,12 +54,10 @@ Future<void> initializeHiveAdapters() async {
   // Customers - Standardized to use customer_model from features/customer/models/
   _registerAdapterIfNotExists(customer_model.CustomerAdapter()); 
   _registerAdapterIfNotExists(customer_model.CustomerCategoryAdapter());
-
   // Inventory
   _registerAdapterIfNotExists(inventory_product.ProductAdapter());
   _registerAdapterIfNotExists(inventory_product.ProductCategoryAdapter());
   _registerAdapterIfNotExists(inventory_product.ProductUnitAdapter());
-  _registerAdapterIfNotExists(global_product.ProductAdapter()); 
   _registerAdapterIfNotExists(stock_tx_model.StockTransactionAdapter()); 
   _registerAdapterIfNotExists(stock_tx_model.StockTransactionTypeAdapter());
 

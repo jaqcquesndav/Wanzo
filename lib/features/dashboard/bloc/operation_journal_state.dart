@@ -18,7 +18,8 @@ class OperationJournalLoaded extends OperationJournalState {
   final DateTime startDate;
   final DateTime endDate;
   final Map<DateTime, List<OperationJournalEntry>> groupedOperations;
-  final double openingBalance;
+  final double openingBalance; // Maintenu pour compatibilité
+  final Map<String, double> openingBalancesByCurrency; // Nouveau champ pour les soldes d'ouverture par devise
 
   const OperationJournalLoaded({
     required this.operations,
@@ -26,6 +27,7 @@ class OperationJournalLoaded extends OperationJournalState {
     required this.endDate,
     required this.groupedOperations,
     required this.openingBalance,
+    required this.openingBalancesByCurrency,
   });
 
   OperationJournalLoaded copyWith({
@@ -34,6 +36,7 @@ class OperationJournalLoaded extends OperationJournalState {
     DateTime? endDate,
     Map<DateTime, List<OperationJournalEntry>>? groupedOperations,
     double? openingBalance,
+    Map<String, double>? openingBalancesByCurrency,
   }) {
     return OperationJournalLoaded(
       operations: operations ?? this.operations,
@@ -41,6 +44,7 @@ class OperationJournalLoaded extends OperationJournalState {
       endDate: endDate ?? this.endDate,
       groupedOperations: groupedOperations ?? this.groupedOperations,
       openingBalance: openingBalance ?? this.openingBalance,
+      openingBalancesByCurrency: openingBalancesByCurrency ?? this.openingBalancesByCurrency,
     );
   }
 }

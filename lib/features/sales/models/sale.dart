@@ -219,7 +219,6 @@ class Sale extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
-
   @override
   List<Object?> get props => [
     id,
@@ -248,6 +247,9 @@ class Sale extends Equatable {
     lastSyncAttempt,
     errorMessage,
   ];
+  
+  /// Obtient le code de devise effectif pour cette vente
+  String get currencyCode => transactionCurrencyCode ?? 'CDF';
 }
 
 // Removed the duplicate SaleItem class definition from here.

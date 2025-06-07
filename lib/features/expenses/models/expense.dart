@@ -103,9 +103,11 @@ class Expense extends Equatable {
 
   @JsonKey(includeToJson: false, includeFromJson: false)
   final DateTime? lastSyncAttempt;
-
   @JsonKey(includeToJson: false, includeFromJson: false)
   final String? errorMessage;
+  
+  @HiveField(8) // Nouvelle propriété pour la devise
+  final String? currencyCode; // Code de la devise (USD, CDF, etc.)
 
   const Expense({
     required this.id,
@@ -120,6 +122,7 @@ class Expense extends Equatable {
     this.supplierId, // Added supplierId
     this.beneficiary,
     this.notes,
+    this.currencyCode, // Ajout du code de devise
     this.userId,
     this.createdAt,
     this.updatedAt,
@@ -127,7 +130,6 @@ class Expense extends Equatable {
     this.lastSyncAttempt,
     this.errorMessage,
   });
-
   @override
   List<Object?> get props => [
         id,
@@ -142,6 +144,7 @@ class Expense extends Equatable {
         supplierId,
         beneficiary,
         notes,
+        currencyCode,
         userId,
         createdAt,
         updatedAt,
@@ -149,7 +152,6 @@ class Expense extends Equatable {
         lastSyncAttempt,
         errorMessage,
       ]; // Updated props
-
   Expense copyWith({
     String? id,
     String? localId,
@@ -163,6 +165,7 @@ class Expense extends Equatable {
     String? supplierId, // Added supplierId
     String? beneficiary,
     String? notes,
+    String? currencyCode, // Ajout du code de devise
     String? userId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -183,6 +186,7 @@ class Expense extends Equatable {
       supplierId: supplierId ?? this.supplierId, // Added
       beneficiary: beneficiary ?? this.beneficiary,
       notes: notes ?? this.notes,
+      currencyCode: currencyCode ?? this.currencyCode, // Ajout du code de devise
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -206,4 +210,7 @@ class Expense extends Equatable {
     // This covers synced items and items fetched from the API.
     return id;
   }
+  
+  /// Obtient le code de devise effectif pour cette dépense
+  String get effectiveCurrencyCode => currencyCode ?? 'CDF';
 }

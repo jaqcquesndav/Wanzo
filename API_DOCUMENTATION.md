@@ -14,25 +14,27 @@ This document outlines the expected API endpoints, request/response formats, and
 
 ### Response Format
 - Successful responses (2xx status codes) will generally return JSON.
-- A common successful response structure:
+- All API responses follow a standard structure using the `ApiResponse<T>` pattern:
   ```json
   {
     "success": true,
     "message": "Descriptive message",
-    "data": { /* requested data or result of operation */ },
+    "data": { /* requested data or result of operation, typed as T */ },
     "statusCode": 200 // or 201, etc.
     // "pagination": { ... } // for list endpoints
   }
   ```
-- Error responses (4xx, 5xx status codes) will also return JSON:
+- Error responses (4xx, 5xx status codes) also follow the `ApiResponse` structure:
   ```json
   {
     "success": false,
     "message": "Error description",
+    "data": null,
     "statusCode": 400 // or 401, 403, 404, 500, etc.
     // "errors": { /* field-specific validation errors */ } // Optional
   }
   ```
+- This consistent structure allows for standardized error handling across the application.
 
 ### CRUD Operations Overview
 
@@ -516,33 +518,74 @@ The context for Adha is prepared by the frontend in the background and sent with
   ```
 
 ### I. Financing
-- **Base Endpoint:** `/financing`
-- **Repository:** `FinancingRepository`
-- **Model:** `FinancingRecord` (see `lib/features/financing/models/`)
-- **Operations:** Standard CRUD.
-    - `GET /api/financing/records`: List financing records.
-    - `POST /api/financing/records`: Create a new financing record.
-    - `GET /api/financing/records/{id}`: Get a specific record.
-    - `PUT /api/financing/records/{id}`: Update a record.
-    - `DELETE /api/financing/records/{id}`: Delete a record.
-- **FinancingRecord JSON Structure (Example):**
+- **Base Endpoint:** `/financing-requests`
+- **Service:** `FinancingApiService` (see `lib/features/financing/services/financing_api_service.dart`)
+- **Repository:** `FinancingRepository` (see `lib/features/financing/repositories/financing_repository.dart`)
+- **Model:** `FinancingRequest` (see `lib/features/financing/models/financing_request.dart`)
+- **Operations:**
+    - `GET /api/financing-requests`: List financing requests.
+        - Query Params: `page`, `limit`, `status`, `type`, `financialProduct`, `dateFrom`, `dateTo`.
+    - `POST /api/financing-requests`: Create a new financing request.
+        - This endpoint can accept both JSON data and file attachments using `multipart/form-data`.
+    - `GET /api/financing-requests/{id}`: Get a specific financing request.
+    - `PUT /api/financing-requests/{id}`: Update a financing request.
+    - `DELETE /api/financing-requests/{id}`: Delete a financing request.
+    - `PUT /api/financing-requests/{id}/approve`: Approve a financing request.
+        - Request Body: Contains approval details including interest rate, term, etc.
+    - `PUT /api/financing-requests/{id}/disburse`: Record funds disbursement for an approved request.
+        - Request Body: Contains disbursement date and optional scheduled payments.
+    - `POST /api/financing-requests/{id}/payments`: Record a payment against a financing request.
+        - Request Body: Contains payment date and amount.
+    - `POST /api/financing-requests/{id}/attachments`: Add an attachment to a financing request.
+        - Request Body: Contains file URL, usually after uploading to a storage service.
+
+- **FinancingRequest JSON Structure (Example):**
   ```json
   {
     "id": "string",
-    "userId": "string", // Automatically from authenticated user
-    "type": "string (e.g., 'loan', 'investment', 'grant', 'equity')",
-    "sourceOrPurpose": "string", // e.g., "Bank X Loan", "Seed Investment Round", "Operational Costs"
     "amount": "number",
-    "date": "iso8601_string_date", // Date of transaction or record
-    "terms": "string", // Description of terms, interest rate, repayment schedule, equity details
-    "status": "string (e.g., 'pending', 'active', 'repaid', 'closed', 'defaulted')",
-    "relatedDocuments": [ // Optional URLs to contracts, agreements
-      { "name": "string", "url": "string" }
-    ],
-    "createdAt": "iso8601_string_date",
-    "updatedAt": "iso8601_string_date"
+    "currency": "string",
+    "reason": "string",
+    "type": "string (enum: cashCredit, investmentCredit, leasing, productionInputs, merchandise)",
+    "institution": "string (enum: bonneMoisson, tid, smico, tmb, equitybcdc, wanzoPass)",
+    "requestDate": "iso8601_string_date",
+    "status": "string (default: pending, can be: approved, disbursed, repaying, completed, rejected)",
+    "approvalDate": "iso8601_string_date (optional)",
+    "disbursementDate": "iso8601_string_date (optional)",
+    "scheduledPayments": ["iso8601_string_date", ...] (optional),
+    "completedPayments": ["iso8601_string_date", ...] (optional),
+    "notes": "string (optional)",
+    "interestRate": "number (optional)",
+    "termMonths": "number (optional)",
+    "monthlyPayment": "number (optional)",
+    "attachmentPaths": ["string", ...] (optional),
+    "financialProduct": "string (enum: cashFlow, investment, equipment, agricultural, commercialGoods) (optional)",
+    "leasingCode": "string (optional)"
   }
   ```
+
+- **Enums Used:**
+  - **FinancingType:**
+    - `cashCredit` - Crédit de trésorerie
+    - `investmentCredit` - Crédit d'investissement
+    - `leasing` - Leasing
+    - `productionInputs` - Intrants de production
+    - `merchandise` - Marchandise
+  
+  - **FinancialInstitution:**
+    - `bonneMoisson` - Bonne Moisson
+    - `tid` - TID
+    - `smico` - SMICO
+    - `tmb` - TMB
+    - `equitybcdc` - EquityBCDC
+    - `wanzoPass` - Wanzo Pass
+  
+  - **FinancialProduct:**
+    - `cashFlow` - Crédit de trésorerie
+    - `investment` - Crédit d'investissement
+    - `equipment` - Équipement (leasing)
+    - `agricultural` - Produits agricoles
+    - `commercialGoods` - Marchandises commerciales
 
 ### J. Notifications
 - **Base Endpoint:** `/notifications`
@@ -791,19 +834,117 @@ The context for Adha is prepared by the frontend in the background and sent with
 ---
 ### P. Dashboard
 
-The Dashboard feature aggregates data from various other services to provide an overview of business performance. It does not have its own dedicated API service but relies on the following services:
+The Dashboard feature aggregates data from various repositories to provide an overview of business performance. It now implements both the BLoC pattern and a dedicated API service to standardize the data access.
 
--   **Sales API Service**: To fetch sales data, including total sales, recent sales, and sales trends. (Refer to [Sales API](#h-sales))
--   **Customer API Service**: To fetch customer-related data, such as the number of clients served. (Refer to [Customers API](#b-customers))
--   **Financial Transactions API Service**: To fetch the count of recent transactions. (Refer to [Financial Transactions API](#o-financial-transactions))
+#### Dashboard API Service Implementation
 
-Key Performance Indicators (KPIs) displayed on the dashboard include:
--   Sales Today
--   Clients Served Today
--   Total Receivables
--   Total Transactions Today
+A new `DashboardApiService` (see `lib/features/dashboard/services/dashboard_api_service.dart`) has been created to standardize the API responses and provide a single point of access for dashboard data. This service:
 
-No specific backend endpoints are defined solely for the dashboard. It consumes data from the endpoints defined in the respective sections mentioned above.
+- Uses the `ApiResponse<T>` pattern for consistent response handling
+- Encapsulates error handling logic for robustness
+- Provides specific methods for each KPI data set:
+  - `getDashboardData()`: Retrieves all dashboard data in a single call
+  - `getSalesToday()`: Retrieves only the sales metrics (CDF and USD)
+  - `getClientsServedToday()`: Retrieves the count of unique clients served
+  - `getTotalReceivables()`: Retrieves the total of pending payments
+  - `getExpensesToday()`: Retrieves the day's total expenses
+
+```dart
+// Example method from DashboardApiService
+Future<ApiResponse<DashboardData>> getDashboardData(DateTime date) async {
+  try {
+    // Fetch data from repositories
+    // ...
+    return ApiResponse<DashboardData>(
+      success: true,
+      data: dashboardData,
+      message: 'Données du tableau de bord récupérées avec succès',
+      statusCode: 200,
+    );
+  } catch (e) {
+    return ApiResponse<DashboardData>(
+      success: false,
+      message: 'Erreur lors de la récupération des données',
+      error: e.toString(),
+      statusCode: 500,
+    );
+  }
+}
+```
+
+#### Dashboard BLoC Implementation
+
+The Dashboard BLoC now uses the DashboardApiService and includes an automatic refresh mechanism. It relies on the following repositories:
+-   **SalesRepository**: To fetch sales data, including daily sales in both CDF and USD, and total receivables. (see `lib/features/sales/repositories/sales_repository.dart`)
+-   **CustomerRepository**: To fetch customer-related data, such as the number of unique customers served today. (see `lib/features/customer/repositories/customer_repository.dart`)
+-   **TransactionRepository**: To fetch financial transaction data. (see `lib/features/transactions/repositories/transaction_repository.dart`)
+-   **ExpenseRepository**: To fetch expense data for the day. (see `lib/features/expenses/repositories/expense_repository.dart`)
+
+#### Key Performance Indicators (KPIs)
+
+The KPIs displayed on the dashboard reflect the business's daily performance and financial status:
+
+-   **Sales Today (CDF)**: Total value of sales made today in Congolese Francs (CDF).
+-   **Sales Today (USD)**: Total value of sales made today in US Dollars (USD).
+-   **Clients Served Today**: Number of unique customers who made purchases today.
+-   **Total Receivables**: Sum of all pending payments from customers (credit sales).
+-   **Expenses Today**: Total expenses recorded for the day.
+
+#### Data Flow and Implementation
+
+1. When the Dashboard screen loads, it triggers the `LoadDashboardData` event with the current date.
+2. The `DashboardBloc` processes this event through the DashboardApiService, which:
+   - Fetches sales data for the current day using `SalesRepository.getSalesByDateRange()`
+   - Calculates separate totals for sales in CDF and USD currencies
+   - Retrieves the count of unique customers served today via `CustomerRepository.getUniqueCustomersCountForDateRange()`
+   - Gets total receivables using `SalesRepository.getTotalReceivables()`
+   - Fetches today's expenses using either `ExpenseRepository.getExpensesByDateRange()` or falls back to `TransactionRepository` if needed
+
+3. The BLoC emits a `DashboardLoaded` state containing all KPI values, which the UI then renders.
+4. A refresh timer periodically triggers a `RefreshDashboardData` event every 5 minutes, updating the dashboard without disrupting the UI.
+
+#### Repository Enhancements
+
+Several repositories have been enhanced to better support the Dashboard functionality:
+
+1. **CustomerRepository**:
+   - Improved `getUniqueCustomersCountForDateRange()` to correctly use the SalesRepository for counting unique customers who made purchases during a specified date range
+   - Added proper fallback mechanism based on customer `lastPurchaseDate` when SalesRepository is unavailable
+
+2. **TransactionRepository**:
+   - Enhanced to fully use Hive for persistent storage
+   - Improved Transaction model with additional fields: currency, status, paymentMethodId, relatedEntityId, relatedEntityType
+   - Added better error handling in `getTotalExpensesForDateRange()` with proper fallback mechanisms
+   - Added additional CRUD operations: getTransactionById, updateTransaction, deleteTransaction
+
+3. **Implementation Details**:
+   - All repositories now properly handle errors with fallback values rather than throwing exceptions
+   - The DashboardApiService encapsulates all access to repositories for dashboard data
+   - The DashboardBloc includes automatic refresh mechanism (every 5 minutes) to keep dashboard data current
+
+No specific backend endpoints are required solely for the dashboard. It consumes data from local repositories, which in turn might fetch data from backend endpoints defined in their respective sections.
+
+The repositories have been enhanced for better reliability:
+
+1. **CustomerRepository**:
+   - `getUniqueCustomersCountForDateRange()` now properly counts unique customers who made purchases within a date range
+   - Implements a fallback mechanism using `lastPurchaseDate` if sales data is unavailable
+   - Improved error handling with meaningful fallback values
+
+2. **TransactionRepository**:
+   - Now properly utilizes Hive for persistent storage
+   - Enhanced error handling for database operations
+   - Improved type safety with proper Hive adapters
+   - Added robust recovery mechanisms for corrupted data
+
+3. **ExpenseRepository**:
+   - Better integration with TransactionRepository for consistent expense tracking
+   - Improved error handling for all methods
+
+All repositories are now backed by comprehensive unit tests to ensure their reliability for the Dashboard feature.
+- `CustomerRepository.getUniqueCustomersCountForDateRange()` now correctly counts unique customers based on sales data
+- `TransactionRepository` has improved Hive integration and error handling
+- All repositories use appropriate fallback mechanisms when primary data sources are unavailable
 
 ---
 
@@ -813,6 +954,10 @@ Manages products, stock levels, and stock movements.
 
 ### 1. Product Endpoints
 
+-   **Base Endpoint:** `/inventory`
+-   **Service:** `InventoryApiService` (see `lib/features/inventory/services/inventory_api_service.dart`)
+-   **Models:** `Product`, `StockTransaction` (see `lib/features/inventory/models/`)
+
 -   **`GET /api/inventory/products`**: List all products.
     -   Query Parameters:
         -   `page` (int, optional): Page number for pagination.
@@ -821,31 +966,38 @@ Manages products, stock levels, and stock movements.
         -   `sortBy` (string, optional): Field to sort by (e.g., `name`, `createdAt`, `stockQuantity`).
         -   `sortOrder` (string, optional): `asc` or `desc`.
         -   `q` (string, optional): Search query for product name, description, or barcode.
-    -   Response: `200 OK` with a list of product objects.
+    -   Response: `200 OK` with an `ApiResponse<List<Product>>` structure.
+    -   Error Handling: Returns `ApiResponse` with `success: false` and appropriate error message.
 -   **`POST /api/inventory/products`**: Create a new product.
-    -   Request Body: `multipart/form-data` including product data (JSON string for product fields) and an optional `image` file.
-        -   Product fields (refer to `Product` model in `lib/features/inventory/models/product.dart`):
-            -   `name` (string, required)
-            -   `description` (string, optional)
-            -   `barcode` (string, optional)
-            -   `category` (string, required, e.g., `food`, `electronics` - see `ProductCategory` enum)
-            -   `costPriceInCdf` (double, required)
-            -   `sellingPriceInCdf` (double, required)
-            -   `stockQuantity` (double, required)
-            -   `unit` (string, required, e.g., `piece`, `kg` - see `ProductUnit` enum)
-            -   `alertThreshold` (double, optional, default: 5)
-            -   `inputCurrencyCode` (string, required, e.g., "USD", "CDF")
-            -   `inputExchangeRate` (double, required, rate to CDF)
-            -   `costPriceInInputCurrency` (double, required)
-            -   `sellingPriceInInputCurrency` (double, required)
-    -   Response: `201 Created` with the created product object.
+    -   Request Body: `multipart/form-data` including:
+        -   Product fields as form fields (converted from `Product.toJson()`)
+        -   Optional `image` file
+    -   Product fields (refer to `Product` model in `lib/features/inventory/models/product.dart`):
+        -   `name` (string, required)
+        -   `description` (string, optional)
+        -   `barcode` (string, optional)
+        -   `category` (string, required, e.g., `food`, `electronics` - see `ProductCategory` enum)
+        -   `costPriceInCdf` (double, required)
+        -   `sellingPriceInCdf` (double, required)
+        -   `stockQuantity` (double, required)
+        -   `unit` (string, required, e.g., `piece`, `kg` - see `ProductUnit` enum)
+        -   `alertThreshold` (double, optional, default: 5)
+        -   `inputCurrencyCode` (string, required, e.g., "USD", "CDF")
+        -   `inputExchangeRate` (double, required, rate to CDF)
+        -   `costPriceInInputCurrency` (double, required)
+        -   `sellingPriceInInputCurrency` (double, required)
+    -   Response: `201 Created` with an `ApiResponse<Product>` structure.
+    -   Error Handling: Returns `ApiResponse` with `success: false` and error details.
 -   **`GET /api/inventory/products/{id}`**: Get a specific product by its ID.
-    -   Response: `200 OK` with the product object or `404 Not Found`.
+    -   Response: `200 OK` with an `ApiResponse<Product>` structure or error response if not found.
 -   **`PUT /api/inventory/products/{id}`**: Update an existing product.
-    -   Request Body: `multipart/form-data` including product data (JSON string for product fields) and an optional `image` file. Can also include `removeImage` (boolean) to delete the existing image.
-    -   Response: `200 OK` with the updated product object or `404 Not Found`.
+    -   Request Body: `multipart/form-data` including:
+        -   Product fields as form fields (converted from `Product.toJson()`)
+        -   Optional `image` file
+        -   Optional `removeImage` (boolean) to delete the existing image
+    -   Response: `200 OK` with an `ApiResponse<Product>` structure or error response.
 -   **`DELETE /api/inventory/products/{id}`**: Delete a product.
-    -   Response: `204 No Content` or `404 Not Found`.
+    -   Response: `200 OK` with an `ApiResponse<void>` structure or error response.
 
 ### 2. Stock Transaction Endpoints
 
@@ -854,12 +1006,13 @@ Manages products, stock levels, and stock movements.
         -   `productId` (string, optional): Filter by product ID.
         -   `page` (int, optional): Page number.
         -   `limit` (int, optional): Items per page.
-        -   `type` (string, optional): Filter by transaction type (e.g., `purchase`, `sale`, `adjustment` - see `StockTransactionType` enum).
+        -   `type` (string, optional): Filter by transaction type (see `StockTransactionType` enum).
         -   `dateFrom` (string, optional, format: `YYYY-MM-DD`): Start date for filtering.
         -   `dateTo` (string, optional, format: `YYYY-MM-DD`): End date for filtering.
-    -   Response: `200 OK` with a list of stock transaction objects.
+    -   Response: `200 OK` with an `ApiResponse<List<StockTransaction>>` structure.
+    -   Error Handling: Returns `ApiResponse` with `success: false` and appropriate error message.
 -   **`POST /api/inventory/stock-transactions`**: Create a new stock transaction.
-    -   Request Body: JSON object for the stock transaction (refer to `StockTransaction` model in `lib/features/inventory/models/stock_transaction.dart`):
+    -   Request Body: JSON object for the stock transaction (refer to `StockTransaction` model):
         -   `productId` (string, required)
         -   `type` (string, required, e.g., `purchase`, `sale`)
         -   `quantity` (double, required, can be negative for outflows)
@@ -868,11 +1021,98 @@ Manages products, stock levels, and stock movements.
         -   `notes` (string, optional)
         -   `unitCostInCdf` (double, required)
         -   `totalValueInCdf` (double, required)
-    -   Response: `201 Created` with the created stock transaction object.
+    -   Response: `201 Created` with an `ApiResponse<StockTransaction>` structure.
+    -   Error Handling: Returns `ApiResponse` with `success: false` and error details.
 -   **`GET /api/inventory/stock-transactions/{id}`**: Get a specific stock transaction by ID.
-    -   Response: `200 OK` with the stock transaction object or `404 Not Found`.
+    -   Response: `200 OK` with an `ApiResponse<StockTransaction>` structure or error response.
+
+- **StockTransactionType Enum Values:**
+  - `purchase` - Adding stock through purchase
+  - `sale` - Reducing stock through sales
+  - `adjustment` - Manual stock adjustment
+  - `return` - Stock return (increases inventory)
+  - `wastage` - Stock wastage (decreases inventory)
+  - `transfer` - Stock transfer between locations
 
 **Note:** Stock transactions are generally immutable. Updating or deleting them directly is typically not allowed to maintain audit trails. Adjustments are made by creating new counter-transactions.
 
+### 3. Standard ApiResponse Structure
+
+All endpoints in the inventory API return responses wrapped in the `ApiResponse<T>` structure:
+
+```json
+{
+  "success": true, // or false for errors
+  "message": "Descriptive message about the operation result",
+  "data": T, // The requested data (null for errors)
+  "statusCode": 200 // HTTP status code (or error code)
+}
+```
+
+For errors, the structure remains the same but with `success: false` and appropriate error message and status code.
+
 ---
 This documentation should be expanded by the backend team, specifying exact request/response schemas, validation rules, and any other specific behaviors for each endpoint.
+
+## R. Standards and Best Practices
+
+### 1. ApiResponse<T> Usage Standards
+
+All API services in the Wanzo application should use the `ApiResponse<T>` pattern for consistency:
+
+- **Service Implementation:**
+  ```dart
+  Future<ApiResponse<T>> methodName(...) async {
+    try {
+      // API call logic
+      return ApiResponse<T>(
+        success: true,
+        data: result,
+        message: "Operation successful",
+        statusCode: 200
+      );
+    } on ApiException catch (e) {
+      return ApiResponse<T>(
+        success: false,
+        data: null,
+        message: e.message,
+        statusCode: e.statusCode ?? 500
+      );
+    } catch (e) {
+      return ApiResponse<T>(
+        success: false,
+        data: null,
+        message: "An unexpected error occurred: ${e.toString()}",
+        statusCode: 500
+      );
+    }
+  }
+  ```
+
+- **Generics Usage:**
+  - `ApiResponse<List<Product>>` for list endpoints
+  - `ApiResponse<Product>` for single entity endpoints 
+  - `ApiResponse<void>` for operations without return data
+
+### 2. Error Handling
+
+All API services should implement standardized error handling:
+
+- Use `ApiException` for known API errors
+- Catch and handle all exceptions to prevent application crashes
+- Provide meaningful error messages that can be displayed to users
+- Include appropriate HTTP status codes in error responses
+
+### 3. Authentication
+
+- All endpoints requiring authentication should be documented as such
+- Use consistent `requiresAuth: true` parameter when making API calls
+- Handle authentication errors consistently (401 Unauthorized, 403 Forbidden)
+
+### 4. File Upload Handling
+
+For endpoints that handle file uploads:
+- Use `multipart/form-data` consistently
+- Document all required and optional fields
+- Specify allowed file types and size limits
+- Detail how uploaded files are stored and referenced in the database

@@ -215,19 +215,16 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       if (product == null) {
         emit(InventoryError("Produit associé à la transaction non trouvé."));
         return;
-      }
-
-      final transaction = await _inventoryRepository.addStockTransaction(event.transaction);
-      
-      // Create journal entry
-      final String? currentNotes = transaction.notes;
+      }      final transaction = await _inventoryRepository.addStockTransaction(event.transaction);
+        // Create journal entry
+      final String? notes = transaction.notes;
       String journalDescription;
-      if (currentNotes != null && currentNotes.isNotEmpty) {
-        journalDescription = currentNotes;
+      if (notes != null && notes.isNotEmpty) {
+        journalDescription = notes;
       } else {
         journalDescription = "Mouvement de stock: ${product.name}";
       }
-
+      
       final journalEntry = OperationJournalEntry(
         id: _uuid.v4(),
         date: transaction.date,
@@ -240,10 +237,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
         productId: transaction.productId,
         productName: product.name, // Use product name from fetched product
         relatedDocumentId: transaction.id,
-        currencyCode: 'CDF', // Added currency code
-        isDebit: transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn,
-        isCredit: !(transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn),
-        balanceAfter: 0.0,
+        currencyCode: transaction.effectiveCurrencyCode,
+        isDebit: transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn,        isCredit: !(transaction.type == StockTransactionType.purchase || transaction.type == StockTransactionType.initialStock || transaction.type == StockTransactionType.returned || transaction.type == StockTransactionType.transferIn),
+        balanceAfter: 0.0, // Placeholder, will be calculated by journal
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry)); // Dispatch event
 

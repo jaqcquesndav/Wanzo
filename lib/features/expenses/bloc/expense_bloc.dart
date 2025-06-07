@@ -63,7 +63,6 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       emit(ExpenseError("Erreur de chargement des dépenses par catégorie: ${e.toString()}"));
     }
   }
-
   Future<void> _onAddExpense(AddExpense event, Emitter<ExpenseState> emit) async {
     emit(const ExpenseLoading());
     try {
@@ -73,7 +72,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         event.expense, 
         imageFiles: event.imageFiles,
       );
-
+      
       // Journal entry creation remains the same.
       final journalEntry = OperationJournalEntry(
         id: _uuid.v4(),
@@ -83,9 +82,10 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: -newExpense.amount.abs(),
         paymentMethod: newExpense.paymentMethod,
         relatedDocumentId: newExpense.id,
+        currencyCode: newExpense.effectiveCurrencyCode,
         isDebit: true,
         isCredit: false,
-        balanceAfter: 0, 
+        balanceAfter: 0.0,
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
 
@@ -107,10 +107,9 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         add(const LoadExpenses()); // Reload to reflect current state
         return;
       }
-      
-      await _expenseRepository.updateExpense(event.expense);
+        await _expenseRepository.updateExpense(event.expense);
       final updatedExpense = event.expense; // Alias for clarity
-
+      
       // 1. Create a reversing journal entry for the original expense
       final reversalJournalEntry = OperationJournalEntry(
         id: _uuid.v4(),
@@ -120,12 +119,13 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: originalExpense.amount.abs(), // Positive amount for cashIn
         paymentMethod: originalExpense.paymentMethod,
         relatedDocumentId: originalExpense.id,
+        currencyCode: originalExpense.effectiveCurrencyCode,
         isDebit: false, // Reversal of an expense is a credit
         isCredit: true,
-        balanceAfter: 0, // Placeholder, to be calculated by journal logic
+        balanceAfter: 0.0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(reversalJournalEntry));
-
+      
       // 2. Create a new journal entry for the updated expense
       final newJournalEntry = OperationJournalEntry(
         id: _uuid.v4(),
@@ -135,9 +135,10 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: -updatedExpense.amount.abs(), // Negative amount for cashOut
         paymentMethod: updatedExpense.paymentMethod,
         relatedDocumentId: updatedExpense.id,
+        currencyCode: updatedExpense.effectiveCurrencyCode,
         isDebit: true, // Updated expense is a debit
         isCredit: false,
-        balanceAfter: 0, // Placeholder, to be calculated by journal logic
+        balanceAfter: 0.0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(newJournalEntry));
 
@@ -157,10 +158,8 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       if (expenseToDelete == null) {
         emit(const ExpenseError("Dépense non trouvée pour l'annulation du journal."));
         return;
-      }
-
-      await _expenseRepository.deleteExpense(event.expenseId);
-
+      }      await _expenseRepository.deleteExpense(event.expenseId);
+      
       // Create a reversing journal entry
       final journalEntry = OperationJournalEntry(
         id: _uuid.v4(),
@@ -170,9 +169,10 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         amount: expenseToDelete.amount.abs(), // Positive amount for cashIn
         paymentMethod: expenseToDelete.paymentMethod,
         relatedDocumentId: expenseToDelete.id,
+        currencyCode: expenseToDelete.effectiveCurrencyCode,
         isDebit: false, // Reversal of an expense is a credit
         isCredit: true,
-        balanceAfter: 0, // Placeholder, to be calculated by journal logic
+        balanceAfter: 0.0, // Placeholder, to be calculated by journal logic
       );
       _operationJournalBloc.add(AddOperationJournalEntry(journalEntry));
 

@@ -1,11 +1,18 @@
 import 'package:wanzo/core/services/api_client.dart';
 import 'package:wanzo/core/models/api_response.dart';
 import 'package:wanzo/features/financing/models/financing_request.dart';
+import 'dart:io';
+import 'package:wanzo/core/services/image_upload_service.dart';
 
 class FinancingApiService {
   final ApiClient _apiClient;
+  final ImageUploadService _imageUploadService;
 
-  FinancingApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  FinancingApiService({
+    ApiClient? apiClient, 
+    ImageUploadService? imageUploadService
+  }) : _apiClient = apiClient ?? ApiClient(),
+       _imageUploadService = imageUploadService ?? ImageUploadService();
 
   /// Récupère la liste des demandes de financement
   /// Paramètres optionnels:
@@ -56,11 +63,29 @@ class FinancingApiService {
     } catch (e) {
       throw ApiException('Échec de récupération des demandes de financement: Une erreur inattendue est survenue. $e');
     }
-  }
-  /// Crée une nouvelle demande de financement
-  Future<ApiResponse<FinancingRequest>> createFinancingRequest(FinancingRequest request) async {
+  }  /// Crée une nouvelle demande de financement
+  /// Paramètres:
+  /// - request: La demande de financement à créer
+  /// - attachments: Liste de fichiers à joindre à la demande (optionnel)
+  Future<ApiResponse<FinancingRequest>> createFinancingRequest(
+    FinancingRequest request, {
+    List<File>? attachments,
+  }) async {
     try {
-      final response = await _apiClient.post('financing-requests', body: request.toJson(), requiresAuth: true);
+      // Si des pièces jointes sont fournies, les téléverser d'abord
+      List<String>? attachmentUrls;
+      if (attachments != null && attachments.isNotEmpty) {
+        attachmentUrls = await _imageUploadService.uploadImages(attachments);
+      }
+
+      // Créer un objet de demande mis à jour avec les URLs des pièces jointes
+      final Map<String, dynamic> requestData = request.toJson();
+      if (attachmentUrls != null && attachmentUrls.isNotEmpty) {
+        requestData['attachmentUrls'] = attachmentUrls;
+      }
+
+      // Faire la requête API
+      final response = await _apiClient.post('financing-requests', body: requestData, requiresAuth: true);
       
       if (response != null && response['data'] != null) {
         final createdRequest = FinancingRequest.fromJson(response['data'] as Map<String, dynamic>);
@@ -283,6 +308,45 @@ class FinancingApiService {
       rethrow;
     } catch (e) {
       throw ApiException('Échec d\'enregistrement du paiement: Une erreur inattendue est survenue. $e');
+    }
+  }  /// Télécharge une pièce jointe pour une demande de financement
+  Future<ApiResponse<String>> uploadAttachment(String requestId, File file) async {
+    try {
+      // Utilise le service d'upload d'image pour télécharger le fichier
+      final String? fileUrl = await _imageUploadService.uploadImage(file);
+      
+      if (fileUrl != null) {
+        // Enregistre l'URL de la pièce jointe dans la demande de financement
+        final response = await _apiClient.post(
+          'financing-requests/$requestId/attachments',
+          body: {'fileUrl': fileUrl},
+          requiresAuth: true,
+        );
+        
+        if (response != null && response['success'] == true) {
+          return ApiResponse<String>(
+            success: true,
+            data: fileUrl,
+            message: 'Pièce jointe téléchargée avec succès.',
+            statusCode: 200,
+          );
+        } else {
+          throw ApiException(
+            'Échec de l\'enregistrement de la pièce jointe: ${response != null ? response['message'] as String? ?? 'Raison inconnue' : 'Réponse null'}', 
+            responseBody: response, 
+            statusCode: response != null ? response['statusCode'] as int? : null
+          );
+        }
+      } else {
+        throw ApiException(
+          'Échec du téléchargement de la pièce jointe: Impossible d\'obtenir l\'URL de l\'image', 
+          statusCode: null
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException('Erreur inattendue lors du téléchargement de la pièce jointe: $e');
     }
   }
 }

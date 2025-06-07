@@ -103,9 +103,7 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
   ) async {
     try {
       await _salesRepository.addSale(event.sale);
-      emit(SalesOperationSuccess('Vente ajoutée avec succès', saleId: event.sale.id)); // Pass saleId
-
-      // Enregistrer les opérations dans le journal
+      emit(SalesOperationSuccess('Vente ajoutée avec succès', saleId: event.sale.id)); // Pass saleId      // Enregistrer les opérations dans le journal
       final List<OperationJournalEntry> journalEntries = [];
       String saleDescription = 'Vente #${event.sale.id.substring(0, 6)} - ${event.sale.customerName}';
 
@@ -114,10 +112,12 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       if (event.sale.paymentMethod?.toLowerCase().contains('crédit') ?? false) {
         saleType = OperationType.saleCredit;
       } else if (event.sale.paymentMethod?.toLowerCase().contains('échelonné') ?? false) {
-        saleType = OperationType.saleInstallment;
-      } else {
+        saleType = OperationType.saleInstallment;      } else {
         saleType = OperationType.saleCash;
       }
+
+      // Déterminer la devise de la vente
+      String currencyCode = event.sale.currencyCode;
 
       journalEntries.add(OperationJournalEntry(
         id: _uuid.v4(),
@@ -126,6 +126,7 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         type: saleType,
         amount: event.sale.totalAmountInCdf, // Use totalAmountInCdf
         relatedDocumentId: event.sale.id,
+        currencyCode: currencyCode, // Spécifier la devise
         isDebit: false, // Sales are typically credits to revenue
         isCredit: true,
         balanceAfter: 0, // Placeholder
@@ -140,13 +141,12 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
           type: OperationType.cashIn,
           amount: event.sale.paidAmountInCdf, // Use paidAmountInCdf
           relatedDocumentId: event.sale.id,
+          currencyCode: currencyCode, // Spécifier la devise
           isDebit: true, // CashIn is a debit to cash asset
           isCredit: false,
           balanceAfter: 0, // Placeholder
         ));
-      }
-
-      // Enregistrer les sorties de stock pour chaque article vendu
+      }      // Enregistrer les sorties de stock pour chaque article vendu
       for (var item in event.sale.items) {
         // Only create stock out journal entries for products
         if (item.itemType == SaleItemType.product) {
@@ -157,6 +157,7 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
             type: OperationType.stockOut,
             amount: 0, // Cost of goods sold would be calculated and used here in a full system
             relatedDocumentId: event.sale.id,
+            currencyCode: event.sale.currencyCode, // Spécifier la devise
             isDebit: true, // COGS is a debit (expense), Inventory is credited
             isCredit: false, // This entry reflects the COGS/Inventory reduction part
             balanceAfter: 0, // Placeholder

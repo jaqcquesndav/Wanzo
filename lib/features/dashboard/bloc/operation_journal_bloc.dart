@@ -20,34 +20,46 @@ class OperationJournalBloc
     on<AddOperationJournalEntry>(_onAddOperationJournalEntry); // Added handler
     on<AddMultipleOperationJournalEntries>(_onAddMultipleOperationJournalEntries); // Added handler
   }
-
   Future<void> _onLoadOperations(
     LoadOperations event,
     Emitter<OperationJournalState> emit,
   ) async {
     emit(const OperationJournalLoading());
     try {
-      // 1. Fetch raw operations and opening balance
+      // 1. Fetch raw operations and opening balances
       final rawOperations = await _repository.getOperations(event.startDate, event.endDate);
-      final openingBalance = await _repository.getOpeningBalance(event.startDate);
+      final openingBalancesByCurrency = await _repository.getOpeningBalances(event.startDate);
+      final openingBalance = openingBalancesByCurrency.values.fold(0.0, (prev, curr) => prev + curr);
 
       // 2. Sort operations by date
       final sortedOperations = List<OperationJournalEntry>.from(rawOperations);
       sortedOperations.sort((a, b) => a.date.compareTo(b.date));
 
-      // 3. Calculate isDebit, isCredit, and running balanceAfter
+      // 3. Calculate isDebit, isCredit, and running balances by currency
       final processedOperations = <OperationJournalEntry>[];
       double currentBalance = openingBalance;
+      Map<String, double> currentBalancesByCurrency = Map<String, double>.from(openingBalancesByCurrency);
 
       for (final op in sortedOperations) {
         final bool calculatedIsDebit = op.amount < 0;
         final bool calculatedIsCredit = op.amount > 0;
-        currentBalance += op.amount; // Amount is already signed
+        
+        // Mettre à jour le solde total pour compatibilité
+        currentBalance += op.amount;
+        
+        // Mettre à jour le solde de la devise spécifique
+        String currencyCode = op.currencyCode ?? 'CDF';
+        currentBalancesByCurrency[currencyCode] = (currentBalancesByCurrency[currencyCode] ?? 0.0) + op.amount;
+        
+        // Vérifier que les devises principales sont toujours présentes
+        if (!currentBalancesByCurrency.containsKey('USD')) currentBalancesByCurrency['USD'] = 0.0;
+        if (!currentBalancesByCurrency.containsKey('CDF')) currentBalancesByCurrency['CDF'] = 0.0;
         
         processedOperations.add(op.copyWith(
           isDebit: calculatedIsDebit,
           isCredit: calculatedIsCredit,
           balanceAfter: currentBalance,
+          balancesByCurrency: Map<String, double>.from(currentBalancesByCurrency),
         ));
       }
 
@@ -56,11 +68,12 @@ class OperationJournalBloc
 
       // 5. Emit the loaded state with processed data
       emit(OperationJournalLoaded(
-        operations: processedOperations, // Use processed operations
+        operations: processedOperations,
         startDate: event.startDate,
         endDate: event.endDate,
         groupedOperations: grouped,
-        openingBalance: openingBalance, 
+        openingBalance: openingBalance,
+        openingBalancesByCurrency: openingBalancesByCurrency,
       ));
     } catch (e) {
       emit(OperationJournalError('Erreur de chargement des opérations: ${e.toString()}'));

@@ -15,3 +15,12 @@ class LoadDashboardData extends DashboardEvent {
   @override
   List<Object> get props => [date];
 }
+
+class RefreshDashboardData extends DashboardEvent {
+  final DateTime date; // Date for which to refresh data
+
+  const RefreshDashboardData(this.date);
+
+  @override
+  List<Object> get props => [date];
+}

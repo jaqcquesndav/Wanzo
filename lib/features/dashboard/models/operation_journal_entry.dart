@@ -103,11 +103,11 @@ class OperationJournalEntry {
   final String? productId; // ID du produit pour les mouvements de stock
   final String? productName; // Nom du produit pour les mouvements de stock
   final String? paymentMethod; // Méthode de paiement pour les transactions financières
-  final String? currencyCode; // Code de la devise pour le montant
+  final String? currencyCode; // Code de la devise pour le montant (obligatoire pour le calcul du solde correct)
   final bool isDebit;
   final bool isCredit;
-  final double balanceAfter;
-
+  final double balanceAfter; // Solde total après l'opération
+  final Map<String, double>? balancesByCurrency; // Soldes par devise (CDF, USD, etc.)
   const OperationJournalEntry({
     required this.id,
     required this.date,
@@ -119,12 +119,12 @@ class OperationJournalEntry {
     this.productId,
     this.productName,
     this.paymentMethod,
-    this.currencyCode, // Added to constructor
+    required this.currencyCode, // Maintenant requis pour le traitement correct des devises
     required this.isDebit,
     required this.isCredit,
     required this.balanceAfter,
+    this.balancesByCurrency,
   });
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -137,14 +137,23 @@ class OperationJournalEntry {
       if (productId != null) 'productId': productId,
       if (productName != null) 'productName': productName,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
-      if (currencyCode != null) 'currencyCode': currencyCode,
+      'currencyCode': currencyCode, // Désormais obligatoire
       'isDebit': isDebit,
       'isCredit': isCredit,
       'balanceAfter': balanceAfter,
+      if (balancesByCurrency != null) 'balancesByCurrency': balancesByCurrency,
     };
   }
-
   factory OperationJournalEntry.fromJson(Map<String, dynamic> json) {
+    Map<String, double>? balancesByCurrency;
+    if (json['balancesByCurrency'] != null) {
+      balancesByCurrency = Map<String, double>.from(
+        (json['balancesByCurrency'] as Map).map(
+          (key, value) => MapEntry(key as String, (value as num).toDouble()),
+        ),
+      );
+    }
+    
     return OperationJournalEntry(
       id: json['id'] as String,
       date: DateTime.parse(json['date'] as String),
@@ -156,13 +165,13 @@ class OperationJournalEntry {
       productId: json['productId'] as String?,
       productName: json['productName'] as String?,
       paymentMethod: json['paymentMethod'] as String?,
-      currencyCode: json['currencyCode'] as String?, // Added to fromJson
+      currencyCode: json['currencyCode'] as String? ?? 'CDF', // Valeur par défaut 'CDF' si non spécifié
       isDebit: json['isDebit'] as bool? ?? false, // Provide default if null
       isCredit: json['isCredit'] as bool? ?? false, // Provide default if null
       balanceAfter: (json['balanceAfter'] as num?)?.toDouble() ?? 0.0, // Provide default if null
+      balancesByCurrency: balancesByCurrency,
     );
   }
-
   OperationJournalEntry copyWith({
     String? id,
     DateTime? date,
@@ -178,6 +187,7 @@ class OperationJournalEntry {
     bool? isDebit,
     bool? isCredit,
     double? balanceAfter,
+    Map<String, double>? balancesByCurrency,
   }) {
     return OperationJournalEntry(
       id: id ?? this.id,
@@ -194,9 +204,9 @@ class OperationJournalEntry {
       isDebit: isDebit ?? this.isDebit,
       isCredit: isCredit ?? this.isCredit,
       balanceAfter: balanceAfter ?? this.balanceAfter,
+      balancesByCurrency: balancesByCurrency ?? this.balancesByCurrency,
     );
   }
-
   // Placeholder for AdhaBloc integration
   Map<String, dynamic> toContextMap() {
     return {
@@ -210,7 +220,8 @@ class OperationJournalEntry {
       if (productId != null) 'productId': productId,
       if (productName != null) 'productName': productName,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
-      if (currencyCode != null) 'currencyCode': currencyCode, // Added to toContextMap
+      'currencyCode': currencyCode, // Obligatoire maintenant
+      if (balancesByCurrency != null) 'balancesByCurrency': balancesByCurrency,
     };
   }
 }

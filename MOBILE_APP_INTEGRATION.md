@@ -33,29 +33,41 @@ L'application mobile doit suivre le flux suivant pour communiquer avec le backen
 
 ### 1. Endpoints et Variables d'Environnement
 
-Votre application Flutter doit être configurée avec les endpoints suivants :
+Votre application Flutter utilise maintenant une configuration basée sur des variables d'environnement. Dans le fichier `lib/core/config/env_config.dart` :
 
 ```dart
 // Fichier env_config.dart pour les variables d'environnement
 
 class EnvConfig {
   // API Gateway comme point d'entrée principal
-  static const String apiGatewayUrl = 'http://localhost:8000/api';
+  static String get apiGatewayUrl => dotenv.env['API_GATEWAY_URL'] ?? 'http://localhost:8000/api';
   
   // URLs des services directs (à utiliser uniquement si nécessaire)
-  static const String authServiceUrl = 'http://localhost:3000/api';
-  static const String appMobileServiceUrl = 'http://localhost:3006/api';
+  static String get authServiceUrl => dotenv.env['AUTH_SERVICE_URL'] ?? 'http://localhost:3000/api';
+  static String get appMobileServiceUrl => dotenv.env['APP_MOBILE_SERVICE_URL'] ?? 'http://localhost:3006/api';
+  static String get adminServiceUrl => dotenv.env['ADMIN_SERVICE_URL'] ?? 'http://localhost:3001/api';
   
   // Configuration Auth0
-  static const String auth0Domain = 'dev-tezmln0tk0g1gouf.eu.auth0.com';
-  static const String auth0ClientId = '43d64kgsVYyCZHEFsax7zlRBVUiraCKL';
-  static const String auth0Audience = 'https://api.wanzo.com';
-  static const String auth0RedirectUri = 'com.wanzo.app://login-callback';
-  static const String auth0LogoutUri = 'com.wanzo.app://logout-callback';
+  static String get auth0Domain => dotenv.env['AUTH0_DOMAIN'] ?? 'dev-tezmln0tk0g1gouf.eu.auth0.com';
+  static String get auth0ClientId => dotenv.env['AUTH0_CLIENT_ID'] ?? '43d64kgsVYyCZHEFsax7zlRBVUiraCKL';
+  static String get auth0Audience => dotenv.env['AUTH0_AUDIENCE'] ?? 'https://api.wanzo.com';
+  static String get auth0RedirectUri => dotenv.env['AUTH0_REDIRECT_URI'] ?? 'com.wanzo.app://login-callback';
+  static String get auth0LogoutUri => dotenv.env['AUTH0_LOGOUT_URI'] ?? 'com.wanzo.app://logout-callback';
+  
+  // Méthode pour obtenir l'URL de base appropriée
+  static String getBaseUrl({bool useApiGateway = true}) {
+    // Par défaut, utiliser l'API Gateway comme point d'entrée
+    if (useApiGateway) {
+      return apiGatewayUrl;
+    }
+    
+    // Sinon, retourner l'URL du service demandé
+    return authServiceUrl;
+  }
 }
 ```
 
-⚠️ **Important** : Pour le développement sur des appareils physiques, remplacez `localhost` par l'adresse IP de votre machine où sont hébergés les services backend.
+⚠️ **Important** : Pour le développement sur des appareils physiques, remplacez `localhost` par l'adresse IP de votre machine où sont hébergés les services backend ou utilisez les variables d'environnement appropriées.
 
 ### 2. Configuration Auth0
 
@@ -66,6 +78,9 @@ Assurez-vous que votre application est correctement configurée pour utiliser Au
    - `flutter_secure_storage`: Pour stocker en toute sécurité les tokens
    - `http`: Pour les appels API
    - `jwt_decoder`: Pour décoder et analyser les JWT tokens
+   - `flutter_dotenv`: Pour gérer les variables d'environnement
+   - `hive`: Pour le stockage local et le cache API
+   - `connectivity_plus`: Pour la détection de la connectivité réseau
 
 2. **Redirection URIs** :
    - Dans le tableau de bord Auth0, configurez les URI de redirection suivants :
@@ -120,55 +135,138 @@ Assurez-vous que votre application est correctement configurée pour utiliser Au
 
 ### 3. Gestion des Tokens JWT
 
-L'application doit gérer correctement les tokens JWT :
+L'application gère les tokens JWT avec une approche sécurisée :
 
-1. **Stockage sécurisé** : Utilisez `flutter_secure_storage` pour stocker les tokens
-2. **Rafraîchissement automatique** : Implémentez la logique pour rafraîchir les tokens expirés
-3. **Envoi dans les en-têtes** : Incluez le token dans l'en-tête `Authorization: Bearer <token>` pour toutes les requêtes API
+1. **Stockage sécurisé** : Utilisation de `flutter_secure_storage` pour stocker les tokens
+2. **Rafraîchissement automatique** : Logique pour rafraîchir les tokens expirés implémentée dans `Auth0Service`
+3. **Envoi dans les en-têtes** : Inclusion du token dans l'en-tête `Authorization: Bearer <token>` pour toutes les requêtes API
 
-Voici un exemple de gestionnaire de tokens :
+Voici un exemple du gestionnaire de tokens implémenté dans l'application :
 
 ```dart
+// Extrait de Auth0Service
 Future<String?> getAccessToken() async {
-  // Vérifier si le token a expiré
-  final bool isValid = await isAuthenticated();
-  if (!isValid) {
-    // Essayer de rafraîchir le token s'il a expiré
-    final refreshed = await refreshToken();
-    if (!refreshed) return null;
+  try {
+    // Vérifier la connectivité
+    final hasConnection = await _connectivityService.isConnected();
+    if (!hasConnection) {
+      // En mode hors ligne, on peut utiliser un token stocké localement ou 
+      // passer au mode d'authentification hors ligne
+      return await offlineAuthService.getAccessToken();
+    }
+
+    // Vérifier si un token existe déjà
+    final storedAccessToken = await _secureStorage.read(key: _accessTokenKey);
+    final expiresAtString = await _secureStorage.read(key: _expiresAtKey);
+
+    if (storedAccessToken == null || expiresAtString == null) {
+      return null;
+    }
+
+    // Vérifier si le token a expiré
+    final expiresAt = DateTime.parse(expiresAtString);
+    if (DateTime.now().isAfter(expiresAt.subtract(const Duration(minutes: 5)))) {
+      // Token expiré ou proche de l'expiration, essayer de le rafraîchir
+      final refreshed = await _refreshTokens();
+      if (!refreshed) return null;
+      return await _secureStorage.read(key: _accessTokenKey);
+    }
+
+    // Token valide
+    return storedAccessToken;
+  } catch (e) {
+    AppLogger.error('Error getting access token: $e');
+    return null;
   }
-  
-  return await secureStorage.read(key: accessTokenKey);
 }
 ```
 
 ### 4. Appels API
 
-Pour vos appels API, utilisez toujours l'API Gateway comme point d'entrée principal. Exemple :
+L'application utilise une classe `ApiClient` pour gérer les appels API avec prise en charge du mode hors ligne et du cache :
 
 ```dart
-Future<dynamic> get(String endpoint) async {
-  try {
-    final url = Uri.parse('${EnvConfig.apiGatewayUrl}/${endpoint}');
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ${await getAccessToken()}'
-    };
-    
-    final response = await http.get(url, headers: headers);
-    
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('API Error: ${response.statusCode}');
+// Exemple simplifié de la classe ApiClient
+class ApiClient {
+  final String _baseUrl;
+  final http.Client _httpClient;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  Auth0Service? _auth0Service;
+
+  // Singleton pattern implementation
+  static final ApiClient _instance = ApiClient._internal(
+    useApiGateway: true,
+  );
+  
+  // Factory constructor
+  factory ApiClient() => _instance;
+
+  // Private constructor
+  ApiClient._internal({
+    http.Client? httpClient,
+    bool useApiGateway = true,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _baseUrl = EnvConfig.getBaseUrl(useApiGateway: useApiGateway);
+
+  // Configure with Auth0Service
+  static void configure({Auth0Service? auth0Service}) {
+    _instance._auth0Service = auth0Service;
+  }
+
+  // Get method with cache support
+  Future<Map<String, dynamic>?> get(
+    String endpoint, {
+    Map<String, String>? queryParameters,
+    bool requiresAuth = false,
+    bool useCache = true,
+    Duration cacheDuration = ApiCacheService.defaultCacheDuration,
+  }) async {
+    try {
+      // Build URL and headers
+      final uri = Uri.parse('$_baseUrl/$endpoint').replace(
+        queryParameters: queryParameters,
+      );
+      
+      final headers = await getHeaders(requiresAuth: requiresAuth);
+      
+      // Check cache if enabled
+      final String cacheKey = uri.toString();
+      if (useCache) {
+        final cachedResponse = await ApiCacheService().getCachedResponse(cacheKey);
+        if (cachedResponse != null) {
+          return cachedResponse;
+        }
+      }
+      
+      // Make the API call
+      final response = await _httpClient.get(uri, headers: headers);
+      
+      // Handle the response
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        // Cache the successful response if caching is enabled
+        if (useCache) {
+          await ApiCacheService().cacheResponse(cacheKey, responseBody, cacheDuration);
+        }
+        
+        return responseBody;
+      } else {
+        throw ApiException(
+          'HTTP Error: ${response.statusCode}',
+          statusCode: response.statusCode,
+          responseBody: response.body,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Network error: $e');
     }
-  } catch (e) {
-    print('GET Error: $e');
-    throw Exception('Failed to perform GET request');
   }
 }
 ```
+
+Pour les opérations de création, mise à jour et suppression, l'application utilise des services API spécifiques par domaine (customers, inventory, financing, etc.) qui utilisent tous le `ApiClient` comme base.
 
 ## Points à vérifier pour assurer une connexion correcte
 
@@ -187,15 +285,68 @@ Future<dynamic> get(String endpoint) async {
    - Vérifiez le rafraîchissement du token : laissez le token expirer et confirmez qu'il est automatiquement rafraîchi
    - Testez la déconnexion : assurez-vous que les tokens sont correctement supprimés
 
+4. **Fonctionnalités hors ligne** :
+   - Vérifiez que l'application détecte correctement l'état de la connectivité
+   - Assurez-vous que les données sont correctement mises en cache pour une utilisation hors ligne
+   - Testez la synchronisation des données lorsque la connexion est rétablie
+
 ## Environnements de déploiement
 
-Adaptez vos configurations selon l'environnement :
+Adaptez vos configurations selon l'environnement en utilisant des fichiers `.env` différents :
 
-- **Développement** : Utilisation de l'adresse IP locale ou `localhost`
-- **Test** : Utilisation des serveurs de test avec leurs DNS ou IPs
-- **Production** : Utilisation des domaines de production (e.g., `api.wanzo.com`)
+- **Développement** (`dev.env`) : 
+  ```
+  API_GATEWAY_URL=http://192.168.1.x:8000/api
+  AUTH_SERVICE_URL=http://192.168.1.x:3000/api
+  APP_MOBILE_SERVICE_URL=http://192.168.1.x:3006/api
+  AUTH0_DOMAIN=dev-tezmln0tk0g1gouf.eu.auth0.com
+  AUTH0_CLIENT_ID=43d64kgsVYyCZHEFsax7zlRBVUiraCKL
+  ```
 
-Créez des profils de configuration séparés pour chaque environnement.
+- **Test** (`test.env`) :
+  ```
+  API_GATEWAY_URL=https://test-api.wanzo.com/api
+  AUTH_SERVICE_URL=https://test-auth.wanzo.com/api
+  APP_MOBILE_SERVICE_URL=https://test-mobile.wanzo.com/api
+  AUTH0_DOMAIN=dev-tezmln0tk0g1gouf.eu.auth0.com
+  AUTH0_CLIENT_ID=43d64kgsVYyCZHEFsax7zlRBVUiraCKL
+  ```
+
+- **Production** (`prod.env`) :
+  ```
+  API_GATEWAY_URL=https://api.wanzo.com/api
+  AUTH_SERVICE_URL=https://auth.wanzo.com/api
+  APP_MOBILE_SERVICE_URL=https://mobile.wanzo.com/api
+  AUTH0_DOMAIN=wanzo.eu.auth0.com
+  AUTH0_CLIENT_ID=production_client_id
+  ```
+
+Pour charger le fichier d'environnement approprié au démarrage de l'application :
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Déterminer quel fichier .env charger selon l'environnement
+  String envFile = 'assets/env/dev.env';
+  #if (dart.library.io)
+  const envName = String.fromEnvironment('ENV', defaultValue: 'dev');
+  if (envName == 'prod') {
+    envFile = 'assets/env/prod.env';
+  } else if (envName == 'test') {
+    envFile = 'assets/env/test.env';
+  }
+  #endif
+
+  // Charger les variables d'environnement
+  await dotenv.load(fileName: envFile);
+  
+  // Initialiser les services
+  await initServices();
+  
+  runApp(const MyApp());
+}
+```
 
 ## Assistance et dépannage
 

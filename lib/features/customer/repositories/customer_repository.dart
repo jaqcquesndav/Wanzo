@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/customer.dart';
+import '../../sales/repositories/sales_repository.dart';
 
 /// Repository pour la gestion des clients
 class CustomerRepository {
@@ -152,13 +153,49 @@ class CustomerRepository {
     );
     await _customersBox.put(customerId, updatedCustomer);
     return updatedCustomer;
-  }
-
-  /// Récupère le nombre de clients uniques pour une période donnée
+  }  /// Récupère le nombre de clients uniques pour une période donnée
   Future<int> getUniqueCustomersCountForDateRange(DateTime startDate, DateTime endDate) async {
-    // This is a placeholder implementation. 
-    // In a real scenario, you would filter sales by date range and then count unique customer IDs.
-    // For now, it returns the total number of customers as a mock.
-    return _customersBox.length;
+    // Dépendance sur SalesRepository pour récupérer les ventes de la période
+    try {
+      // Récupérer les ventes de la période via le SalesRepository
+      final salesRepo = await _getSalesRepository();
+      if (salesRepo != null) {
+        final sales = await salesRepo.getSalesByDateRange(startDate, endDate);
+        
+        // Extraire les IDs clients uniques des ventes
+        final uniqueCustomerIds = <String>{};
+        for (final sale in sales) {
+          if (sale.customerId != null && sale.customerId!.isNotEmpty) {
+            uniqueCustomerIds.add(sale.customerId!);
+          }
+        }
+        
+        return uniqueCustomerIds.length;
+      }
+      
+      // Fallback: Si pas d'accès au SalesRepository, utiliser lastPurchaseDate des clients
+      return _customersBox.values
+        .where((customer) => customer.lastPurchaseDate != null && 
+          customer.lastPurchaseDate!.isAfter(startDate) && 
+          customer.lastPurchaseDate!.isBefore(endDate.add(const Duration(days: 1))))
+        .length;
+    } catch (e) {
+      print('Erreur lors du calcul des clients uniques: $e');
+      // Fallback en cas d'erreur: retourner 0 plutôt qu'une valeur incorrecte
+      return 0;
+    }
+  }
+  
+  // Méthode helper pour obtenir une instance de SalesRepository
+  Future<SalesRepository?> _getSalesRepository() async {
+    try {
+      // Créer et initialiser une instance du SalesRepository
+      final salesRepo = SalesRepository();
+      await salesRepo.init();
+      return salesRepo;
+    } catch (e) {
+      print('Erreur lors de l\'obtention du SalesRepository: $e');
+      return null;
+    }
   }
 }

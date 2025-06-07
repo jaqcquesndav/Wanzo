@@ -42,8 +42,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
           : event.request;
 
       await _financingRepository.addRequest(requestWithId);
-      
-      final journalEntry = OperationJournalEntry(
+        final journalEntry = OperationJournalEntry(
         id: const Uuid().v4(),
         date: requestWithId.requestDate,
         description: 'Demande de financement: ${requestWithId.type.displayName} - ${requestWithId.institution.displayName}',
@@ -51,6 +50,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         amount: requestWithId.amount, 
         relatedDocumentId: requestWithId.id,
         paymentMethod: requestWithId.currency, 
+        currencyCode: requestWithId.currency, // Utiliser la devise spécifiée dans la demande
         isDebit: false, // Financing request itself is not a debit/credit yet until approved/rejected or funds move
         isCredit: false,
         balanceAfter: 0, // Placeholder, journal service should calculate this
@@ -107,8 +107,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         termMonths: event.termMonths,
         monthlyPayment: event.monthlyPayment,
       );
-      
-      // Créer une entrée dans le journal des opérations
+        // Créer une entrée dans le journal des opérations
       final journalEntry = OperationJournalEntry(
         id: const Uuid().v4(),
         date: event.approvalDate,
@@ -117,6 +116,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         amount: updatedRequest.amount,
         relatedDocumentId: updatedRequest.id,
         paymentMethod: updatedRequest.currency,
+        currencyCode: updatedRequest.currency, // Utiliser la devise spécifiée dans la demande
         isDebit: false,
         isCredit: false,
         balanceAfter: 0, // Placeholder
@@ -140,8 +140,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         disbursementDate: event.disbursementDate,
         scheduledPayments: event.scheduledPayments,
       );
-      
-      // Créer une entrée dans le journal des opérations pour le décaissement
+        // Créer une entrée dans le journal des opérations pour le décaissement
       final journalEntry = OperationJournalEntry(
         id: const Uuid().v4(),
         date: event.disbursementDate,
@@ -150,6 +149,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         amount: updatedRequest.amount,
         relatedDocumentId: updatedRequest.id,
         paymentMethod: updatedRequest.currency,
+        currencyCode: updatedRequest.currency, // Utiliser la devise spécifiée dans la demande
         isDebit: false,
         isCredit: true,
         balanceAfter: 0, // Placeholder
@@ -173,8 +173,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         paymentDate: event.paymentDate,
         amount: event.amount,
       );
-      
-      // Créer une entrée dans le journal des opérations pour le paiement
+        // Créer une entrée dans le journal des opérations pour le paiement
       final journalEntry = OperationJournalEntry(
         id: const Uuid().v4(),
         date: event.paymentDate,
@@ -183,6 +182,7 @@ class FinancingBloc extends Bloc<FinancingEvent, FinancingState> {
         amount: event.amount,
         relatedDocumentId: updatedRequest.id,
         paymentMethod: updatedRequest.currency,
+        currencyCode: updatedRequest.currency, // Utiliser la devise spécifiée dans la demande
         isDebit: true,
         isCredit: false,
         balanceAfter: 0, // Placeholder

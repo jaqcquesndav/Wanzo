@@ -47,22 +47,44 @@ class OperationJournalRepository {
       return []; 
     }
   }
-
-  Future<double> getOpeningBalance(DateTime forDate) async {
-    // This method will also need to be updated to use ApiService
-    // For now, let's assume it might call an endpoint like /journal/opening-balance?date=...
+  Future<Map<String, double>> getOpeningBalances(DateTime forDate) async {
+    // Cette méthode permet de récupérer les soldes d'ouverture pour toutes les devises
     try {
-      final response = await _apiService.get('journal/opening-balance', queryParams: {
+      final response = await _apiService.get('journal/opening-balances', queryParams: {
         'date': forDate.toIso8601String(),
       });
-      if (response['balance'] != null) {
-        return (response['balance'] as num).toDouble();
+      
+      if (response['balances'] != null && response['balances'] is Map) {
+        return Map<String, double>.from(
+          (response['balances'] as Map).map(
+            (key, value) => MapEntry(key as String, (value as num).toDouble()),
+          ),
+        );
       }
-      return 0.0;
+      
+      // Par défaut, renvoyer des soldes à zéro pour les principales devises
+      return {
+        'CDF': 0.0,
+        'USD': 0.0,
+      };
     } catch (e) {
-      debugPrint("Error fetching opening balance: $e");
-      return 0.0; // Fallback or error handling
+      debugPrint("Error fetching opening balances: $e");
+      // En cas d'erreur, utiliser des valeurs par défaut
+      return {
+        'CDF': 0.0,
+        'USD': 0.0,
+      };
     }
+  }
+  Future<double> getOpeningBalance(DateTime forDate) async {
+    // Cette méthode restera pour la compatibilité, mais appelle getOpeningBalances et renvoie le total
+    final balances = await getOpeningBalances(forDate);
+    double total = 0.0;
+    // Utiliser une boucle for pour éviter les problèmes potentiels avec FutureOr<double>
+    for (final value in balances.values) {
+      total += value;
+    }
+    return total;
   }
 
   Future<void> addOperation(OperationJournalEntry entry) async {
@@ -97,6 +119,91 @@ class OperationJournalRepository {
 
   // TODO: Ajouter des méthodes pour récupérer les opérations de vente, caisse, stock
   // et les transformer en OperationJournalEntry
+
+  /// Récupère les opérations de vente uniquement
+  Future<List<OperationJournalEntry>> getSalesOperations(DateTime startDate, DateTime endDate) async {
+    try {
+      final response = await _apiService.get('journal/operations', queryParams: {
+        'start_date': startDate.toIso8601String(),
+        'end_date': endDate.toIso8601String(),
+        'type': 'sales',
+      });
+      
+      if (response['data'] != null && response['data'] is List) {
+        return (response['data'] as List)
+            .map((item) => OperationJournalEntry.fromJson(item as Map<String, dynamic>))
+            .toList()..sort((a,b) => b.date.compareTo(a.date));
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching sales operations: $e");
+      return [];
+    }
+  }
+
+  /// Récupère les opérations de caisse uniquement (entrées et sorties d'espèces)
+  Future<List<OperationJournalEntry>> getCashOperations(DateTime startDate, DateTime endDate) async {
+    try {
+      final response = await _apiService.get('journal/operations', queryParams: {
+        'start_date': startDate.toIso8601String(),
+        'end_date': endDate.toIso8601String(),
+        'type': 'cash',
+      });
+      
+      if (response['data'] != null && response['data'] is List) {
+        return (response['data'] as List)
+            .map((item) => OperationJournalEntry.fromJson(item as Map<String, dynamic>))
+            .toList()..sort((a,b) => b.date.compareTo(a.date));
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching cash operations: $e");
+      return [];
+    }
+  }
+
+  /// Récupère les opérations de stock uniquement (entrées et sorties de stock)
+  Future<List<OperationJournalEntry>> getInventoryOperations(DateTime startDate, DateTime endDate) async {
+    try {
+      final response = await _apiService.get('journal/operations', queryParams: {
+        'start_date': startDate.toIso8601String(),
+        'end_date': endDate.toIso8601String(),
+        'type': 'inventory',
+      });
+      
+      if (response['data'] != null && response['data'] is List) {
+        return (response['data'] as List)
+            .map((item) => OperationJournalEntry.fromJson(item as Map<String, dynamic>))
+            .toList()..sort((a,b) => b.date.compareTo(a.date));
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching inventory operations: $e");
+      return [];
+    }
+  }
+
+  /// Récupère les opérations par type d'opération spécifique
+  Future<List<OperationJournalEntry>> getOperationsByType(
+      DateTime startDate, DateTime endDate, OperationType type) async {
+    try {
+      final response = await _apiService.get('journal/operations', queryParams: {
+        'start_date': startDate.toIso8601String(),
+        'end_date': endDate.toIso8601String(),
+        'operation_type': type.name,
+      });
+      
+      if (response['data'] != null && response['data'] is List) {
+        return (response['data'] as List)
+            .map((item) => OperationJournalEntry.fromJson(item as Map<String, dynamic>))
+            .toList()..sort((a,b) => b.date.compareTo(a.date));
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching operations by type: $e");
+      return [];
+    }
+  }
 
   // Updated for AdhaBloc integration - uses ApiService
   Future<List<Map<String, dynamic>>> getRecentEntries({int limit = 5}) async {

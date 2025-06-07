@@ -75,24 +75,32 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       }
     }
   }
-
   Future<void> _shareAttachment(BuildContext context, String url) async {
     if (_isSharing) return; // Prevent multiple share attempts
 
     setState(() {
       _isSharing = true;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
+    
+    // Capture le contexte actuel et vérifie s'il sera valide plus tard
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Préparation du partage...'), duration: Duration(seconds: 2)), // Shorter duration
     );
-
+    
     try {
       final File imageToShare = await _getFileForSharing(url);
       final xFile = XFile(imageToShare.path);
-      await Share.shareXFiles([xFile], text: 'Pièce jointe de dépense: ${widget.expenseId}');
+      
+      // Utiliser la bonne méthode pour partager des fichiers
+      await Share.shareXFiles(
+        [xFile],
+        text: 'Pièce jointe de dépense: ${widget.expenseId}',
+        subject: 'Dépense ${widget.expenseId}'
+      );
     } catch (e) {
       if (mounted) { // Check if mounted before showing SnackBar
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('Erreur de partage: ${e.toString()}')),
         );
       }
@@ -206,10 +214,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
               }
               return const Center(child: Text('Veuillez charger une dépense.'));
             },
-          ),
-          if (_isSharing) // Show loading indicator
+          ),          if (_isSharing) // Show loading indicator
             Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 127, red: 0, green: 0, blue: 0),
               child: const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -310,11 +317,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                             ),
                           );
                         },
-                      ),
-                      Container( // Share button overlay
+                      ),                      Container( // Share button overlay
                         margin: const EdgeInsets.all(4.0),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 127, red: 0, green: 0, blue: 0),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
