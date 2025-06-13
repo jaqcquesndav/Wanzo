@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 import 'package:wanzo/features/dashboard/services/dashboard_api_service.dart';
 import 'package:wanzo/features/sales/repositories/sales_repository.dart';
 import 'package:wanzo/features/customer/repositories/customer_repository.dart';
@@ -8,13 +7,11 @@ import 'package:wanzo/features/transactions/repositories/transaction_repository.
 import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/sales/models/sale.dart';
 
-@GenerateMocks([
-  SalesRepository,
-  CustomerRepository,
-  TransactionRepository,
-  ExpenseRepository,
-])
-import 'dashboard_api_service_test.mocks.dart';
+// Classes Mock manuelles
+class MockSalesRepository extends Mock implements SalesRepository {}
+class MockCustomerRepository extends Mock implements CustomerRepository {}
+class MockTransactionRepository extends Mock implements TransactionRepository {}
+class MockExpenseRepository extends Mock implements ExpenseRepository {}
 
 void main() {
   late MockSalesRepository mockSalesRepository;
@@ -39,9 +36,8 @@ void main() {
 
   group('DashboardApiService', () {
     final testDate = DateTime(2025, 6, 7);
-    // Calculate the start and end of the test day
-    final startOfDay = DateTime(testDate.year, testDate.month, testDate.day);
-    final endOfDay = DateTime(testDate.year, testDate.month, testDate.day, 23, 59, 59);
+    final startOfDay = DateTime(2025, 6, 7, 0, 0, 0);
+    final endOfDay = DateTime(2025, 6, 7, 23, 59, 59);
 
     test('getDashboardData returns correct data on success', () async {
       // Arrange

@@ -13,10 +13,9 @@ import '../../../core/utils/connectivity_service.dart';
 class OfflineAuthService {
   static const String _lastUserKey = 'lastLoggedInUser';
   static const String _offlineLoginEnabledKey = 'offlineLoginEnabled';
-  
-  final FlutterSecureStorage _secureStorage;
+    final FlutterSecureStorage _secureStorage;
   final DatabaseService _databaseService;
-  final ConnectivityService _connectivityService;
+  // ConnectivityService is used in canLoginOffline and other methods through _databaseService
   
   /// Constructeur
   OfflineAuthService({
@@ -24,8 +23,7 @@ class OfflineAuthService {
     required DatabaseService databaseService,
     required ConnectivityService connectivityService,
   }) : _secureStorage = secureStorage,
-       _databaseService = databaseService,
-       _connectivityService = connectivityService;
+       _databaseService = databaseService;
   
   /// Vérifie si l'authentification hors ligne est activée
   Future<bool> isOfflineLoginEnabled() async {
@@ -72,9 +70,12 @@ class OfflineAuthService {
     return null;
   }
   
-  /// Supprime les informations de l'utilisateur pour l'authentification hors ligne
-  Future<void> clearOfflineUserData() async {
+  /// Supprime les informations de l\'utilisateur pour l\'authentification hors ligne
+  Future<void> clearOfflineData() async {
     await _secureStorage.delete(key: _lastUserKey);
+    // Potentially also delete other offline data if necessary, e.g., from local DB
+    // await _databaseService.database.then((db) => db.delete('user_specific_table', where: 'userId = ?', whereArgs: [userId]));
+    debugPrint("OfflineAuthService: Cleared last logged in user from secure storage.");
   }
   
   /// Vérifie si l'utilisateur peut se connecter en mode hors ligne

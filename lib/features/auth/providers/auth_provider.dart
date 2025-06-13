@@ -163,10 +163,9 @@ class AuthProvider extends ChangeNotifier {
     if (enabled && _user != null) {
       await _offlineAuthService.saveUserForOfflineLogin(_user!);
     }
-    
-    // Si désactivé, effacer les données utilisateur en cache
+      // Si désactivé, effacer les données utilisateur en cache
     if (!enabled) {
-      await _offlineAuthService.clearOfflineUserData();
+      await _offlineAuthService.clearOfflineData();
     }
   }
   

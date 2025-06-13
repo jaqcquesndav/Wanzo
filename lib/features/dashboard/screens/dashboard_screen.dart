@@ -585,8 +585,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       childAspectRatio: 2.2, // Réduit la hauteur des cartes KPI (valeur plus grande = cartes plus plates)
       physics: const NeverScrollableScrollPhysics(),      
       children: [
-        _buildStatCard(context, title: l10n.dashboardHeaderSalesToday + ' (CDF)', value: formatCurrency(kpiData.salesTodayCdf, 'CDF'), icon: Icons.monetization_on, color: Colors.green, l10n: l10n),
-        _buildStatCard(context, title: l10n.dashboardHeaderSalesToday + ' (USD)', value: formatCurrency(kpiData.salesTodayUsd, 'USD'), icon: Icons.monetization_on, color: Colors.blue, l10n: l10n),
+        _buildStatCard(context, title: '${l10n.dashboardHeaderSalesToday} (CDF)', value: formatCurrency(kpiData.salesTodayCdf, 'CDF'), icon: Icons.monetization_on, color: Colors.green, l10n: l10n),
+        _buildStatCard(context, title: '${l10n.dashboardHeaderSalesToday} (USD)', value: formatCurrency(kpiData.salesTodayUsd, 'USD'), icon: Icons.monetization_on, color: Colors.blue, l10n: l10n),
         _buildStatCard(context, title: l10n.dashboardHeaderClientsServed, value: kpiData.clientsServed.toString(), icon: Icons.people, color: Colors.orange, l10n: l10n),
         _buildStatCard(context, title: 'Dépenses', value: formatCurrency(kpiData.expenses, displayCurrencyCode), icon: Icons.money_off, color: Colors.red, l10n: l10n),
       ],

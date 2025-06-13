@@ -55,7 +55,7 @@
 				<key>CFBundleTypeRole</key>
 				<string>Editor</string>
 				<key>CFBundleURLName</key>
-				<string>com.wanzo.app</string>
+				<string>auth0</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>com.wanzo.app</string>

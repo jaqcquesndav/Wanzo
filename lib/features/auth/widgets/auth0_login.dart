@@ -113,15 +113,13 @@ class _Auth0LoginState extends State<Auth0Login> {
                 ),
               ],
             ),
-          ),
-
-        // Bouton de connexion Auth0 ou hors ligne
+          ),        // Bouton de connexion Auth0 ou hors ligne avec expérience intégrée
         ElevatedButton.icon(
           onPressed: (!isConnected && !_offlineAuthAvailable) || _isLoading
               ? null // Désactivé si hors ligne sans authentification disponible
               : _performAuth0Login,
           icon: Icon(isConnected ? Icons.login : Icons.offline_bolt),
-          label: Text(isConnected ? 'Connexion avec Auth0' : 'Connexion hors ligne'),
+          label: Text(isConnected ? 'Se connecter' : 'Connexion hors ligne'),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             minimumSize: const Size(double.infinity, 48),

@@ -55,10 +55,10 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true // Add this line
-        
-        // Configuration pour flutter_appauth
-        manifestPlaceholders = [
-            appAuthRedirectScheme: "com.wanzo.app"
+          // Configuration for auth0_flutter
+        manifestPlaceholders += [
+            auth0Domain: "dev-tezmln0tk0g1gouf.eu.auth0.com",
+            auth0Scheme: "com.wanzo.app"
         ]
     }
 

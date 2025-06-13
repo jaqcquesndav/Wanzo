@@ -37,13 +37,15 @@ class UserAdapter extends TypeAdapter<User> {
       businessSectorId: fields[17] as String?,
       businessAddress: fields[18] as String?,
       businessLogoUrl: fields[19] as String?,
+      emailVerified: fields[20] as bool,
+      phoneVerified: fields[21] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(22)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -83,7 +85,11 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(18)
       ..write(obj.businessAddress)
       ..writeByte(19)
-      ..write(obj.businessLogoUrl);
+      ..write(obj.businessLogoUrl)
+      ..writeByte(20)
+      ..write(obj.emailVerified)
+      ..writeByte(21)
+      ..write(obj.phoneVerified);
   }
 
   @override
@@ -171,6 +177,8 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
       businessSectorId: json['business_sector_id'] as String?,
       businessAddress: json['business_address'] as String?,
       businessLogoUrl: json['business_logo_url'] as String?,
+      emailVerified: json['email_verified'] as bool,
+      phoneVerified: json['phone_verified'] as bool,
     );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -198,4 +206,6 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
       if (instance.businessAddress case final value?) 'business_address': value,
       if (instance.businessLogoUrl case final value?)
         'business_logo_url': value,
+      'email_verified': instance.emailVerified,
+      'phone_verified': instance.phoneVerified,
     };

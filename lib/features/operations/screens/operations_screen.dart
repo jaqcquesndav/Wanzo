@@ -11,8 +11,6 @@ import 'package:wanzo/features/expenses/repositories/expense_repository.dart';
 import 'package:wanzo/features/sales/repositories/sales_repository.dart';
 import 'package:wanzo/features/financing/models/financing_request.dart';
 import 'package:wanzo/features/financing/repositories/financing_repository.dart';
-import 'package:wanzo/features/financing/bloc/financing_bloc.dart';
-import 'package:wanzo/features/dashboard/bloc/operation_journal_bloc.dart' hide LoadOperations;
 
 import '../bloc/operations_bloc.dart';
 

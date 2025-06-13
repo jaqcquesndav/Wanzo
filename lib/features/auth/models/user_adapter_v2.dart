@@ -10,9 +10,7 @@ class UserAdapterV2 extends TypeAdapter<User> {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-
-    return User(
+    };    return User(
       id: fields[0] as String,
       name: fields[1] as String,
       email: fields[2] as String,
@@ -26,6 +24,8 @@ class UserAdapterV2 extends TypeAdapter<User> {
       // Migration logic: If field 10 is null, default to IdStatus.UNKNOWN
       idCardStatus: fields[10] == null ? IdStatus.UNKNOWN : fields[10] as IdStatus,
       idCardStatusReason: fields[11] as String?,
+      emailVerified: fields[20] as bool? ?? false,  // Added required field with default value
+      phoneVerified: fields[21] as bool? ?? false,  // Added required field with default value
     );
   }
 

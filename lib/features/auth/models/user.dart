@@ -101,6 +101,12 @@ class User extends Equatable {
   @HiveField(19) // Ensure this HiveField index is unique and sequential
   final String? businessLogoUrl;
 
+  @HiveField(20) // New field
+  final bool emailVerified;
+
+  @HiveField(21) // New field
+  final bool phoneVerified;
+
   const User({
     required this.id,
     required this.name,
@@ -122,6 +128,8 @@ class User extends Equatable {
     this.businessSectorId, // Added field
     this.businessAddress, // Added field
     this.businessLogoUrl, // Added field
+    required this.emailVerified, // Added to constructor
+    required this.phoneVerified, // Added to constructor
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -149,6 +157,8 @@ class User extends Equatable {
     String? businessSectorId, // Added parameter
     String? businessAddress, // Added parameter
     String? businessLogoUrl, // Added parameter
+    bool? emailVerified, // Added parameter
+    bool? phoneVerified, // Added parameter
   }) {
     return User(
       id: id ?? this.id,
@@ -171,6 +181,8 @@ class User extends Equatable {
       businessSectorId: businessSectorId ?? this.businessSectorId, // Added assignment
       businessAddress: businessAddress ?? this.businessAddress, // Added assignment
       businessLogoUrl: businessLogoUrl ?? this.businessLogoUrl, // Added assignment
+      emailVerified: emailVerified ?? this.emailVerified, // Added assignment
+      phoneVerified: phoneVerified ?? this.phoneVerified, // Added assignment
     );
   }
 
@@ -196,6 +208,8 @@ class User extends Equatable {
         businessSectorId, // Added to props
         businessAddress, // Added to props
         businessLogoUrl, // Added to props
+        emailVerified, // Added to props
+        phoneVerified, // Added to props
       ];
 
   // Helper method for Adha businessProfile context

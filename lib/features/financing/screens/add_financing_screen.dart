@@ -11,7 +11,7 @@ import 'package:wanzo/features/financing/bloc/financing_bloc.dart';
 import 'package:wanzo/features/financing/models/financing_request.dart';
 
 class AddFinancingScreen extends StatefulWidget {
-  const AddFinancingScreen({Key? key}) : super(key: key);
+  const AddFinancingScreen({super.key});
 
   @override
   State<AddFinancingScreen> createState() => _AddFinancingScreenState();
@@ -24,7 +24,7 @@ class _AddFinancingScreenState extends State<AddFinancingScreen> {  final _formK
   final _termMonthsController = TextEditingController(); // Contrôleur pour la durée en mois
   FinancialInstitution _selectedInstitution = FinancialInstitution.bonneMoisson;
   FinancialProduct _selectedProduct = FinancialProduct.cashFlow; // Produit financier sélectionné
-  List<String> _attachmentPaths = []; // Liste des pièces jointes
+  final List<String> _attachmentPaths = []; // Liste des pièces jointes
   final ImagePicker _picker = ImagePicker();
   String? _leasingCode; // Code pour le leasing
   

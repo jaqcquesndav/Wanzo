@@ -46,7 +46,8 @@ dependencies:
   connectivity_plus: ^6.1.4 # Upgraded from ^5.0.2
   http: ^1.2.0
     # Authentication
-  flutter_appauth: ^9.0.0
+  # flutter_appauth: ^9.0.1 # Upgraded to latest stable # Removed
+  auth0_flutter: ^1.8.0 # Added for embedded Auth0
   flutter_secure_storage: ^9.2.0 # Upgraded from ^4.2.1
   jwt_decoder: ^2.0.1 # Pour décoder et analyser les JWT tokens
   
@@ -77,6 +78,7 @@ dependencies:
   flutter_dotenv: ^5.1.0 # Added flutter_dotenv
   photo_view: ^0.15.0 # Added photo_view for image zooming
   bloc: ^9.0.0
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

@@ -84,7 +84,6 @@ class AuthRepository {
   /// Déconnecte l'utilisateur actuel
   Future<void> logout() async {
     try {
-      final bool wasDemo = await _auth0Service.isDemoUserActive();
       await _auth0Service.logout(); // Auth0Service handles clearing its own tokens including demo key
       
       final userBox = Hive.box<User>(_userBoxName);
@@ -199,26 +198,26 @@ class AuthRepository {
       // TODO: Gérer le téléchargement de l'image de profil
     }
 
-    final token = await _auth0Service.getAccessToken();
-    if (token != null) {
-      try {
-        // Corrected method name if it was a typo, or ensure it exists in Auth0Service
-        await _auth0Service.updateUserMetadata(token, userToUpdate); 
-      } catch (e) {
-        debugPrint('Error updating Auth0 profile/metadata: $e');
-      }
-    }
+    // final token = await _auth0Service.getAccessToken(); // Commented out as updateUserMetadata is
+    // if (token != null) {                                // Commented out
+    //   try {                                             // Commented out
+    //     // Corrected method name if it was a typo, or ensure it exists in Auth0Service
+    //     // await _auth0Service.updateUserMetadata(token, userToUpdate); // Commented out
+    //   } catch (e) {                                     // Commented out
+    //     debugPrint('Error updating Auth0 profile/metadata: $e'); // Commented out
+    //   }                                                 // Commented out
+    // }                                                   // Commented out
   }
 
   /// Updates the local user data and metadata in Auth0.
   Future<void> updateLocalUser(User user) async {
     _currentUser = user;
     await _saveUserData(user);
-    final String? currentToken = await _auth0Service.getAccessToken();
-    if (currentToken != null && _currentUser != null) {
-      // Corrected method name if it was a typo, or ensure it exists in Auth0Service
-      await _auth0Service.updateUserMetadata(currentToken, _currentUser!); 
-    }
+    // final String? currentToken = await _auth0Service.getAccessToken(); // Commented out
+    // if (currentToken != null && _currentUser != null) {                // Commented out
+    //   // Corrected method name if it was a typo, or ensure it exists in Auth0Service
+    //   // await _auth0Service.updateUserMetadata(currentToken, _currentUser!); // Commented out
+    // }                                                                  // Commented out
   }
 
   /// Récupère l'utilisateur avec une option pour forcer la récupération distante

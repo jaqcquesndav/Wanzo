@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:wanzo/features/customer/repositories/customer_repository.dart';
 import 'package:wanzo/features/sales/repositories/sales_repository.dart';

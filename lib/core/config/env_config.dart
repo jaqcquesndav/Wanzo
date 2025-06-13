@@ -1,4 +1,3 @@
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Configuration des variables d'environnement pour l'application Wanzo
@@ -18,6 +17,8 @@ class EnvConfig {
   static String get auth0Audience => dotenv.env['AUTH0_AUDIENCE'] ?? 'https://api.wanzo.com';
   static String get auth0RedirectUri => dotenv.env['AUTH0_REDIRECT_URI'] ?? 'com.wanzo.app://login-callback';
   static String get auth0LogoutUri => dotenv.env['AUTH0_LOGOUT_URI'] ?? 'com.wanzo.app://logout-callback';
+  static String get auth0Scheme => dotenv.env['AUTH0_SCHEME'] ?? 'com.example.wanzo'; // Added
+
   /// Retourne l'URL appropriée selon l'environnement (dev, staging, prod)
   static String getBaseUrl({bool useApiGateway = true}) {
     // Par défaut, utiliser l'API Gateway comme point d'entrée
