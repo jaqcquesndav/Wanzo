@@ -55,8 +55,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+    return BlocListener<AuthBloc, AuthState>(      listener: (context, state) {
         if (state is AuthAuthenticated) {
           // Redirection vers le dashboard
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -65,10 +64,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             }
           });
         } else if (state is AuthUnauthenticated) {
-          // Redirection vers l'écran d'accueil ou d'onboarding
+          // Redirection vers l'onboarding ou Auth0 directement
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) { // Check if the widget is still in the tree
-              context.go('/onboarding'); // Use go_router
+              context.go('/onboarding'); // Rediriger vers onboarding d'abord
             }
           });
         }

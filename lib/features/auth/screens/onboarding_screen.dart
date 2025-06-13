@@ -55,9 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  /// Passe à la page suivante ou termine l'onboarding
+  }  /// Passe à la page suivante ou termine l'onboarding
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -65,14 +63,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Fin de l'onboarding, redirection vers la page de connexion
-      context.go('/login'); // Use go_router
+      // Fin de l'onboarding, redirection vers l'écran d'information Auth0
+      context.go('/auth0_info');
     }
   }
 
   /// Passe à la dernière page pour sauter l'onboarding
   void _skipOnboarding() {
-    context.go('/login'); // Use go_router
+    context.go('/auth0_info');
   }
 
   @override

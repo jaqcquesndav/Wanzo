@@ -175,7 +175,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       dateFormat: json['dateFormat'] as String? ?? 'DD/MM/YYYY',
       themeMode:
           $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
-              AppThemeMode.system,
+              AppThemeMode.light,
       language: json['language'] as String? ?? 'fr',
       showTaxes: json['showTaxes'] as bool? ?? true,
       defaultTaxRate: (json['defaultTaxRate'] as num?)?.toDouble() ?? 16.0,

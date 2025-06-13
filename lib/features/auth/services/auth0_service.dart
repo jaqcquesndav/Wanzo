@@ -87,9 +87,10 @@ class Auth0Service {
     return demoUser;
   }
 
+  /// Se connecte à Auth0 en utilisant les pages d'authentification d'Auth0 directement
   Future<User> login() async {
     try {
-      debugPrint("Auth0Service: Attempting embedded Auth0 login. Clearing demo user flag.");
+      debugPrint("Auth0Service: Attempting Auth0 login with hosted login page. Clearing demo user flag.");
       await setDemoUserActive(false);
       await auth0.credentialsManager.clearCredentials();
 
@@ -98,11 +99,16 @@ class Auth0Service {
       debugPrint("Auth0Service: Using audience: $_auth0Audience");
       debugPrint("Auth0Service: Using scheme: $_auth0Scheme");
 
+      // Utiliser directement les pages d'authentification d'Auth0 au lieu des pages intégrées
       final Credentials credentials = await auth0
           .webAuthentication(scheme: _auth0Scheme)
           .login(
             audience: _auth0Audience,
             scopes: {'openid', 'profile', 'email', 'offline_access', 'read:user_id_token'},
+            // Utilisation du mode Universal Login d'Auth0
+            parameters: {
+              'prompt': 'login', // Force l'affichage de la page de login même si l'utilisateur est déjà connecté
+            },
           );
 
       await _saveCredentials(credentials);
@@ -118,8 +124,8 @@ class Auth0Service {
     } on WebAuthenticationException catch (e) {
       final String eMessage = e.message.toLowerCase();
       // Ensure details is converted to string before toLowerCase()
-      final String eDetails = e.details.toString().toLowerCase(); // Removed ?. as details is non-nullable
-      debugPrint('WebAuthenticationException during login: ${e.message}. Details: ${e.details}.'); // Removed cause as it's not available
+      final String eDetails = e.details.toString().toLowerCase();
+      debugPrint('WebAuthenticationException during login: ${e.message}. Details: ${e.details}.');
 
       bool userCancelled = eMessage.contains('cancel') || eDetails.contains('cancel') ||
                            eMessage.contains('user_cancelled') || eDetails.contains('user_cancelled') ||

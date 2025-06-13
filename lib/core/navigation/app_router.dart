@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
-import '../../features/auth/screens/login_screen.dart';
-import '../../features/auth/screens/onboarding_screen.dart';
-import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/auth/screens/onboarding_screen.dart';
+import '../../features/auth/screens/auth0_redirect_screen.dart';
+import '../../features/auth/screens/auth0_info_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/inventory/models/product.dart';
 import '../../features/inventory/screens/add_product_screen.dart';
@@ -57,10 +57,9 @@ class AppRouter {
 
       if (isAuthenticating || (onSplashScreen && authState is AuthInitial)) {
         return null; 
-      }
-
+      }      // Si non authentifié et pas sur les écrans d'authentification ou de splash, rediriger vers l'écran d'information Auth0
       if (!isAuthenticated && !onAuthScreens && !onSplashScreen) {
-        return '/login';
+        return '/auth0_info';
       }
 
       if (isAuthenticated && (onAuthScreens || onSplashScreen)) {
@@ -79,16 +78,23 @@ class AppRouter {
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
+        path: '/auth0_info',
+        builder: (context, state) => const Auth0InfoScreen(),
+      ),
+      GoRoute(
+        path: '/auth0_redirect',
+        builder: (context, state) => const Auth0RedirectScreen(),
+      ),      GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        redirect: (_, __) => '/auth0_info', // Rediriger vers l'écran d'information Auth0
       ),
       GoRoute(
         path: '/signup',
-        builder: (context, state) => const SignupScreen(),
+        redirect: (_, __) => '/auth0_info', // Rediriger vers l'écran d'information Auth0
       ),
       GoRoute(
         path: ForgotPasswordScreen.routeName,
-        builder: (context, state) => const ForgotPasswordScreen(),
+        redirect: (_, __) => '/auth0_info', // Rediriger vers l'écran d'information Auth0
       ),
       GoRoute(
         path: '/dashboard',
