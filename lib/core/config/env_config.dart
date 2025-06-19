@@ -2,9 +2,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Configuration des variables d'environnement pour l'application Wanzo
 /// Cette classe centralise toutes les URLs et configurations pour les différents environnements
-class EnvConfig {
-  /// URL de l'API Gateway, point d'entrée principal pour toutes les requêtes
-  static String get apiGatewayUrl => dotenv.env['API_GATEWAY_URL'] ?? 'http://localhost:8000/api';
+class EnvConfig {  /// URL de l'API Gateway, point d'entrée principal pour toutes les requêtes
+  static String get apiGatewayUrl => dotenv.env['API_GATEWAY_URL'] ?? 'http://localhost:8000/mobile';
   
   /// URLs des services directs (à utiliser uniquement si nécessaire)
   static String get authServiceUrl => dotenv.env['AUTH_SERVICE_URL'] ?? 'http://localhost:3000/api';
